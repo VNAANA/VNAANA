@@ -5,6 +5,11 @@ database, fetch a URL, or store questions and article text. Ollama runs locally 
 `OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`); `OLLAMA_MODEL` defaults to
 `llama3.2`. The model must already be installed. No model download is automatic.
 
+For summary and Q&A, `language` selects the **answer language** (`en` or `nl`),
+not the article's original language. Always send the original article text, even
+when a translated version is displayed. Keep original and displayed text separate
+in the client; these endpoints do not fetch an article by ID or use chat history.
+
 ## Summarize
 
 `POST /ai/summarize`
@@ -42,7 +47,8 @@ Both endpoints return the same shape:
 ```
 
 `sources` contains the submitted URL only, or `[]` when omitted; it is **not** an
-independently verified citation. An unsupported question returns
+independently verified citation. Each request is grounded in one supplied article,
+not multiple corroborated sources. An unsupported question returns HTTP 200 with
 `status: "insufficient_information"`, a clear explanation in `text` and
 `uncertainty`, and no invented answer. Empty or over-limit inputs receive HTTP 422;
 an unavailable model or invalid model response receives HTTP 503. The article limit
