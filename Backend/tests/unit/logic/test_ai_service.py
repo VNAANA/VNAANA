@@ -78,6 +78,37 @@ class AIServiceTests(unittest.TestCase):
         with self.assertRaises(AIModelError):
             AIService(lambda _system, _prompt: "not json").summarize("Article.", "en")
 
+    def test_summary_rejects_unfinished_or_overlong_output(self):
+        article = " ".join(["The library opened on Monday and welcomed readers today."] * 4)
+        for output in ('The mayor said:', 'The mayor said: "Welcome.', article):
+            with self.subTest(output=output), self.assertRaises(AIModelError):
+                AIService(FakeModel({"text": output}).generate).summarize(article, "en")
+
+    def test_answer_prompt_explicitly_requires_requested_language(self):
+        fake = FakeModel({"status": "answered", "text": "Two million euros.", "evidence": "2 miljoen euro"})
+        result = AIService(fake.generate).ask("Het gebouw kostte 2 miljoen euro.", "How much?", "en")
+        self.assertEqual(result["status"], "answered")
+        self.assertIn("MUST be in English", fake.calls[0][0])
+        self.assertIn("keep the evidence as an exact quote", fake.calls[0][0])
+
+    def test_english_summary_uses_original_dutch_article(self):
+        original = "De bibliotheek is maandag geopend."
+        fake = FakeModel({"text": "The library opened on Monday."})
+        result = AIService(fake.generate).summarize(original, "en")
+        self.assertEqual(result["status"], "answered")
+        self.assertEqual(len(fake.calls), 1)
+        self.assertIn("entirely in English", fake.calls[0][0])
+        self.assertEqual(fake.calls[0][1], f"ARTICLE:\n{original}")
+
+    def test_dutch_answer_uses_original_english_article_as_evidence(self):
+        original = "The library opened on Monday."
+        fake = FakeModel({"status": "answered", "text": "Op maandag.", "evidence": "opened on Monday"})
+        result = AIService(fake.generate).ask(original, "Wanneer?", "nl")
+        self.assertEqual(result["status"], "answered")
+        self.assertEqual(len(fake.calls), 1)
+        self.assertIn("MUST be in Dutch", fake.calls[0][0])
+        self.assertEqual(fake.calls[0][1], f"ARTICLE:\n{original}\n\nQUESTION:\nWanneer?")
+
 
 if __name__ == "__main__":
     unittest.main()
