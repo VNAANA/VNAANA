@@ -184,7 +184,7 @@
   color: var(--muted);
 }
 
-/* Bottom of the sidebar, where the profile will go once users can log in */
+/* Bottom of the sidebar: "Log in", or the signed-in user's profile */
 .account {
   margin-top: auto;
   padding-top: 14px;
@@ -211,6 +211,50 @@
 
 .loginButton:hover {
   background: #262b34;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px 8px;
+  border-radius: var(--radius-ui);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.profile:hover {
+  background: var(--surface-2);
+}
+
+.profileText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.profileName,
+.profileEmail {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileName {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.profileEmail {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.profileChevron {
+  flex: none;
+  color: var(--muted);
 }
 
 /* ---------- Mobile bars (below 820px) ---------- */

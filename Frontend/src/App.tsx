@@ -4,9 +4,11 @@ import { FeedPost } from './components/FeedPost/FeedPost'
 import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
+import { ProfilePage } from './components/ProfilePage/ProfilePage'
 import { briefingMeta, sampleStories, sampleUser } from './data/sampleStories'
 import { useHash } from './hooks/useHash'
 import { useAuth } from './hooks/useAuth'
+import { getAccount } from './utils/account'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
 
@@ -38,7 +40,9 @@ export default function App() {
   }, [])
 
   if (hash === '#login') return <LoginPage auth={auth} />
+  if (hash === '#profile') return <ProfilePage auth={auth} />
 
+  const account = getAccount(auth.session)
   const forYouCount = sampleStories.filter((story) => story.feedReason === 'forYou').length
 
   return (
@@ -46,7 +50,7 @@ export default function App() {
       <a href="#feed" className={styles.skipLink}>
         Skip to feed
       </a>
-      <Sidebar user={sampleUser} signedIn={!!auth.session} signingOut={auth.signingOut} onSignOut={auth.signOut} />
+      <Sidebar user={sampleUser} account={account} />
       <MobileTopBar />
 
       {/*
@@ -84,7 +88,7 @@ export default function App() {
         </footer>
       </main>
 
-      <MobileTabBar signedIn={!!auth.session} signingOut={auth.signingOut} onSignOut={auth.signOut} />
+      <MobileTabBar account={account} />
     </div>
   )
 }

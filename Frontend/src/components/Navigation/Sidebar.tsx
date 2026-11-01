@@ -1,14 +1,14 @@
-import { Compass, LogIn, LogOut, Sparkles } from 'lucide-react'
+import { ChevronRight, Compass, LogIn, Sparkles } from 'lucide-react'
 import { TOPICS, TOPIC_ICONS } from '../../data/topics'
 import type { User } from '../../types'
+import type { Account } from '../../utils/account'
+import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Logo } from './Logo'
 import { SearchField } from './SearchField'
 import styles from './Navigation.module.css'
 
 /* Desktop navigation. Below 820px it is replaced by MobileTopBar + MobileTabBar. */
-export function Sidebar({ user, signedIn, signingOut, onSignOut }: {
-  user: User; signedIn: boolean; signingOut: boolean; onSignOut: () => Promise<void>
-}) {
+export function Sidebar({ user, account }: { user: User; account: Account | null }) {
   return (
     <aside className={styles.sidebar}>
       <Logo />
@@ -61,15 +61,22 @@ export function Sidebar({ user, signedIn, signingOut, onSignOut }: {
       </section>
 
       <div className={styles.account}>
-        {signedIn ? (
-          <button type="button" className={styles.loginButton} onClick={onSignOut} disabled={signingOut}>
-            <LogOut size={20} aria-hidden="true" />
-            {signingOut ? 'Signing out…' : 'Sign out'}
-          </button>
-        ) : <a href="#login" className={styles.loginButton}>
-          <LogIn size={20} aria-hidden="true" />
-          Log in
-        </a>}
+        {account ? (
+          <a href="#profile" className={styles.profile}>
+            <AccountAvatar account={account} />
+            <span className={styles.profileText}>
+              <span className={styles.profileName}>{account.name}</span>
+              {account.email && <span className={styles.profileEmail}>{account.email}</span>}
+            </span>
+            <ChevronRight size={18} className={styles.profileChevron} aria-hidden="true" />
+            <span className="sr-only">, view profile</span>
+          </a>
+        ) : (
+          <a href="#login" className={styles.loginButton}>
+            <LogIn size={20} aria-hidden="true" />
+            Log in
+          </a>
+        )}
       </div>
     </aside>
   )
