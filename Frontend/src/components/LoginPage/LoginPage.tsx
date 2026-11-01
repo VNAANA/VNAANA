@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../Navigation/Logo'
 import styles from './LoginPage.module.css'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../utils/supabase'
 import type { useAuth } from '../../hooks/useAuth'
 
 type Errors = { email?: string; password?: string }

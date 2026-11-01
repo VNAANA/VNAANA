@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../utils/supabase'
 import { useHash } from './useHash'
 
 /** Keep authentication alive on both the feed and the login page. */
