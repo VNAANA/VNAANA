@@ -18,7 +18,8 @@ export function NovaChatLog() {
     <div className={styles.log} role="log" aria-live="polite" aria-label="Conversation with Nova">
       {chat.messages.length === 0 && (
         <p className={styles.intro}>
-          Nova answers from {story.aiNote.sourceCount} sources and tells you what isn’t confirmed yet.
+          Nova answers from {story.aiNote.sourceCount} {story.aiNote.sourceCount === 1 ? 'source' : 'sources'} and
+          tells you what isn’t confirmed yet.
           <span className={styles.prototype}> Prototype: answers are pre-written, not live AI.</span>
         </p>
       )}

@@ -32,6 +32,13 @@ class ArticleService:
             offset=offset,
         )
 
+    def list_random_articles(
+        self,
+        *,
+        limit: int = 3,
+    ) -> list[Article]:
+        return self.articles.list_random(limit=limit)
+
     def get_article(
         self,
         article_id: uuid.UUID,

@@ -39,7 +39,8 @@ function Byline() {
       <div className={styles.who}>
         <PublisherName />
         <span className={styles.meta}>
-          By {story.author} · {story.publishedAgo}
+          {story.author && `By ${story.author} · `}
+          {story.publishedAgo}
         </span>
       </div>
     </div>
@@ -48,6 +49,7 @@ function Byline() {
 
 function TopicPill() {
   const { story } = usePost()
+  if (!story.topic) return null
   const Icon = TOPIC_ICONS[story.topic]
   return (
     <span className={styles.pill}>

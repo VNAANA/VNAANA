@@ -1,12 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { CarouselArrows, CounterPill } from './CarouselControls'
-import { PART_LABELS, usePost } from './PostContext'
+import { usePost } from './PostContext'
 import styles from './PostCarousel.module.css'
 
 type PartPadding = { top?: number; bottom?: number }
 
 type Props = {
-  /** One element per part: What happened, Why it matters, Read more. */
+  /** One element per part: What happened, Why it matters, (Full article,) Read more. */
   parts: ReactNode[]
   /** Class that sets the size (--parts-h). */
   className?: string
@@ -21,7 +21,7 @@ type Props = {
  * The arrows are vertically centred; on narrow carousels they move to the bottom corners.
  */
 export function PostCarousel({ parts, className = '', partPadding }: Props) {
-  const { story, carousel, partIds } = usePost()
+  const { story, carousel, partIds, partLabels } = usePost()
 
   const paddingVars = {
     '--part-pad-top': partPadding?.top && `${partPadding.top}px`,
@@ -48,7 +48,7 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
               className={styles.slide}
               role="group"
               aria-roledescription="part"
-              aria-label={`${i + 1} of ${carousel.count}: ${PART_LABELS[i]}`}
+              aria-label={`${i + 1} of ${carousel.count}: ${partLabels[i]}`}
               inert={i !== carousel.index}
             >
               {part}
@@ -61,7 +61,7 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
       <CarouselArrows />
 
       <p className="sr-only" aria-live="polite">
-        Part {carousel.index + 1} of {carousel.count}: {PART_LABELS[carousel.index]}
+        Part {carousel.index + 1} of {carousel.count}: {partLabels[carousel.index]}
       </p>
     </div>
   )

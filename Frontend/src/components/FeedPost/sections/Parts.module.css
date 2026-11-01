@@ -8,6 +8,25 @@
   user-select: none;
 }
 
+/* Stand-in when the story has no image: the publisher's name on a tinted panel */
+.imageFallback {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--foryou-bg);
+  user-select: none;
+}
+
+.imageFallbackName {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--foryou-ink);
+  opacity: 0.55;
+}
+
 /* ---------- Part 1 ---------- */
 
 .whatHappened {
@@ -119,6 +138,23 @@
   color: #fff;
   font-size: 12px;
   font-weight: 700;
+}
+
+/* ---------- Full article ---------- */
+
+.articleMeta {
+  margin-top: 6px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.articleBody {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--body);
 }
 
 .background {

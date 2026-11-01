@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { apiUrl } from '../utils/api'
 import { supabase } from '../utils/supabase'
 import { useHash } from './useHash'
 
@@ -40,9 +41,7 @@ export function useAuth() {
     async function bootstrap() {
       setBackendStatus('Finishing sign-in…')
       try {
-        const apiUrl = import.meta.env.VITE_API_BASE_URL?.trim()
-        if (!apiUrl) throw new Error('Missing API URL')
-        const response = await fetch(`${apiUrl.replace(/\/$/, '')}/users/me/bootstrap`, {
+        const response = await fetch(apiUrl('/users/me/bootstrap'), {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
