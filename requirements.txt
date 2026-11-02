@@ -14,3 +14,10 @@ alembic==1.20.0
 pytest
 pytest-asyncio
 feedparser
+
+# News gathering and scraping
+requests
+trafilatura
+
+# Loading .env in migrations (also pulled in by pydantic-settings, listed because we import it directly)
+python-dotenv

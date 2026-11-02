@@ -87,7 +87,6 @@ class UserService:
             if not consent:
                 # Consent went from on to off. Reactions and tag scores only
                 # exist while consent is on, so this is exactly when there is
-                # data to remove (design doc D3).
                 self.algorithm.delete_algorithm_data(user_id)
 
         return user
