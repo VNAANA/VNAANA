@@ -78,7 +78,7 @@ jobs:
                   images: ${{ steps.image.outputs.name }}
                   tags: |
                       type=raw,value=latest
-                      type=sha
+                      type=sha,format=long
 
             - name: Build and push Docker image
               uses: docker/build-push-action@v6
@@ -87,3 +87,29 @@ jobs:
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+    deploy:
+        name: Deploy to Azure
+        runs-on: ubuntu-latest
+        needs: publish
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+        permissions:
+            contents: read
+            id-token: write
+
+        steps:
+            - name: Log in to Azure
+              uses: azure/login@v2
+              with:
+                  client-id: ${{ vars.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ vars.AZURE_TENANT_ID }}
+                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Deploy image to Azure Container Apps
+              uses: azure/CLI@v1
+              with:
+                  inlineScript: |
+                      az containerapp update \
+                        --name vna-api \
+                        --resource-group rb-vna-dev \
+                        --image ghcr.io/vnaana/vnaana:sha-${{ github.sha }}
