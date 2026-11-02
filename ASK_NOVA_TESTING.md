@@ -1,13 +1,13 @@
-# Ask Nova Thursday demo quick start
+# Ask Nova feature quick start
 
-This separate testing branch is for Thursday's demo and team review; do not merge it into `dev` yet.
+This separate Ask Nova feature branch is for team testing and review; do not merge it into `dev` yet.
 
 ## Clone
 
 ```powershell
-git clone --single-branch --branch demo/ask-nova-thursday `
-  https://github.com/RikH2023/VNAANA.git D:\VNAANA-Thursday-Demo
-Set-Location D:\VNAANA-Thursday-Demo
+git clone --single-branch --branch feature/ask-nova-integration `
+  https://github.com/VNAANA/VNAANA.git D:\VNAANA-AskNova
+Set-Location D:\VNAANA-AskNova
 ```
 
 ## Prerequisites and configuration
@@ -30,7 +30,7 @@ Set-Location ..
 ollama pull llama3.2
 ```
 
-## Start the demo in separate PowerShell terminals
+## Start the application in separate PowerShell terminals
 
 ```powershell
 # Terminal 1 — only if Ollama is not already running
@@ -38,8 +38,8 @@ ollama serve
 # Terminal 2 — from the repository root
 .\.venv\Scripts\python.exe -m uvicorn Backend.main:app --reload --host 127.0.0.1 --port 8000
 # Terminal 3
-Set-Location D:\VNAANA-Thursday-Demo\Frontend
+Set-Location D:\VNAANA-AskNova\Frontend
 npm run dev
 ```
 
-Open <http://localhost:5173>. Confirm the feed loads, Ask Nova answers a supported question, English and Dutch can be selected, and a preview-only article shows its limited-context notice. The Azure backend is not compatible with this local-Ollama demo; responses may be slow on weaker laptops, and no database migrations should be run independently.
+Open <http://localhost:5173>. Confirm the feed loads, Ask Nova answers a supported question, English and Dutch can be selected, and a preview-only article shows its limited-context notice. The Azure backend is not compatible with this local-Ollama feature test; responses may be slow on weaker laptops, and no database migrations should be run independently.
