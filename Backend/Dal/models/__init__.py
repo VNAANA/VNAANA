@@ -10,6 +10,7 @@ from Backend.Dal.models.article import Article
 from Backend.Dal.models.story_article import StoryArticle
 from Backend.Dal.models.engagement_event import EngagementEvent
 from Backend.Dal.models.event_weight import EventWeight
+from Backend.Dal.models.story_reaction import StoryReaction
 
 __all__ = [
     "Base",
@@ -18,6 +19,7 @@ __all__ = [
     "UserTag",
     "Story",
     "StoryStatus",
+    "StoryReaction",
     "StoryTag",
     "Provider",
     "Article",
