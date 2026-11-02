@@ -12,15 +12,26 @@ import styles from './NovaChat.module.css'
  */
 
 export function NovaChatLog() {
-  const { story, chat } = usePost()
+  const { chat } = usePost()
 
   return (
     <div className={styles.log} role="log" aria-live="polite" aria-label="Conversation with Nova">
+      {chat.groundingMode === 'preview' && (
+        <p className={styles.intro}>
+          {chat.previewIncludesDescription
+            ? 'Full article text is unavailable. Nova is using only the headline and available description.'
+            : 'Full article text is unavailable. Nova is using only the headline.'}
+        </p>
+      )}
       {chat.messages.length === 0 && (
         <p className={styles.intro}>
-          Nova answers from {story.aiNote.sourceCount} {story.aiNote.sourceCount === 1 ? 'source' : 'sources'} and
-          tells you what isn’t confirmed yet.
-          <span className={styles.prototype}> Prototype: answers are pre-written, not live AI.</span>
+          {chat.tooLong
+            ? 'Ask Nova is unavailable: this article exceeds the 12,000-character AI limit.'
+            : chat.available
+              ? chat.groundingMode === 'full_article'
+                ? 'Nova answers using only this original article, not other sources or previous messages.'
+                : 'Questions are answered only when the available preview supports them.'
+              : 'Ask Nova is unavailable because the original article text is missing.'}
         </p>
       )}
       {chat.messages.map((message) =>
@@ -35,11 +46,12 @@ export function NovaChatLog() {
           </p>
         ) : (
           <div key={message.id} className={styles.nova}>
-            <span className="sr-only">Nova answered: </span>
+            <span className="sr-only">Nova replied: </span>
+            {message.answer.status === 'insufficient_information' && <strong>Not answered from this article</strong>}
             <p>{message.answer.text}</p>
-            <p className={styles.sources}>
-              <strong>Sources:</strong> {message.answer.sources.join(', ')}
-            </p>
+            {message.answer.sources.length > 0 && <p className={styles.sources}>
+              <strong>Submitted article URL:</strong> {message.answer.sources.join(', ')}
+            </p>}
             <p className={styles.uncertain}>
               <Info size={14} aria-hidden="true" />
               <span>
@@ -56,7 +68,7 @@ export function NovaChatLog() {
             <span />
             <span />
           </span>
-          Nova is checking the sources…
+          Nova is checking the article…
         </p>
       )}
     </div>
@@ -83,8 +95,15 @@ export function NovaComposer() {
 
   return (
     <div className={styles.composer}>
-      <SuggestionChips onPick={(question) => void chat.send(question)} tone="row" />
+      <SuggestionChips onPick={(suggestion) => void chat.sendSuggestion(suggestion)} tone="row" disabled={!chat.available || chat.pending} />
       <form className={styles.form} onSubmit={onSubmit}>
+        <label className={styles.language}>
+          Answer language
+          <select value={chat.language} onChange={(event) => chat.setLanguage(event.target.value as 'en' | 'nl')} aria-label="Nova answer language">
+            <option value="en">English</option>
+            <option value="nl">Dutch</option>
+          </select>
+        </label>
         <label htmlFor={inputId} className="sr-only">
           Ask Nova about this story
         </label>
@@ -96,8 +115,9 @@ export function NovaComposer() {
           onChange={(event) => setDraft(event.target.value)}
           placeholder="Ask Nova anything…"
           autoComplete="off"
+          disabled={!chat.available || chat.pending}
         />
-        <button type="submit" className={styles.send} aria-label="Send question to Nova" disabled={chat.pending}>
+        <button type="submit" className={styles.send} aria-label="Send question to Nova" disabled={!chat.available || chat.pending}>
           <SendHorizontal size={18} aria-hidden="true" />
         </button>
       </form>

@@ -33,10 +33,23 @@ export async function fetchRandomStories(signal?: AbortSignal): Promise<Story[]>
 
 export function articleToStory(article: ApiArticle): Story {
   const content = toParagraphs(article.content)
-  const summary = shorten(htmlToText(article.description) || content[0] || '')
+  const description = htmlToText(article.description)
+  const summary = shorten(description || content[0] || '')
+  const hasFullArticle = !!article.content?.trim()
+  const previewText = [article.title.trim(), description].filter(Boolean).join('\n\n')
+  const groundingText = hasFullArticle ? article.content! : previewText
 
   return {
     id: article.id,
+    // Keep AI grounding separate from the shortened text used by the feed display.
+    ...(groundingText ? {
+      novaArticle: {
+        groundingText,
+        groundingMode: hasFullArticle ? 'full_article' : 'preview',
+        ...(!hasFullArticle ? { previewIncludesDescription: !!description } : {}),
+        ...(article.canonical_url?.trim() ? { sourceUrl: article.canonical_url } : {}),
+      },
+    } : {}),
     publisher: {
       name: article.provider.name,
       initials: initials(article.provider.name),

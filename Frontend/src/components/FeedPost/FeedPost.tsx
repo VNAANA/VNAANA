@@ -38,7 +38,7 @@ export function FeedPost({ story, onOpened }: Props) {
   const parts = getParts(story)
   const partLabels = parts.map((part) => PART_LABELS[part])
   const carousel = useCarousel(parts.length)
-  const chat = useNovaChat(story)
+  const chat = useNovaChat(story.novaArticle)
   const [hidden, setHidden] = useState(false)
   const [composerFocusRequest, setComposerFocusRequest] = useState(0)
   const undoRef = useRef<HTMLButtonElement>(null)

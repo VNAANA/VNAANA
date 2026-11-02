@@ -1,14 +1,11 @@
 """Manual only: run from repository root with `python -m Backend.tests.manual.ai_ollama_smoke`."""
 
-from Backend.config import get_settings
-from Backend.Logic.ai_service import AIModelError, AIService
-from Backend.Logic.ollama_client import OllamaClient
+from Backend.Logic.ai_service import AIModelError
+from Backend.Presentation.dependencies import get_ai_service
 
 
 def main() -> None:
-    settings = get_settings()
-    client = OllamaClient(settings.ollama_base_url, settings.ollama_model, settings.ollama_timeout_seconds)
-    service = AIService(client.generate)
+    service = get_ai_service()
     article = "The city opened a new library on Monday. It has two reading rooms."
     try:
         summary = service.summarize(article, "en")

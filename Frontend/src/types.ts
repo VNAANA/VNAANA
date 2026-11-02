@@ -9,12 +9,20 @@ export type Topic =
 
 export type FeedReason = 'forYou' | 'dontMiss'
 
+export type NovaArticle = {
+  groundingText: string
+  groundingMode: 'full_article' | 'preview'
+  previewIncludesDescription?: boolean
+  sourceUrl?: string
+}
+
 /*
  * Articles from the API don't have a topic, image or Nova's "why it matters"
  * analysis yet, so those are optional and the post shows a fallback instead.
  */
 export type Story = {
   id: string
+  novaArticle?: NovaArticle
   publisher: { name: string; initials: string; verified: boolean }
   author?: string
   publishedAgo: string // "2h ago"
