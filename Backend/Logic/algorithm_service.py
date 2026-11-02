@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from Backend.Logic.Algorithm.decay import LIFETIME_DAYS
 from Backend.Logic.Algorithm.ranking import is_unlocked, rank_stories
 from Backend.Logic.Algorithm.scoring import score_user
+from Backend.Logic.Algorithm.shared_types import TagScores
 from Backend.Logic.domain.feed import Feed, FeedStatus
 from Backend.Logic.exceptions import NotFoundError
 from Backend.Logic.ports.algorithm_repository import AlgorithmRepository
@@ -27,9 +28,6 @@ class AlgorithmService:
         self.algorithm = algorithm
         self.users = users
 
-    # ------------------------------------------------------------------
-    # Hourly job (design doc D11)
-    # ------------------------------------------------------------------
 
     def run_scoring(self, now: datetime | None = None) -> int:
         """Recompute and store the tag scores of every consented user.
@@ -38,7 +36,6 @@ class AlgorithmService:
         can pin the clock; the job itself leaves it empty.
         """
         now = now or datetime.now(timezone.utc)
-        since = now - timedelta(days=LIFETIME_DAYS)
 
         # Consent can be withdrawn between runs: clean those scores up first.
         self.algorithm.delete_tag_scores_without_consent()
@@ -46,22 +43,25 @@ class AlgorithmService:
         user_ids = self.algorithm.list_consented_user_ids()
 
         for user_id in user_ids:
-            events = self.algorithm.list_events_since(user_id, since)
-            reactions = self.algorithm.list_reactions_since(user_id, since)
-            declared_tags = self.algorithm.list_declared_tags(user_id)
-
-            story_ids = {event.story_id for event in events if event.story_id is not None}
-            story_ids |= {reaction.story_id for reaction in reactions}
-            story_tags = self.algorithm.get_story_tags(list(story_ids))
-
-            scores = score_user(events, reactions, declared_tags, story_tags, now)
+            scores = self._compute_tag_scores(user_id, now)
             self.algorithm.replace_tag_scores(user_id, scores, now)
 
         return len(user_ids)
 
-    # ------------------------------------------------------------------
-    # "For you" feed (design doc D3, D10, D12)
-    # ------------------------------------------------------------------
+    def _compute_tag_scores(self, user_id: uuid.UUID, now: datetime) -> TagScores:
+        """Score one user from their last 30 days. Reads only, saves nothing."""
+        since = now - timedelta(days=LIFETIME_DAYS)
+
+        events = self.algorithm.list_events_since(user_id, since)
+        reactions = self.algorithm.list_reactions_since(user_id, since)
+        declared_tags = self.algorithm.list_declared_tags(user_id)
+
+        story_ids = {event.story_id for event in events if event.story_id is not None}
+        story_ids |= {reaction.story_id for reaction in reactions}
+        story_tags = self.algorithm.get_story_tags(list(story_ids))
+
+        return score_user(events, reactions, declared_tags, story_tags, now)
+
 
     def get_feed(
         self,
@@ -83,12 +83,21 @@ class AlgorithmService:
         if not user.analytics_consent:
             return Feed(FeedStatus.no_consent)
 
+        now = now or datetime.now(timezone.utc)
         tag_scores = self.algorithm.get_tag_scores(user_id)
 
-        if not is_unlocked(tag_scores):
+        # No stored scores yet: the user just onboarded or just gave consent,
+        # and the hourly job hasn't run for them. Score them on the spot so
+        # they don't wait up to an hour. Not saved: this request only reads,
+        # and the next hourly run stores it as usual.
+        if not tag_scores:
+            tag_scores = self._compute_tag_scores(user_id, now)
+
+        has_declared_tags = bool(self.algorithm.list_declared_tags(user_id))
+
+        if not is_unlocked(tag_scores, has_declared_tags=has_declared_tags):
             return Feed(FeedStatus.locked)
 
-        now = now or datetime.now(timezone.utc)
         stories = self.algorithm.list_candidate_stories(now - timedelta(days=LIFETIME_DAYS))
         story_tags = self.algorithm.get_story_tags([story.id for story in stories])
 

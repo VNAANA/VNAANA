@@ -14,21 +14,25 @@ from Backend.Logic.Algorithm.shared_types import StoryTags, TagScores
 from Backend.Logic.domain.feed import RankedStory
 from Backend.Logic.domain.story import Story
 
-# ---- unlock rule (design doc D10) ---------------------------------------------
 
 BROAD_TAG_COUNT = 3     # three tags ...
 BROAD_MIN_SCORE = 10    # ... at 10 or more
 FOCUSED_MIN_SCORE = 15  # or one tag at 15 or more
 
 
-def is_unlocked(tag_scores: TagScores) -> bool:
+def is_unlocked(tag_scores: TagScores, *, has_declared_tags: bool) -> bool:
+    """Declared tags unlock "For you" on their own: the user told us what they
+    like, so that is enough to personalise on. Without them, the user has to
+    earn it through their actions (the score thresholds).
+    """
+    if has_declared_tags:
+        return True
+
     broad = sum(1 for score in tag_scores.values() if score >= BROAD_MIN_SCORE)
     focused = any(score >= FOCUSED_MIN_SCORE for score in tag_scores.values())
 
     return broad >= BROAD_TAG_COUNT or focused
 
-
-# ---- scoring a single story (design doc D7, D9) --------------------------------
 
 def story_score(tag_ids: list[uuid.UUID], tag_scores: TagScores) -> float:
     """Average of the user's scores for the story's tags.
