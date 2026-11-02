@@ -148,7 +148,7 @@ activemq-data/
 *.sage.py
 
 # Environments
-.env
+Backend/.env
 .envrc
 .venv
 env/
@@ -218,3 +218,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 *.docx
+/docs
+/vnaana_backend_dev.txt
