@@ -4,9 +4,12 @@ import { FeedPost } from './components/FeedPost/FeedPost'
 import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
-import { briefingMeta, sampleStories, sampleUser } from './data/sampleStories'
+import { ProfilePage } from './components/ProfilePage/ProfilePage'
+import { briefingMeta, sampleUser } from './data/sampleStories'
 import { useHash } from './hooks/useHash'
 import { useAuth } from './hooks/useAuth'
+import { useFeedStories } from './hooks/useFeedStories'
+import { getAccount } from './utils/account'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
 
@@ -16,6 +19,7 @@ const BRIEFING_STORAGE_KEY = 'vnaana.briefingDismissed'
 export default function App() {
   const hash = useHash()
   const auth = useAuth()
+  const feed = useFeedStories()
   const metadata = auth.session?.user.user_metadata
   const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -38,15 +42,18 @@ export default function App() {
   }, [])
 
   if (hash === '#login') return <LoginPage auth={auth} />
+  if (hash === '#profile') return <ProfilePage auth={auth} />
 
-  const forYouCount = sampleStories.filter((story) => story.feedReason === 'forYou').length
+  const account = getAccount(auth.session)
+  const stories = feed.stories
+  const forYouCount = stories.filter((story) => story.feedReason === 'forYou').length
 
   return (
     <div className={styles.app}>
       <a href="#feed" className={styles.skipLink}>
         Skip to feed
       </a>
-      <Sidebar user={sampleUser} signedIn={!!auth.session} signingOut={auth.signingOut} onSignOut={auth.signOut} />
+      <Sidebar user={sampleUser} account={account} />
       <MobileTopBar />
 
       {/*
@@ -55,13 +62,13 @@ export default function App() {
       */}
       <main ref={feedRef} id="feed" className={styles.feed} tabIndex={-1} aria-label="For You feed">
         {auth.backendStatus && <p role="status">{auth.backendStatus}</p>}
-        {!briefingDismissed && (
+        {!briefingDismissed && feed.status === 'ready' && (
           <div className={styles.intro}>
             <div className={styles.column}>
               <BriefingCard
                 firstName={firstName}
                 forYouCount={forYouCount}
-                dontMissCount={sampleStories.length - forYouCount}
+                dontMissCount={stories.length - forYouCount}
                 openedCount={openedIds.size}
                 readTime={briefingMeta.readTime}
                 updatedAt={briefingMeta.updatedAt}
@@ -71,7 +78,21 @@ export default function App() {
           </div>
         )}
 
-        {sampleStories.map((story) => (
+        {feed.status === 'loading' && (
+          <p className={styles.feedMessage} role="status">
+            Nova is gathering today’s stories…
+          </p>
+        )}
+        {feed.status === 'error' && (
+          <div className={styles.feedMessage} role="alert">
+            <p>We couldn’t load the news right now.</p>
+            <button type="button" className={styles.retry} onClick={feed.reload}>
+              Try again
+            </button>
+          </div>
+        )}
+
+        {stories.map((story) => (
           <div key={story.id} className={styles.slide}>
             <div className={styles.column}>
               <FeedPost story={story} onOpened={markOpened} />
@@ -79,12 +100,14 @@ export default function App() {
           </div>
         ))}
 
-        <footer className={styles.feedEnd}>
-          <p>You’re all caught up for this morning.</p>
-        </footer>
+        {feed.status === 'ready' && (
+          <footer className={styles.feedEnd}>
+            <p>You’re all caught up for this morning.</p>
+          </footer>
+        )}
       </main>
 
-      <MobileTabBar signedIn={!!auth.session} signingOut={auth.signingOut} onSignOut={auth.signOut} />
+      <MobileTabBar account={account} />
     </div>
   )
 }

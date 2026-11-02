@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import type { Story } from '../types'
 import { askNova } from '../utils/nova'
 import type { NovaAnswer } from '../utils/nova'
 
@@ -8,7 +9,7 @@ export type ChatMessage =
   | { id: number; from: 'nova'; error: string }
 
 /* The Ask Nova conversation for one post. Lives in FeedPost. */
-export function useNovaChat(storyId: string) {
+export function useNovaChat(story: Story) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [pending, setPending] = useState(false)
   const nextId = useRef(0)
@@ -19,7 +20,7 @@ export function useNovaChat(storyId: string) {
     setMessages((list) => [...list, { id: nextId.current++, from: 'user', text }])
     setPending(true)
     try {
-      const answer = await askNova(storyId, text)
+      const answer = await askNova(story, text)
       setMessages((list) => [...list, { id: nextId.current++, from: 'nova', answer }])
     } catch {
       setMessages((list) => [

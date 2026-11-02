@@ -43,10 +43,12 @@ src/
   hooks/
     useCarousel.ts         Shared 3-part carousel state (keys + swipe)
     useNovaChat.ts         The Ask Nova conversation of one post
-    useHash.ts             Current URL hash; "#login" shows the login page
+    useHash.ts             Current URL hash; "#login" / "#profile" show those pages
   components/
     Navigation/            Sidebar, MobileTopBar, MobileTabBar, Logo, SearchField
-    LoginPage/             Email + password and "Continue with Google" (frontend only)
+    LoginPage/             Email + password and "Continue with Google"
+    ProfilePage/           Signed-in user's name, email and account actions (sign out)
+    AccountAvatar/         The user's profile picture, or their initials
     BriefingCard/          Nova's greeting + progress bar (dismissible)
     NovaAvatar/            Nova's face
     FeedPost/              One story – see below

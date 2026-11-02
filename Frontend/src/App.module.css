@@ -58,6 +58,26 @@
   margin-inline: auto;
 }
 
+/* Loading / error message while the stories come in */
+.feedMessage {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 64px 32px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.retry {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .feedEnd {
   padding: 24px 0 40px;
   text-align: center;

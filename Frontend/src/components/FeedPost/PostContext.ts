@@ -18,6 +18,8 @@ export type PostContextValue = {
   composerFocusRequest: number
   titleId: string
   partIds: string[]
+  /** Labels of this story's parts, in carousel order. */
+  partLabels: string[]
 }
 
 export const PostContext = createContext<PostContextValue | null>(null)
@@ -28,7 +30,21 @@ export function usePost() {
   return context
 }
 
-export const PART_LABELS = ['What happened', 'Why it matters', 'Read more'] as const
+export type PartKey = 'whatHappened' | 'why' | 'fullArticle' | 'readMore'
 
-/** The part that holds "Read more" and the Ask Nova chat. */
-export const ASK_NOVA_PART = PART_LABELS.length - 1
+export const PART_LABELS: Record<PartKey, string> = {
+  whatHappened: 'What happened',
+  why: 'Why it matters',
+  fullArticle: 'Full article',
+  readMore: 'Read more',
+}
+
+/*
+ * The parts of a story's carousel, in order. "Full article" only appears when
+ * the article text has been scraped. "Read more" (with the Ask Nova chat) is always last.
+ */
+export function getParts(story: Story): PartKey[] {
+  return story.content?.length
+    ? ['whatHappened', 'why', 'fullArticle', 'readMore']
+    : ['whatHappened', 'why', 'readMore']
+}

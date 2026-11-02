@@ -35,6 +35,14 @@ class ArticleRepository(ABC):
         ...
 
     @abstractmethod
+    def list_random(
+        self,
+        *,
+        limit: int = 3,
+    ) -> ArticleList:
+        ...
+
+    @abstractmethod
     def list_unscraped(
         self,
         *,

@@ -1,4 +1,6 @@
-import { Compass, LayoutGrid, LogIn, LogOut, Sparkles } from 'lucide-react'
+import { Compass, LayoutGrid, LogIn, Sparkles } from 'lucide-react'
+import type { Account } from '../../utils/account'
+import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Logo } from './Logo'
 import { SearchField } from './SearchField'
 import styles from './Navigation.module.css'
@@ -20,9 +22,7 @@ const TABS = [
 ]
 
 /* Bottom tab bar for screens under 820px. */
-export function MobileTabBar({ signedIn, signingOut, onSignOut }: {
-  signedIn: boolean; signingOut: boolean; onSignOut: () => Promise<void>
-}) {
+export function MobileTabBar({ account }: { account: Account | null }) {
   return (
     <nav className={styles.tabBar} aria-label="Main">
       <ul>
@@ -35,14 +35,15 @@ export function MobileTabBar({ signedIn, signingOut, onSignOut }: {
           </li>
         ))}
         <li>
-          {signedIn ? (
-            <button type="button" className={styles.tab} onClick={onSignOut} disabled={signingOut}>
-              <LogOut size={22} aria-hidden="true" />
-              {signingOut ? 'Signing out…' : 'Sign out'}
-            </button>
+          {account ? (
+            <a href="#profile" className={styles.tab}>
+              <AccountAvatar account={account} size={22} />
+              Profile
+            </a>
           ) : (
             <a href="#login" className={styles.tab}>
-              <LogIn size={22} aria-hidden="true" />Log in
+              <LogIn size={22} aria-hidden="true" />
+              Log in
             </a>
           )}
         </li>

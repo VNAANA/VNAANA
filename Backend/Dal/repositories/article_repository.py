@@ -161,6 +161,25 @@ class ArticleRepository(ArticleRepositoryPort):
 
         return article, article_model.id == candidate_id
 
+    def list_random(
+        self,
+        *,
+        limit: int = 3,
+    ) -> ArticleList:
+        """Return a random sample of articles."""
+        stmt = (
+            select(ArticleModel)
+            .order_by(func.random())
+            .limit(limit)
+        )
+
+        article_models = self.db.scalars(stmt)
+
+        return [
+            self._to_domain(article_model)
+            for article_model in article_models
+        ]
+
     def list_unscraped(
         self,
         *,

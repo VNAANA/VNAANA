@@ -5,7 +5,7 @@
  * Swap the body of `askNova` for a real API call later; the UI only
  * depends on the `NovaAnswer` shape.
  */
-import { findStory } from '../data/sampleStories'
+import type { Story } from '../types'
 
 export type NovaAnswer = {
   text: string
@@ -30,28 +30,28 @@ function lastSentence(text: string) {
   return sentences[sentences.length - 1]
 }
 
-export async function askNova(storyId: string, question: string): Promise<NovaAnswer> {
+export async function askNova(story: Story, question: string): Promise<NovaAnswer> {
   await new Promise((resolve) => setTimeout(resolve, FAKE_DELAY_MS))
 
-  const story = findStory(storyId)
-  if (!story) throw new Error(`Unknown story: ${storyId}`)
-
   const q = question.toLowerCase()
-  const [firstPoint] = story.why.points
+  const { why } = story
+  // Stories from the API have no analysis yet; fall back to the article text.
+  const firstPoint = why?.points[0]?.text ?? story.content?.[1] ?? ''
+  const background = why?.background ?? story.content?.[2] ?? firstSentence(story.summary)
   let text: string
 
   if (q.includes('simple')) {
-    text = `In short: ${firstSentence(story.summary)} ${firstPoint.text}`
+    text = `In short: ${firstSentence(story.summary)} ${firstPoint}`
   } else if (q.includes('led to') || q.includes('why')) {
-    text = `Some background: ${story.why.background} That is part of why this is news now.`
+    text = `Some background: ${background} That is part of why this is news now.`
   } else if (q.includes('next')) {
     text = `Nothing is final yet. Based on the reporting so far: ${lastSentence(story.summary)}`
   } else if (q.includes('for me')) {
-    text = `${story.whyPicked} The most direct effect: ${firstPoint.text}`
+    text = `${story.whyPicked} The most direct effect: ${firstPoint}`
+  } else if (why) {
+    text = `Here is what the sources agree on: ${why.points.map((point) => `${point.keyword} – ${point.text}`).join(' ')}`
   } else {
-    text = `Here is what the sources agree on: ${story.why.points
-      .map((point) => `${point.keyword} – ${point.text}`)
-      .join(' ')}`
+    text = `Here is what the article says: ${story.summary}`
   }
 
   return {
