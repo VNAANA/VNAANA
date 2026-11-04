@@ -1,9 +1,22 @@
 /* Ask Nova's single article-grounded API request. */
 import type { NovaArticle } from '../types'
+import type { NovaErrorCode } from '../data/strings'
 import { apiUrl } from './api'
+import type { Language } from './language'
 
-export type NovaLanguage = 'en' | 'nl'
+/* Nova answers in the display language chosen on the profile page. */
+export type NovaLanguage = Language
 export const MAX_NOVA_ARTICLE_CHARS = 12_000
+
+/* A failed request. The chat shows the message for `code` in the display language. */
+export class NovaError extends Error {
+  readonly code: NovaErrorCode
+
+  constructor(code: NovaErrorCode) {
+    super(`Nova request failed: ${code}`)
+    this.code = code
+  }
+}
 
 export type NovaSuggestion = {
   label: string
@@ -17,11 +30,19 @@ export type NovaAnswer = {
   status: 'answered' | 'insufficient_information'
 }
 
-export const NOVA_SUGGESTIONS: readonly NovaSuggestion[] = [
-  { label: 'Explain it simpler', action: 'simplify' },
-  { label: 'What led to this?', action: 'ask' },
-  { label: 'What happens next?', action: 'ask' },
-] as const
+// Shown in the answer language; the label is also the question sent to Nova.
+export const NOVA_SUGGESTIONS: Record<NovaLanguage, readonly NovaSuggestion[]> = {
+  en: [
+    { label: 'Explain it simpler', action: 'simplify' },
+    { label: 'What led to this?', action: 'ask' },
+    { label: 'What happens next?', action: 'ask' },
+  ],
+  nl: [
+    { label: 'Leg het eenvoudiger uit', action: 'simplify' },
+    { label: 'Wat leidde hiertoe?', action: 'ask' },
+    { label: 'Wat gebeurt er nu?', action: 'ask' },
+  ],
+}
 
 export async function askNova(article: NovaArticle, question: string, language: NovaLanguage): Promise<NovaAnswer> {
   return requestNova('/ai/ask', {
@@ -50,17 +71,17 @@ async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<strin
       body: JSON.stringify(body),
     })
   } catch {
-    throw new Error('Cannot reach the AI service. Check that the backend is running.')
+    throw new NovaError('unreachable')
   }
-  if (response.status === 422) throw new Error('The article or question is invalid or too long.')
-  if (response.status === 503) throw new Error('The AI model is unavailable. Please try again later.')
-  if (!response.ok) throw new Error('Nova could not answer right now. Please try again.')
+  if (response.status === 422) throw new NovaError('invalidRequest')
+  if (response.status === 503) throw new NovaError('modelUnavailable')
+  if (!response.ok) throw new NovaError('failed')
 
   let answer: unknown
   try {
     answer = await response.json()
   } catch {
-    throw new Error('The AI service returned an invalid response.')
+    throw new NovaError('invalidResponse')
   }
   if (
     !answer || typeof answer !== 'object' ||
@@ -71,7 +92,7 @@ async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<strin
     !('status' in answer) ||
     (answer.status !== 'answered' && answer.status !== 'insufficient_information')
   ) {
-    throw new Error('The AI service returned an invalid response.')
+    throw new NovaError('invalidResponse')
   }
   return answer as NovaAnswer
 }

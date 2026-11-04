@@ -1,4 +1,5 @@
 import { Compass, LayoutGrid, LogIn, Sparkles } from 'lucide-react'
+import { useStrings } from '../../hooks/useStrings'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Logo } from './Logo'
@@ -15,22 +16,24 @@ export function MobileTopBar() {
   )
 }
 
+// label: the key of the tab's name in the nav strings
 const TABS = [
-  { label: 'For You', href: '/', Icon: Sparkles, current: true },
-  { label: 'Explore', href: '#explore', Icon: Compass },
-  { label: 'Topics', href: '#topics', Icon: LayoutGrid },
-]
+  { label: 'forYou', href: '/', Icon: Sparkles, current: true },
+  { label: 'explore', href: '#explore', Icon: Compass, current: false },
+  { label: 'topics', href: '#topics', Icon: LayoutGrid, current: false },
+] as const
 
 /* Bottom tab bar for screens under 820px. */
 export function MobileTabBar({ account }: { account: Account | null }) {
+  const { t } = useStrings()
   return (
-    <nav className={styles.tabBar} aria-label="Main">
+    <nav className={styles.tabBar} aria-label={t.nav.main}>
       <ul>
         {TABS.map(({ label, href, Icon, current }) => (
           <li key={label}>
             <a href={href} className={styles.tab} aria-current={current ? 'page' : undefined}>
               <Icon size={22} aria-hidden="true" />
-              {label}
+              {t.nav[label]}
             </a>
           </li>
         ))}
@@ -38,12 +41,12 @@ export function MobileTabBar({ account }: { account: Account | null }) {
           {account ? (
             <a href="#profile" className={styles.tab}>
               <AccountAvatar account={account} size={22} />
-              Profile
+              {t.nav.profile}
             </a>
           ) : (
             <a href="#login" className={styles.tab}>
               <LogIn size={22} aria-hidden="true" />
-              Log in
+              {t.common.logIn}
             </a>
           )}
         </li>

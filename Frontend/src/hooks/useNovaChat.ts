@@ -1,19 +1,20 @@
 import { useRef, useState } from 'react'
-import { askNova, simplifyNova } from '../utils/nova'
+import type { NovaErrorCode } from '../data/strings'
+import { askNova, NovaError, simplifyNova } from '../utils/nova'
 import type { NovaAnswer, NovaSuggestion } from '../utils/nova'
 import { MAX_NOVA_ARTICLE_CHARS } from '../utils/nova'
+import { readLanguage } from '../utils/language'
 import type { NovaArticle } from '../types'
 
 export type ChatMessage =
   | { id: number; from: 'user'; text: string }
   | { id: number; from: 'nova'; answer: NovaAnswer }
-  | { id: number; from: 'nova'; error: string }
+  | { id: number; from: 'nova'; error: NovaErrorCode }
 
 /* The Ask Nova conversation for one post. Lives in FeedPost. */
 export function useNovaChat(article?: NovaArticle) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [pending, setPending] = useState(false)
-  const [language, setLanguage] = useState<'en' | 'nl'>('en')
   const nextId = useRef(0)
 
   const submit = async (message: string, action: NovaSuggestion['action']) => {
@@ -21,6 +22,8 @@ export function useNovaChat(article?: NovaArticle) {
     if (!text || pending || !available) return
     setMessages((list) => [...list, { id: nextId.current++, from: 'user', text }])
     setPending(true)
+    // The answer language is set on the profile page
+    const language = readLanguage()
     try {
       const answer = action === 'simplify'
         ? await simplifyNova(article!, language)
@@ -29,7 +32,7 @@ export function useNovaChat(article?: NovaArticle) {
     } catch (error) {
       setMessages((list) => [
         ...list,
-        { id: nextId.current++, from: 'nova', error: error instanceof Error ? error.message : 'Nova could not answer right now.' },
+        { id: nextId.current++, from: 'nova', error: error instanceof NovaError ? error.code : 'failed' },
       ])
     } finally {
       setPending(false)
@@ -45,8 +48,6 @@ export function useNovaChat(article?: NovaArticle) {
     pending,
     send,
     sendSuggestion,
-    language,
-    setLanguage,
     available,
     tooLong,
     groundingMode: article?.groundingMode,

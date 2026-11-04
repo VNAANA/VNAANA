@@ -9,6 +9,7 @@ import { briefingMeta, sampleUser } from './data/sampleStories'
 import { useHash } from './hooks/useHash'
 import { useAuth } from './hooks/useAuth'
 import { useFeedStories } from './hooks/useFeedStories'
+import { useStrings } from './hooks/useStrings'
 import { getAccount } from './utils/account'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
@@ -20,10 +21,11 @@ export default function App() {
   const hash = useHash()
   const auth = useAuth()
   const feed = useFeedStories()
+  const { t } = useStrings()
   const metadata = auth.session?.user.user_metadata
   const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
-  const firstName = displayName?.trim() || 'there'
+  const firstName = displayName?.trim()
   const [openedIds, setOpenedIds] = useState<Set<string>>(() => new Set())
   const [briefingDismissed, setBriefingDismissed] = useState(
     () => readStorage(BRIEFING_STORAGE_KEY, 'session') === 'true',
@@ -51,7 +53,7 @@ export default function App() {
   return (
     <div className={styles.app}>
       <a href="#feed" className={styles.skipLink}>
-        Skip to feed
+        {t.feed.skipToFeed}
       </a>
       <Sidebar user={sampleUser} account={account} />
       <MobileTopBar />
@@ -60,8 +62,8 @@ export default function App() {
         The feed scrolls on its own and snaps to one post at a time:
         every post sits in a full-height "slide".
       */}
-      <main ref={feedRef} id="feed" className={styles.feed} tabIndex={-1} aria-label="For You feed">
-        {auth.backendStatus && <p role="status">{auth.backendStatus}</p>}
+      <main ref={feedRef} id="feed" className={styles.feed} tabIndex={-1} aria-label={t.feed.label}>
+        {auth.backendStatus && <p role="status">{t.auth[auth.backendStatus]}</p>}
         {!briefingDismissed && feed.status === 'ready' && (
           <div className={styles.intro}>
             <div className={styles.column}>
@@ -70,7 +72,7 @@ export default function App() {
                 forYouCount={forYouCount}
                 dontMissCount={stories.length - forYouCount}
                 openedCount={openedIds.size}
-                readTime={briefingMeta.readTime}
+                readMinutes={briefingMeta.readMinutes}
                 updatedAt={briefingMeta.updatedAt}
                 onDismiss={dismissBriefing}
               />
@@ -80,14 +82,14 @@ export default function App() {
 
         {feed.status === 'loading' && (
           <p className={styles.feedMessage} role="status">
-            Nova is gathering today’s stories…
+            {t.feed.loading}
           </p>
         )}
         {feed.status === 'error' && (
           <div className={styles.feedMessage} role="alert">
-            <p>We couldn’t load the news right now.</p>
+            <p>{t.feed.loadFailed}</p>
             <button type="button" className={styles.retry} onClick={feed.reload}>
-              Try again
+              {t.feed.retry}
             </button>
           </div>
         )}
@@ -102,7 +104,7 @@ export default function App() {
 
         {feed.status === 'ready' && (
           <footer className={styles.feedEnd}>
-            <p>You’re all caught up for this morning.</p>
+            <p>{t.feed.caughtUp}</p>
           </footer>
         )}
       </main>

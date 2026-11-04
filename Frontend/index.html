@@ -1,7 +1,12 @@
 <!doctype html>
-<html lang="en">
+<!--
+  translate="no": the app switches between English and Dutch itself (profile page).
+  Browser translation rewrites React's text nodes and crashes the app (removeChild / insertBefore errors).
+-->
+<html lang="en" translate="no">
   <head>
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="VNAANA – short, personal news with context on demand." />

@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useCarousel } from '../../hooks/useCarousel'
 import { useNovaChat } from '../../hooks/useNovaChat'
+import { useStrings } from '../../hooks/useStrings'
 import type { Story } from '../../types'
 import { PartDots } from './CarouselControls'
 import { PostCarousel } from './PostCarousel'
-import { getParts, PART_LABELS, PostContext } from './PostContext'
+import { getParts, PostContext } from './PostContext'
 import type { PartKey } from './PostContext'
 import { PostHeader } from './PostHeader'
 import { ReactionBar } from './ReactionBar'
@@ -35,8 +36,9 @@ const PART_ELEMENTS: Record<PartKey, ReactNode> = {
  * heart / share / Ask Nova.
  */
 export function FeedPost({ story, onOpened }: Props) {
+  const { t } = useStrings()
   const parts = getParts(story)
-  const partLabels = parts.map((part) => PART_LABELS[part])
+  const partLabels = parts.map((part) => t.post.parts[part])
   const carousel = useCarousel(parts.length)
   const chat = useNovaChat(story.novaArticle)
   const [hidden, setHidden] = useState(false)
@@ -73,12 +75,12 @@ export function FeedPost({ story, onOpened }: Props) {
 
   if (hidden) {
     return (
-      <article className={styles.hidden} data-hidden="true" aria-label={`Hidden: ${story.title}`}>
+      <article className={styles.hidden} data-hidden="true" aria-label={t.post.hiddenLabel(story.title)}>
         <p>
-          <strong>Hidden</strong> · You’ll see fewer stories like this.
+          <strong>{t.post.hidden}</strong> · {t.post.hiddenText}
         </p>
         <button ref={undoRef} type="button" className={styles.undo} onClick={() => setHidden(false)}>
-          Undo
+          {t.post.undo}
         </button>
       </article>
     )

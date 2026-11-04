@@ -1,14 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { ExternalLink, Info } from 'lucide-react'
+import { useStrings } from '../../../hooks/useStrings'
 import { NovaChatLog, NovaComposer } from '../NovaChat'
 import { usePost } from '../PostContext'
 import styles from './Parts.module.css'
 
 /* The three parts of a story. FeedPost puts these inside a carousel. */
-
-function plural(count: number, one: string, many: string) {
-  return `${count} ${count === 1 ? one : many}`
-}
 
 /* Articles from the API have no image yet: show the publisher on a plain panel instead. */
 function StoryImage({ className = '' }: { className?: string }) {
@@ -50,22 +47,22 @@ export function WhatHappenedPart() {
 
 export function WhyPart() {
   const { story } = usePost()
+  const { t } = useStrings()
   const { why, aiNote } = story
+  const uncertainty = aiNote.uncertainty ?? t.post.why.notCompared
 
   // No analysis from Nova yet: point to where the reader can find the story itself.
   if (!why) {
     return (
       <div className={styles.part}>
-        <p className={styles.eyebrow}>Why it matters</p>
-        <h3 className={styles.heading}>Nova hasn’t explained this one yet</h3>
+        <p className={styles.eyebrow}>{t.post.parts.why}</p>
+        <h3 className={styles.heading}>{t.post.why.notExplained}</h3>
         <p className={styles.background}>
-          {story.content
-            ? 'Until then, you can read the whole article on the next slide.'
-            : `The full text isn’t available here yet. Read it on ${story.publisher.name}.`}
+          {story.content ? t.post.why.readNextSlide : t.post.why.readOnPublisher(story.publisher.name)}
         </p>
         <p className={styles.aiNote}>
           <Info size={16} aria-hidden="true" />
-          <span>{aiNote.uncertainty}</span>
+          <span>{uncertainty}</span>
         </p>
       </div>
     )
@@ -73,7 +70,7 @@ export function WhyPart() {
 
   return (
     <div className={styles.part}>
-      <p className={styles.eyebrow}>Why it matters</p>
+      <p className={styles.eyebrow}>{t.post.parts.why}</p>
       <h3 className={styles.heading}>{why.heading}</h3>
       <ol className={styles.points}>
         {why.points.map((point, i) => (
@@ -88,12 +85,12 @@ export function WhyPart() {
         ))}
       </ol>
       <p className={styles.background}>
-        <strong>Background:</strong> {why.background}
+        <strong>{t.post.why.background}</strong> {why.background}
       </p>
       <p className={styles.aiNote}>
         <Info size={16} aria-hidden="true" />
         <span>
-          AI summary from {plural(aiNote.sourceCount, 'source', 'sources')} · {aiNote.uncertainty}
+          {t.post.why.aiSummary(aiNote.sourceCount)} · {uncertainty}
         </span>
       </p>
     </div>
@@ -103,14 +100,16 @@ export function WhyPart() {
 /* Only for stories whose article text was scraped: the whole article, scrollable. */
 export function FullArticlePart() {
   const { story } = usePost()
+  const { t } = useStrings()
+  const { readMinutes } = story.readMore
   return (
     <div className={styles.part}>
-      <p className={styles.eyebrow}>Full article</p>
+      <p className={styles.eyebrow}>{t.post.parts.fullArticle}</p>
       <h3 className={styles.heading}>{story.title}</h3>
       <p className={styles.articleMeta}>
         {story.publisher.name}
         {story.author && ` · ${story.author}`}
-        {story.readMore.readTime && ` · ${story.readMore.readTime}`}
+        {readMinutes && ` · ${t.post.readMore.minRead(readMinutes)}`}
       </p>
       <div className={styles.articleBody}>
         {story.content?.map((paragraph, i) => (
@@ -124,6 +123,7 @@ export function FullArticlePart() {
 /* Last part: the original source, other perspectives, and the Ask Nova chat. */
 export function ReadMorePart() {
   const { story, actions, chat } = usePost()
+  const { t } = useStrings()
   const { readMore } = story
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -144,18 +144,18 @@ export function ReadMorePart() {
           rel="noopener noreferrer"
           onClick={actions.markOpened}
         >
-          <span className={styles.sourceLabel}>Full story on {story.publisher.name}</span>
+          <span className={styles.sourceLabel}>{t.post.readMore.fullStoryOn(story.publisher.name)}</span>
           <span className={styles.sourceTitle}>{story.title}</span>
           <span className={styles.sourceMeta}>
-            {readMore.readTime ?? 'Read the article'}
+            {readMore.readMinutes ? t.post.readMore.minRead(readMore.readMinutes) : t.post.readMore.readArticle}
             <ExternalLink size={15} aria-hidden="true" />
-            <span className="sr-only">(opens in a new tab)</span>
+            <span className="sr-only">{t.common.opensInNewTab}</span>
           </span>
         </a>
 
         {readMore.perspectives.length > 0 && (
           <>
-            <h3 className={styles.subhead}>Other perspectives</h3>
+            <h3 className={styles.subhead}>{t.post.readMore.otherPerspectives}</h3>
             <ul className={styles.perspectives}>
               {readMore.perspectives.map((perspective) => (
                 <li key={perspective.url}>
@@ -165,7 +165,7 @@ export function ReadMorePart() {
                       <span className={styles.perspectiveAngle}>{perspective.angle}</span>
                     </span>
                     <ExternalLink size={15} aria-hidden="true" />
-                    <span className="sr-only">(opens in a new tab)</span>
+                    <span className="sr-only">{t.common.opensInNewTab}</span>
                   </a>
                 </li>
               ))}
@@ -173,7 +173,7 @@ export function ReadMorePart() {
           </>
         )}
 
-        <h3 className={styles.subhead}>Still curious? Ask Nova</h3>
+        <h3 className={styles.subhead}>{t.post.readMore.stillCurious}</h3>
         <NovaChatLog />
       </div>
       <NovaComposer />

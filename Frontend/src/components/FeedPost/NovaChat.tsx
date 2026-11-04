@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Info, SendHorizontal } from 'lucide-react'
+import { useStrings } from '../../hooks/useStrings'
 import { usePost } from './PostContext'
 import { SuggestionChips } from './SuggestionChips'
 import styles from './NovaChat.module.css'
@@ -13,49 +14,48 @@ import styles from './NovaChat.module.css'
 
 export function NovaChatLog() {
   const { chat } = usePost()
+  const { t } = useStrings()
 
   return (
-    <div className={styles.log} role="log" aria-live="polite" aria-label="Conversation with Nova">
+    <div className={styles.log} role="log" aria-live="polite" aria-label={t.nova.conversation}>
       {chat.groundingMode === 'preview' && (
         <p className={styles.intro}>
-          {chat.previewIncludesDescription
-            ? 'Full article text is unavailable. Nova is using only the headline and available description.'
-            : 'Full article text is unavailable. Nova is using only the headline.'}
+          {chat.previewIncludesDescription ? t.nova.previewWithDescription : t.nova.previewHeadlineOnly}
         </p>
       )}
       {chat.messages.length === 0 && (
         <p className={styles.intro}>
           {chat.tooLong
-            ? 'Ask Nova is unavailable: this article exceeds the 12,000-character AI limit.'
+            ? t.nova.tooLong
             : chat.available
               ? chat.groundingMode === 'full_article'
-                ? 'Nova answers using only this original article, not other sources or previous messages.'
-                : 'Questions are answered only when the available preview supports them.'
-              : 'Ask Nova is unavailable because the original article text is missing.'}
+                ? t.nova.fullArticleOnly
+                : t.nova.previewOnly
+              : t.nova.missingText}
         </p>
       )}
       {chat.messages.map((message) =>
         message.from === 'user' ? (
           <p key={message.id} className={styles.user}>
-            <span className="sr-only">You asked: </span>
+            <span className="sr-only">{t.nova.youAsked}</span>
             {message.text}
           </p>
         ) : 'error' in message ? (
           <p key={message.id} className={styles.nova}>
-            {message.error}
+            {t.nova.errors[message.error]}
           </p>
         ) : (
           <div key={message.id} className={styles.nova}>
-            <span className="sr-only">Nova replied: </span>
-            {message.answer.status === 'insufficient_information' && <strong>Not answered from this article</strong>}
+            <span className="sr-only">{t.nova.novaReplied}</span>
+            {message.answer.status === 'insufficient_information' && <strong>{t.nova.notAnswered}</strong>}
             <p>{message.answer.text}</p>
             {message.answer.sources.length > 0 && <p className={styles.sources}>
-              <strong>Submitted article URL:</strong> {message.answer.sources.join(', ')}
+              <strong>{t.nova.submittedUrl}</strong> {message.answer.sources.join(', ')}
             </p>}
             <p className={styles.uncertain}>
               <Info size={14} aria-hidden="true" />
               <span>
-                <strong>Not certain:</strong> {message.answer.uncertainty}
+                <strong>{t.nova.notCertain}</strong> {message.answer.uncertainty}
               </span>
             </p>
           </div>
@@ -68,7 +68,7 @@ export function NovaChatLog() {
             <span />
             <span />
           </span>
-          Nova is checking the article…
+          {t.nova.checking}
         </p>
       )}
     </div>
@@ -77,6 +77,7 @@ export function NovaChatLog() {
 
 export function NovaComposer() {
   const { story, chat, composerFocusRequest } = usePost()
+  const { t } = useStrings()
   const [draft, setDraft] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const inputId = `${story.id}-nova-input`
@@ -97,15 +98,8 @@ export function NovaComposer() {
     <div className={styles.composer}>
       <SuggestionChips onPick={(suggestion) => void chat.sendSuggestion(suggestion)} tone="row" disabled={!chat.available || chat.pending} />
       <form className={styles.form} onSubmit={onSubmit}>
-        <label className={styles.language}>
-          Answer language
-          <select value={chat.language} onChange={(event) => chat.setLanguage(event.target.value as 'en' | 'nl')} aria-label="Nova answer language">
-            <option value="en">English</option>
-            <option value="nl">Dutch</option>
-          </select>
-        </label>
         <label htmlFor={inputId} className="sr-only">
-          Ask Nova about this story
+          {t.nova.inputLabel}
         </label>
         <input
           ref={inputRef}
@@ -113,11 +107,11 @@ export function NovaComposer() {
           className={styles.input}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="Ask Nova anything…"
+          placeholder={t.nova.placeholder}
           autoComplete="off"
           disabled={!chat.available || chat.pending}
         />
-        <button type="submit" className={styles.send} aria-label="Send question to Nova" disabled={!chat.available || chat.pending}>
+        <button type="submit" className={styles.send} aria-label={t.nova.send} disabled={!chat.available || chat.pending}>
           <SendHorizontal size={18} aria-hidden="true" />
         </button>
       </form>

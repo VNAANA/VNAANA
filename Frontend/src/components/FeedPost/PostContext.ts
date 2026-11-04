@@ -30,14 +30,8 @@ export function usePost() {
   return context
 }
 
+/* The part names are in the post strings (t.post.parts). */
 export type PartKey = 'whatHappened' | 'why' | 'fullArticle' | 'readMore'
-
-export const PART_LABELS: Record<PartKey, string> = {
-  whatHappened: 'What happened',
-  why: 'Why it matters',
-  fullArticle: 'Full article',
-  readMore: 'Read more',
-}
 
 /*
  * The parts of a story's carousel, in order. "Full article" only appears when

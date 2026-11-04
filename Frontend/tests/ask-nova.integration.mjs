@@ -96,8 +96,6 @@ try {
     pending: false,
     send: async () => {},
     sendSuggestion: async () => {},
-    language: 'en',
-    setLanguage: () => {},
     available: true,
     tooLong: false,
     groundingMode: 'preview',

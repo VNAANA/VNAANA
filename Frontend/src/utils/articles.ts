@@ -3,6 +3,7 @@
  * The API only has the raw article (title, description, scraped content),
  * so Nova's analysis parts of a Story are left empty or filled with honest defaults.
  */
+import type { Strings } from '../data/strings'
 import type { Story } from '../types'
 import { apiUrl } from './api'
 
@@ -56,19 +57,16 @@ export function articleToStory(article: ApiArticle): Story {
       verified: article.provider.reliability_status === 'verified',
     },
     author: article.author ?? undefined,
-    publishedAgo: timeAgo(new Date(article.published_at ?? article.first_seen_at)),
+    publishedAt: new Date(article.published_at ?? article.first_seen_at),
     feedReason: 'forYou',
     whyPicked: 'Picked at random from the latest articles while your personal feed is being built.',
     title: article.title,
     summary,
     content: content.length > 0 ? content : undefined,
-    aiNote: {
-      sourceCount: 1,
-      uncertainty: 'Nova hasn’t compared this article with other sources yet.',
-    },
+    aiNote: { sourceCount: 1 },
     readMore: {
       url: article.canonical_url,
-      readTime: readTime(article.content),
+      readMinutes: readMinutes(article.content),
       perspectives: [],
     },
   }
@@ -107,19 +105,20 @@ function initials(name: string) {
     .toUpperCase()
 }
 
-function readTime(content: string | null) {
+function readMinutes(content: string | null) {
   if (!content) return undefined
   const words = content.split(/\s+/).filter(Boolean).length
-  return `${Math.max(1, Math.round(words / WORDS_PER_MINUTE))} min read`
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE))
 }
 
-function timeAgo(date: Date) {
+/* "2h ago" in the display language; older than a week becomes a date. */
+export function timeAgo(date: Date, t: Strings) {
   const minutes = Math.round((Date.now() - date.getTime()) / 60000)
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 1) return t.post.timeAgo.justNow
+  if (minutes < 60) return t.post.timeAgo.minutes(minutes)
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t.post.timeAgo.hours(hours)
   const days = Math.round(hours / 24)
-  if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  if (days < 7) return t.post.timeAgo.days(days)
+  return date.toLocaleDateString(t.locale, { day: 'numeric', month: 'short' })
 }
