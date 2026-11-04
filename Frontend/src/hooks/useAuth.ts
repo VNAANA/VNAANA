@@ -39,7 +39,8 @@ export function useAuth() {
     const token = session.access_token
 
     async function bootstrap() {
-      setBackendStatus('Finishing sign-in…')
+      // No "in progress" text: this runs on every load with a saved session, so it would flash each time.
+      setBackendStatus('')
       try {
         const response = await fetch(apiUrl('/users/me/bootstrap'), {
           method: 'POST',

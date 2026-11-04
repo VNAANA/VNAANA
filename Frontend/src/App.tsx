@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { BriefingCard } from './components/BriefingCard/BriefingCard'
 import { FeedPost } from './components/FeedPost/FeedPost'
+import { PostSkeleton } from './components/FeedPost/PostSkeleton'
 import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
@@ -53,7 +54,7 @@ export default function App() {
       <a href="#feed" className={styles.skipLink}>
         Skip to feed
       </a>
-      <Sidebar user={sampleUser} account={account} />
+      <Sidebar user={sampleUser} account={account} checkingSession={auth.checkingSession} />
       <MobileTopBar />
 
       {/*
@@ -79,9 +80,14 @@ export default function App() {
         )}
 
         {feed.status === 'loading' && (
-          <p className={styles.feedMessage} role="status">
-            Nova is gathering today’s articles for you...
-          </p>
+          <div className={styles.slide}>
+            <div className={styles.column}>
+              <p className="sr-only" role="status">
+                Nova is gathering today’s articles for you...
+              </p>
+              <PostSkeleton />
+            </div>
+          </div>
         )}
         {feed.status === 'error' && (
           <div className={styles.feedMessage} role="alert">
@@ -107,7 +113,7 @@ export default function App() {
         )}
       </main>
 
-      <MobileTabBar account={account} />
+      <MobileTabBar account={account} checkingSession={auth.checkingSession} />
     </div>
   )
 }

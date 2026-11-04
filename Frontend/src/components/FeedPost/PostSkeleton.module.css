@@ -1,0 +1,21 @@
+.skeleton {
+  display: grid;
+  gap: 20px;
+  padding: 20px 24px 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lines {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+}
+
+.image {
+  border-radius: var(--radius-ui);
+}

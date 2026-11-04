@@ -1,6 +1,7 @@
 import { Compass, LayoutGrid, LogIn, Sparkles } from 'lucide-react'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
+import { Skeleton } from '../Skeleton/Skeleton'
 import { Logo } from './Logo'
 import { SearchField } from './SearchField'
 import styles from './Navigation.module.css'
@@ -22,7 +23,7 @@ const TABS = [
 ]
 
 /* Bottom tab bar for screens under 820px. */
-export function MobileTabBar({ account }: { account: Account | null }) {
+export function MobileTabBar({ account, checkingSession }: { account: Account | null; checkingSession: boolean }) {
   return (
     <nav className={styles.tabBar} aria-label="Main">
       <ul>
@@ -35,7 +36,13 @@ export function MobileTabBar({ account }: { account: Account | null }) {
           </li>
         ))}
         <li>
-          {account ? (
+          {checkingSession ? (
+            <div className={styles.tab} role="status">
+              <Skeleton circle width={22} height={22} />
+              <Skeleton width={36} height={10} className={styles.skeletonGap} />
+              <span className="sr-only">Checking your account…</span>
+            </div>
+          ) : account ? (
             <a href="#profile" className={styles.tab}>
               <AccountAvatar account={account} size={22} />
               Profile
