@@ -2,7 +2,7 @@ import uuid
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
@@ -48,6 +48,18 @@ class StoryRepository(StoryRepositoryPort):
             added_at=link.added_at,
         )
 
+    @staticmethod
+    def _escape_like(term: str) -> str:
+        # % and _ are wildcards in LIKE; without this a search for "100%"
+        # would match "100" followed by anything. The backslash goes first,
+        # otherwise the backslashes added below would get escaped again.
+        return (
+            term
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+
     # ---- stories ----
 
     def get(self, story_id: uuid.UUID) -> Story | None:
@@ -63,6 +75,7 @@ class StoryRepository(StoryRepositoryPort):
         *,
         status: StoryStatus | None = None,
         tag_id: uuid.UUID | None = None,
+        search_terms: list[str] | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
@@ -76,6 +89,15 @@ class StoryRepository(StoryRepositoryPort):
                 stmt
                 .join(StoryTagModel)
                 .where(StoryTagModel.tag_id == tag_id)
+            )
+
+        for term in search_terms or []:
+            pattern = f"%{self._escape_like(term)}%"
+            stmt = stmt.where(
+                or_(
+                    StoryModel.title.ilike(pattern, escape="\\"),
+                    StoryModel.summary.ilike(pattern, escape="\\"),
+                )
             )
 
         stmt = (

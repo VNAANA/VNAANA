@@ -15,9 +15,11 @@ class StoryRepository(Protocol):
         *,
         status: StoryStatus | None = None,
         tag_id: uuid.UUID | None = None,
+        search_terms: list[str] | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
+        """search_terms: every word must appear in the title or the summary."""
         ...
 
     def add(self, **fields: Any) -> Story:
