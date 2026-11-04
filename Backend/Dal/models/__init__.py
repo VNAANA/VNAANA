@@ -18,6 +18,7 @@ __all__ = [
     "UserTag",
     "Story",
     "StoryStatus",
+    "StoryReaction",
     "StoryTag",
     "Provider",
     "Article",

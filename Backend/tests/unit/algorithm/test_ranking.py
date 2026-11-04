@@ -51,18 +51,30 @@ def test_strong_older_interest_beats_weak_fresh_interest():
     assert [r.story.title for r in ranked] == ["old", "fresh"]
 
 
-# ---- D10: when "For you" unlocks ----------------------------------------------
+# ---- D10 (revised): when "For you" unlocks ----------------------------------------
 
 @pytest.mark.parametrize(
     "scores, unlocked",
     [
-        ([], False),                 # brand-new user
+        ([], False),                 # brand-new user, nothing declared
         ([15], True),                # one tag at 15
         ([14.9, 10], False),         # two at 10, none at 15
         ([14.9, 10, 9.99], False),   # third just below 10
         ([10, 10, 10], True),        # exactly three at 10
-        ([5, 5, 5], False),          # three fresh declared tags alone
+        ([5, 5, 5], False),          # three tags at 5, but none of them declared
     ],
 )
-def test_unlock_rule(scores, unlocked):
-    assert is_unlocked({new_id(): s for s in scores}) is unlocked
+def test_unlock_rule_without_declared_tags(scores, unlocked):
+    assert is_unlocked({new_id(): s for s in scores}, has_declared_tags=False) is unlocked
+
+
+@pytest.mark.parametrize(
+    "scores",
+    [
+        [],             # declared, not scored yet
+        [4.9],          # one declared tag, partly decayed
+        [-10, 0],       # disliked everything since onboarding
+    ],
+)
+def test_declared_tags_unlock_on_their_own(scores):
+    assert is_unlocked({new_id(): s for s in scores}, has_declared_tags=True) is True

@@ -4,10 +4,12 @@ from decimal import Decimal
 from typing import Any
 
 from Backend.Logic.domain.story import Story, StoryStatus
-from Backend.Logic.exceptions import ConflictError, NotFoundError
+from Backend.Logic.exceptions import ConflictError, InvalidSearchError, NotFoundError
 from Backend.Logic.ports.article_repository import ArticleRepository
 from Backend.Logic.ports.story_repository import StoryRepository
 from Backend.Logic.ports.tag_repository import TagRepository
+
+MIN_SEARCH_LENGTH = 2
 
 
 class StoryService:
@@ -26,15 +28,41 @@ class StoryService:
         *,
         status: StoryStatus | None = None,
         tag_id: uuid.UUID | None = None,
+        q: str | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
         return self.stories.list(
             status=status,
             tag_id=tag_id,
+            search_terms=self._search_terms(q),
             limit=limit,
             offset=offset,
         )
+
+    @staticmethod
+    def _search_terms(q: str | None) -> list[str] | None:
+        """Turns the raw search text into the words a story must all contain.
+
+        None means "don't search": a cleared search bar still sends q="",
+        and that should list stories, not fail.
+        """
+        if q is None:
+            return None
+
+        text = q.strip()
+
+        if not text:
+            return None
+
+        if len(text) < MIN_SEARCH_LENGTH:
+            raise InvalidSearchError(
+                f"Search must be at least {MIN_SEARCH_LENGTH} characters"
+            )
+
+        # split() without an argument also handles double spaces and tabs.
+        # dict.fromkeys drops repeated words but keeps their order.
+        return list(dict.fromkeys(text.split()))
 
     def get_story(
         self,
