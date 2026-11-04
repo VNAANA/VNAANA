@@ -220,3 +220,43 @@ __marimo__/
 *.docx
 /docs
 /vnaana_backend_dev.txt
+
+
+# ==========================================
+# Frontend (Node.js / Vite)
+# ==========================================
+
+# Dependencies
+Frontend/node_modules/
+
+# Build output
+Frontend/dist/
+Frontend/build/
+
+# Vite cache
+Frontend/.vite/
+
+# Environment variables and secrets
+Frontend/.env
+Frontend/.env.*
+!Frontend/.env.example
+!Frontend/.env.template
+
+# Logs
+Frontend/npm-debug.log*
+Frontend/yarn-debug.log*
+Frontend/pnpm-debug.log*
+Frontend/*.log
+
+# Test coverage
+Frontend/coverage/
+
+# TypeScript build cache
+Frontend/*.tsbuildinfo
+
+# Package manager cache
+Frontend/.npm/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
