@@ -35,7 +35,7 @@ class ArticleService:
     def list_random_articles(
         self,
         *,
-        limit: int = 3,
+        limit: int = 5,
     ) -> list[Article]:
         return self.articles.list_random(limit=limit)
 
