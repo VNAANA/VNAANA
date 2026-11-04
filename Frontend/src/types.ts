@@ -13,7 +13,7 @@ export type FeedReason = 'forYou' | 'dontMiss'
  * Articles from the API don't have a topic, image or Nova's "why it matters"
  * analysis yet, so those are optional and the post shows a fallback instead.
  */
-export type Story = {
+export type Article = {
   id: string
   publisher: { name: string; initials: string; verified: boolean }
   author?: string

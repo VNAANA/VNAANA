@@ -5,10 +5,10 @@ import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
 import { ProfilePage } from './components/ProfilePage/ProfilePage'
-import { briefingMeta, sampleUser } from './data/sampleStories'
+import { briefingMeta, sampleUser } from './data/sampleData'
 import { useHash } from './hooks/useHash'
 import { useAuth } from './hooks/useAuth'
-import { useFeedStories } from './hooks/useFeedStories'
+import { useFeedArticles } from './hooks/useFeedArticles'
 import { getAccount } from './utils/account'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
@@ -19,7 +19,7 @@ const BRIEFING_STORAGE_KEY = 'vnaana.briefingDismissed'
 export default function App() {
   const hash = useHash()
   const auth = useAuth()
-  const feed = useFeedStories()
+  const feed = useFeedArticles()
   const metadata = auth.session?.user.user_metadata
   const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -37,16 +37,16 @@ export default function App() {
     feedRef.current?.focus()
   }
 
-  const markOpened = useCallback((storyId: string) => {
-    setOpenedIds((ids) => (ids.has(storyId) ? ids : new Set(ids).add(storyId)))
+  const markOpened = useCallback((articleId: string) => {
+    setOpenedIds((ids) => (ids.has(articleId) ? ids : new Set(ids).add(articleId)))
   }, [])
 
   if (hash === '#login') return <LoginPage auth={auth} />
   if (hash === '#profile') return <ProfilePage auth={auth} />
 
   const account = getAccount(auth.session)
-  const stories = feed.stories
-  const forYouCount = stories.filter((story) => story.feedReason === 'forYou').length
+  const articles = feed.articles
+  const forYouCount = articles.filter((article) => article.feedReason === 'forYou').length
 
   return (
     <div className={styles.app}>
@@ -68,7 +68,7 @@ export default function App() {
               <BriefingCard
                 firstName={firstName}
                 forYouCount={forYouCount}
-                dontMissCount={stories.length - forYouCount}
+                dontMissCount={articles.length - forYouCount}
                 openedCount={openedIds.size}
                 readTime={briefingMeta.readTime}
                 updatedAt={briefingMeta.updatedAt}
@@ -80,7 +80,7 @@ export default function App() {
 
         {feed.status === 'loading' && (
           <p className={styles.feedMessage} role="status">
-            Nova is gathering today’s stories…
+            Nova is gathering today’s articles for you...
           </p>
         )}
         {feed.status === 'error' && (
@@ -92,10 +92,10 @@ export default function App() {
           </div>
         )}
 
-        {stories.map((story) => (
-          <div key={story.id} className={styles.slide}>
+        {articles.map((article) => (
+          <div key={article.id} className={styles.slide}>
             <div className={styles.column}>
-              <FeedPost story={story} onOpened={markOpened} />
+              <FeedPost article={article} onOpened={markOpened} />
             </div>
           </div>
         ))}

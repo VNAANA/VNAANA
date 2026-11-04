@@ -1,9 +1,9 @@
 /*
- * Articles from the backend, turned into feed stories.
+ * Articles from the backend, turned into the Article shape the feed uses.
  * The API only has the raw article (title, description, scraped content),
- * so Nova's analysis parts of a Story are left empty or filled with honest defaults.
+ * so Nova's analysis parts of an Article are left empty or filled with honest defaults.
  */
-import type { Story } from '../types'
+import type { Article } from '../types'
 import { apiUrl } from './api'
 
 /* The parts of the backend's ArticleRead response that the feed uses. */
@@ -24,14 +24,14 @@ export const FEED_SIZE = 3
 const SUMMARY_MAX_CHARS = 320
 const WORDS_PER_MINUTE = 200
 
-export async function fetchRandomStories(signal?: AbortSignal): Promise<Story[]> {
+export async function fetchRandomArticles(signal?: AbortSignal): Promise<Article[]> {
   const response = await fetch(apiUrl(`/articles/random?limit=${FEED_SIZE}`), { signal })
   if (!response.ok) throw new Error('Articles request failed')
   const articles: ApiArticle[] = await response.json()
-  return articles.map(articleToStory)
+  return articles.map(toArticle)
 }
 
-export function articleToStory(article: ApiArticle): Story {
+export function toArticle(article: ApiArticle): Article {
   const content = toParagraphs(article.content)
   const summary = shorten(htmlToText(article.description) || content[0] || '')
 

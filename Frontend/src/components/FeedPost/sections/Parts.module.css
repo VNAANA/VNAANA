@@ -8,7 +8,7 @@
   user-select: none;
 }
 
-/* Stand-in when the story has no image: the publisher's name on a tinted panel */
+/* Stand-in when the article has no image: the publisher's name on a tinted panel */
 .imageFallback {
   display: grid;
   place-items: center;
