@@ -31,13 +31,23 @@
   outline-offset: -3px;
 }
 
-@container parts (max-width: 520px) {
+/* Phones have no arrows, so the text only needs its normal side padding */
+@media (max-width: 819.98px) {
   .viewport {
     --part-pad-x: 18px;
-    --part-pad-bottom: 66px;
-    /* Part 3: the chat input moves right of the "previous" arrow instead */
-    --readmore-pad-bottom: 10px;
-    --composer-inset: 54px;
+  }
+}
+
+/* Narrow carousels on desktop: room for the arrows in the bottom corners */
+@media (min-width: 820px) {
+  @container parts (max-width: 520px) {
+    .viewport {
+      --part-pad-x: 18px;
+      --part-pad-bottom: 66px;
+      /* Part 3: the chat input moves right of the "previous" arrow instead */
+      --readmore-pad-bottom: 10px;
+      --composer-inset: 54px;
+    }
   }
 }
 
