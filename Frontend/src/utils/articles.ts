@@ -19,7 +19,7 @@ export type ApiArticle = {
   first_seen_at: string
 }
 
-export const FEED_SIZE = 3
+export const FEED_SIZE = 5
 
 const SUMMARY_MAX_CHARS = 320
 const WORDS_PER_MINUTE = 200

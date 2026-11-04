@@ -38,7 +38,7 @@ class ArticleRepository(ABC):
     def list_random(
         self,
         *,
-        limit: int = 3,
+        limit: int = 5,
     ) -> ArticleList:
         ...
 
