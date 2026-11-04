@@ -12,13 +12,13 @@ import styles from './NovaChat.module.css'
  */
 
 export function NovaChatLog() {
-  const { story, chat } = usePost()
+  const { article, chat } = usePost()
 
   return (
     <div className={styles.log} role="log" aria-live="polite" aria-label="Conversation with Nova">
       {chat.messages.length === 0 && (
         <p className={styles.intro}>
-          Nova answers from {story.aiNote.sourceCount} {story.aiNote.sourceCount === 1 ? 'source' : 'sources'} and
+          Nova answers from {article.aiNote.sourceCount} {article.aiNote.sourceCount === 1 ? 'source' : 'sources'} and
           tells you what isn’t confirmed yet.
           <span className={styles.prototype}> Prototype: answers are pre-written, not live AI.</span>
         </p>
@@ -64,10 +64,10 @@ export function NovaChatLog() {
 }
 
 export function NovaComposer() {
-  const { story, chat, composerFocusRequest } = usePost()
+  const { article, chat, composerFocusRequest } = usePost()
   const [draft, setDraft] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const inputId = `${story.id}-nova-input`
+  const inputId = `${article.id}-nova-input`
 
   // An Ask Nova button elsewhere in the post asked for the input to be focused.
   // preventScroll stops the browser from scrolling the carousel or the feed.
@@ -86,7 +86,7 @@ export function NovaComposer() {
       <SuggestionChips onPick={(question) => void chat.send(question)} tone="row" />
       <form className={styles.form} onSubmit={onSubmit}>
         <label htmlFor={inputId} className="sr-only">
-          Ask Nova about this story
+          Ask Nova about this article
         </label>
         <input
           ref={inputRef}

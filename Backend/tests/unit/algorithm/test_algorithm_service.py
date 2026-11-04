@@ -113,16 +113,74 @@ def test_feed_without_consent(repo, users, algorithm_service):
     assert algorithm_service.get_feed(user.id).status == FeedStatus.no_consent
 
 
-def test_feed_is_locked_with_only_declared_tags(repo, users, algorithm_service):
-    """Three fresh declared tags are worth 5 each: not enough to unlock."""
+# ---- feed: unlocking (D10 revised) -------------------------------------------------
+
+def test_declared_tags_unlock_the_feed(repo, users, algorithm_service):
+    """One declared tag is enough: the user told us what they like."""
     user = add_user(repo, users)
-    repo.declared_tags[user.id] = [declared(t) for t in (HIKING, SPORT, EDUCATION)]
+    repo.declared_tags[user.id] = [declared(HIKING)]
+    algorithm_service.run_scoring(now=NOW)
+
+    assert algorithm_service.get_feed(user.id, now=NOW).status == FeedStatus.available
+
+
+def test_feed_is_locked_without_declared_tags_and_too_few_actions(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story("hike"), [HIKING])
+    repo.events.append(make_event(user.id, story.id, "share"))  # hiking 5, needs 15
     algorithm_service.run_scoring(now=NOW)
 
     feed = algorithm_service.get_feed(user.id, now=NOW)
 
     assert feed.status == FeedStatus.locked
     assert feed.stories == []
+
+
+def test_actions_alone_can_still_unlock_the_feed(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story("hike"), [HIKING])
+    repo.events += [make_event(user.id, story.id, "share") for _ in range(3)]  # hiking 15
+    algorithm_service.run_scoring(now=NOW)
+
+    assert algorithm_service.get_feed(user.id, now=NOW).status == FeedStatus.available
+
+
+# ---- feed: before the first hourly run ---------------------------------------------
+
+def test_feed_scores_a_new_user_on_the_spot(repo, users, algorithm_service):
+    """Just onboarded, the hourly job hasn't run yet: no waiting for it."""
+    user = add_user(repo, users)
+    repo.declared_tags[user.id] = [declared(SPORT)]
+    repo.add_story(make_story("hike"), [HIKING])
+    repo.add_story(make_story("match"), [SPORT])
+
+    feed = algorithm_service.get_feed(user.id, now=NOW)
+
+    assert feed.status == FeedStatus.available
+    assert [(r.story.title, r.score) for r in feed.stories] == [("match", 5.0), ("hike", 0.0)]
+
+
+def test_on_the_spot_scores_are_not_saved(repo, users, algorithm_service):
+    """The feed only reads; storing scores stays the hourly job's job."""
+    user = add_user(repo, users)
+    repo.declared_tags[user.id] = [declared(SPORT)]
+
+    algorithm_service.get_feed(user.id, now=NOW)
+
+    assert user.id not in repo.scores
+
+
+def test_feed_uses_stored_scores_when_there_are_any(repo, users, algorithm_service):
+    """Once the job has run, the feed doesn't recompute; it reads what's stored."""
+    user = add_user(repo, users)
+    repo.declared_tags[user.id] = [declared(SPORT)]
+    repo.scores[user.id] = {HIKING: 20.0}  # deliberately different from what SPORT would give
+    repo.add_story(make_story("hike"), [HIKING])
+    repo.add_story(make_story("match"), [SPORT])
+
+    feed = algorithm_service.get_feed(user.id, now=NOW)
+
+    assert [r.story.title for r in feed.stories] == ["hike", "match"]
 
 
 # ---- feed: the ranking ------------------------------------------------------------

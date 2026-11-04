@@ -8,20 +8,20 @@ import styles from './PostHeader.module.css'
 /* The post's top bar and the small pieces it is made of (who, when, what, where). */
 
 function PublisherAvatar() {
-  const { story } = usePost()
+  const { article } = usePost()
   return (
     <span className={styles.avatar} aria-hidden="true">
-      {story.publisher.initials}
+      {article.publisher.initials}
     </span>
   )
 }
 
 function PublisherName() {
-  const { story } = usePost()
+  const { article } = usePost()
   return (
     <span className={styles.publisher}>
-      {story.publisher.name}
-      {story.publisher.verified && (
+      {article.publisher.name}
+      {article.publisher.verified && (
         <span className={styles.verified} role="img" aria-label="Verified publisher">
           <BadgeCheck size={16} aria-hidden="true" />
         </span>
@@ -32,15 +32,15 @@ function PublisherName() {
 
 /* Avatar + publisher + "By author · time" in one compact block. */
 function Byline() {
-  const { story } = usePost()
+  const { article } = usePost()
   return (
     <div className={styles.byline}>
       <PublisherAvatar />
       <div className={styles.who}>
         <PublisherName />
         <span className={styles.meta}>
-          {story.author && `By ${story.author} · `}
-          {story.publishedAgo}
+          {article.author && `By ${article.author} · `}
+          {article.publishedAgo}
         </span>
       </div>
     </div>
@@ -48,25 +48,25 @@ function Byline() {
 }
 
 function TopicPill() {
-  const { story } = usePost()
-  if (!story.topic) return null
-  const Icon = TOPIC_ICONS[story.topic]
+  const { article } = usePost()
+  if (!article.topic) return null
+  const Icon = TOPIC_ICONS[article.topic]
   return (
     <span className={styles.pill}>
       <Icon size={14} aria-hidden="true" />
-      {story.topic}
+      {article.topic}
     </span>
   )
 }
 
 function LocationPill() {
-  const { story } = usePost()
-  if (!story.location) return null
+  const { article } = usePost()
+  if (!article.location) return null
   return (
     <span className={styles.pill}>
       <MapPin size={14} aria-hidden="true" />
       <span className="sr-only">Location: </span>
-      {story.location}
+      {article.location}
     </span>
   )
 }
@@ -76,12 +76,12 @@ function LocationPill() {
  * Esc, clicking outside or tabbing away closes it.
  */
 function MoreMenu() {
-  const { story, actions } = usePost()
+  const { article, actions } = usePost()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const firstItemRef = useRef<HTMLButtonElement>(null)
-  const menuId = `${story.id}-menu`
+  const menuId = `${article.id}-menu`
 
   useEffect(() => {
     if (!open) return
@@ -138,7 +138,7 @@ function MoreMenu() {
             <EyeOff size={18} aria-hidden="true" />
             <span>
               <span className={styles.menuItemTitle}>Not interested</span>
-              <span className={styles.menuItemHint}>Show fewer stories like this</span>
+              <span className={styles.menuItemHint}>Show fewer articles like this</span>
             </span>
           </button>
         </div>

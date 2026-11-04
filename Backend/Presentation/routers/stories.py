@@ -29,12 +29,14 @@ def list_stories(
         alias="status",
     ),
     tag_id: uuid.UUID | None = None,
+    q: str | None = Query(None, max_length=100),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
     return service.list_stories(
         status=status_filter,
         tag_id=tag_id,
+        q=q,
         limit=limit,
         offset=offset,
     )

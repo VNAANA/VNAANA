@@ -3,12 +3,20 @@ import { TOPICS, TOPIC_ICONS } from '../../data/topics'
 import type { User } from '../../types'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
+import { Skeleton } from '../Skeleton/Skeleton'
 import { Logo } from './Logo'
 import { SearchField } from './SearchField'
 import styles from './Navigation.module.css'
 
 /* Desktop navigation. Below 820px it is replaced by MobileTopBar + MobileTabBar. */
-export function Sidebar({ user, account }: { user: User; account: Account | null }) {
+type Props = {
+  user: User
+  account: Account | null
+  /** True until the saved session is read, so "Log in" doesn't flash before the profile. */
+  checkingSession: boolean
+}
+
+export function Sidebar({ user, account, checkingSession }: Props) {
   return (
     <aside className={styles.sidebar}>
       <Logo />
@@ -61,7 +69,16 @@ export function Sidebar({ user, account }: { user: User; account: Account | null
       </section>
 
       <div className={styles.account}>
-        {account ? (
+        {checkingSession ? (
+          <div className={styles.profile} role="status">
+            <Skeleton circle width={36} height={36} />
+            <span className={styles.profileText}>
+              <Skeleton width="70%" height={12} />
+              <Skeleton width="90%" height={10} className={styles.skeletonGap} />
+            </span>
+            <span className="sr-only">Checking your account…</span>
+          </div>
+        ) : account ? (
           <a href="#profile" className={styles.profile}>
             <AccountAvatar account={account} />
             <span className={styles.profileText}>

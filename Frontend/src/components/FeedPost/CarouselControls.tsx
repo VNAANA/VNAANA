@@ -3,7 +3,7 @@ import { usePost } from './PostContext'
 import styles from './CarouselControls.module.css'
 
 /*
- * Arrows and progress indicators for the story carousel.
+ * Arrows and progress indicators for the article carousel.
  * They all read the shared carousel state, so they can be placed anywhere in the post.
  */
 

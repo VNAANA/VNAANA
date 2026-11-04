@@ -53,6 +53,19 @@ Fetched 25 articles
 created: Example news headline
 updated: Another news headline
 ```
+## 3. running test or the algorithm playground
+
+Run:
+```powershell
+python -m Backend.Testing_ENV.playground
+```
+this launches the playground
+
+Run:
+```powershell
+pytest Backend/tests   
+```
+for the tests
 
 ## Troubleshooting
 

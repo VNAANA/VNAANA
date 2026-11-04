@@ -257,6 +257,11 @@
   color: var(--muted);
 }
 
+/* Space between the two lines of the account placeholder */
+.skeletonGap {
+  margin-top: 6px;
+}
+
 /* ---------- Mobile bars (below 820px) ---------- */
 
 /* The app is a full-height column on mobile, so these bars just sit above and below the feed. */

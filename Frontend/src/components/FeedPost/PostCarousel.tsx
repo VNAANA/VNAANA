@@ -15,13 +15,14 @@ type Props = {
 }
 
 /*
- * The side-to-side story carousel. Every part has the same height,
+ * The side-to-side article carousel. Every part has the same height,
  * so moving between parts never changes the size of the post.
  * Arrow keys and touch swipes work when it has focus / is touched.
- * The arrows are vertically centred; on narrow carousels they move to the bottom corners.
+ * The arrows are vertically centred; on narrow desktop carousels they move to the
+ * bottom corners, and phones don't show them (they swipe).
  */
 export function PostCarousel({ parts, className = '', partPadding }: Props) {
-  const { story, carousel, partIds, partLabels } = usePost()
+  const { article, carousel, partIds, partLabels } = usePost()
 
   const paddingVars = {
     '--part-pad-top': partPadding?.top && `${partPadding.top}px`,
@@ -35,7 +36,7 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
         style={paddingVars}
         role="region"
         aria-roledescription="carousel"
-        aria-label={`${story.title}, in ${carousel.count} parts. Use the left and right arrow keys to move.`}
+        aria-label={`${article.title}, in ${carousel.count} parts. Use the left and right arrow keys to move.`}
         tabIndex={0}
         {...carousel.keyHandlers}
         {...carousel.swipeHandlers}

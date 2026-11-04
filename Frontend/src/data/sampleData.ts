@@ -1,6 +1,6 @@
 /*
  * Sample data for the prototype. The person is FICTIONAL.
- * Feed stories now come from the backend (see utils/articles.ts).
+ * Feed articles now come from the backend (see utils/articles.ts).
  */
 import type { User } from '../types'
 

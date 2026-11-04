@@ -17,10 +17,10 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`
 }
 
-/* Nova's greeting at the top of the feed, with a progress bar for today's stories. Can be dismissed. */
+/* Nova's greeting at the top of the feed, with a progress bar for today's articles. Can be dismissed. */
 export function BriefingCard({ firstName, forYouCount, dontMissCount, openedCount, readTime, updatedAt, onDismiss }: Props) {
   const total = forYouCount + dontMissCount
-  // White segments = stories opened + the one you're on now
+  // White segments = articles opened + the one you're on now
   const filled = Math.min(openedCount + 1, total)
 
   return (
@@ -29,14 +29,14 @@ export function BriefingCard({ firstName, forYouCount, dontMissCount, openedCoun
       <div className={styles.content}>
         <p className={styles.label}>Nova · your news anchor</p>
         <h1 id="briefing-greeting" className={styles.greeting}>
-          Morning, {firstName}. {plural(forYouCount, 'story', 'stories')} picked for you, plus{' '}
+          Morning, {firstName}. {plural(forYouCount, 'article', 'articles')} picked for you, plus{' '}
           {dontMissCount} you shouldn’t miss.
         </h1>
         <div className={styles.progressRow}>
           <Segments total={total} filled={filled} className={styles.segments} />
           <p className={styles.meta}>
             <span className="sr-only">
-              {openedCount} of {total} stories opened.{' '}
+              {openedCount} of {total} articles opened.{' '}
             </span>
             {readTime} · updated {updatedAt}
           </p>
