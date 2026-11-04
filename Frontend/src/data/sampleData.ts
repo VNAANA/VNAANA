@@ -13,6 +13,6 @@ export const sampleUser: User = {
 }
 
 export const briefingMeta = {
-  readTime: 'About 4 min',
+  readMinutes: 4,
   updatedAt: '08:10',
 }

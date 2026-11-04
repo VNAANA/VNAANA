@@ -4,17 +4,19 @@ import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../Navigation/Logo'
 import styles from './LoginPage.module.css'
 import { supabase } from '../../utils/supabase'
+import type { LoginError, LoginNotice } from '../../data/strings'
 import type { useAuth } from '../../hooks/useAuth'
+import { useStrings } from '../../hooks/useStrings'
 
-type Errors = { email?: string; password?: string }
+type Errors = { email?: LoginError; password?: LoginError }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function validate(email: string, password: string): Errors {
   const errors: Errors = {}
-  if (!email.trim()) errors.email = 'Enter your email address.'
-  else if (!EMAIL_PATTERN.test(email.trim())) errors.email = 'Enter an email address like name@example.com.'
-  if (!password) errors.password = 'Enter your password.'
+  if (!email.trim()) errors.email = 'emailMissing'
+  else if (!EMAIL_PATTERN.test(email.trim())) errors.email = 'emailInvalid'
+  if (!password) errors.password = 'passwordMissing'
   return errors
 }
 
@@ -48,11 +50,12 @@ function GoogleIcon() {
  */
 export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const { session, checkingSession, backendStatus, signingOut, signOut: onSignOut } = auth
+  const { t } = useStrings()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState<LoginNotice | null>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
@@ -62,11 +65,11 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     setErrors(found)
     if (found.email) emailRef.current?.focus()
     else if (found.password) passwordRef.current?.focus()
-    else setNotice('Logging in isn’t connected yet. This page is a design preview.')
+    else setNotice('notConnected')
   }
 
   const onGoogle = async () => {
-    setNotice('Opening Google sign-in…')
+    setNotice('openingGoogle')
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -78,7 +81,7 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
 
       if (error) throw error
     } catch {
-      setNotice('Could not start Google sign-in. Please try again.')
+      setNotice('googleFailed')
     }
   }
 
@@ -88,23 +91,23 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
         <Logo />
         <a href="#" className={styles.back}>
           <ArrowLeft size={18} aria-hidden="true" />
-          Back to feed
+          {t.common.backToFeed}
         </a>
       </header>
 
       <main className={styles.main}>
         <div className={styles.card}>
           <h1 ref={headingRef} className={styles.title} tabIndex={-1}>
-            Log in
+            {t.common.logIn}
           </h1>
-          <p className={styles.intro}>Welcome back. Your morning briefing is waiting.</p>
+          <p className={styles.intro}>{t.login.intro}</p>
             <p className={styles.notice} role="status">
-            {checkingSession ? 'Checking your session…' : backendStatus}
+            {checkingSession ? t.common.checkingSession : backendStatus && t.auth[backendStatus]}
           </p>
           <form className={styles.form} onSubmit={onSubmit} noValidate>
             <div className={styles.field}>
               <label htmlFor="login-email" className={styles.label}>
-                Email
+                {t.login.email}
               </label>
               <input
                 ref={emailRef}
@@ -120,7 +123,7 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               />
               {errors.email && (
                 <p id="login-email-error" className={styles.error}>
-                  {errors.email}
+                  {t.login.errors[errors.email]}
                 </p>
               )}
             </div>
@@ -128,10 +131,10 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             <div className={styles.field}>
               <div className={styles.labelRow}>
                 <label htmlFor="login-password" className={styles.label}>
-                  Password
+                  {t.login.password}
                 </label>
                 <a href="#forgot-password" className={styles.smallLink}>
-                  Forgot password?
+                  {t.login.forgotPassword}
                 </a>
               </div>
               <div className={styles.passwordWrap}>
@@ -150,7 +153,7 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                   type="button"
                   className={styles.reveal}
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
                   aria-pressed={showPassword}
                 >
                   {/* The icon shows the current state: crossed-out eye while the password is hidden */}
@@ -159,39 +162,39 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               </div>
               {errors.password && (
                 <p id="login-password-error" className={styles.error}>
-                  {errors.password}
+                  {t.login.errors[errors.password]}
                 </p>
               )}
             </div>
 
             <button type="submit" className={styles.submit}>
-              Log in
+              {t.common.logIn}
             </button>
           </form>
 
           <p className={styles.divider}>
-            <span>or</span>
+            <span>{t.login.or}</span>
           </p>
 
           {session ? (
             <button type="button" className={styles.google} onClick={onSignOut} disabled={signingOut}>
-              {signingOut ? 'Signing out…' : 'Sign out'}
+              {signingOut ? t.common.signingOut : t.common.signOut}
             </button>
           ) : (
             <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession}>
               <GoogleIcon />
-              Continue with Google
+              {t.login.continueWithGoogle}
             </button>
           )}
 
           <p className={styles.notice} role="status">
-            {notice}
+            {notice && t.login.notices[notice]}
           </p>
 
           <p className={styles.signUp}>
-            New to Virtual News Anchor?{' '}
+            {t.login.newHere}{' '}
             <a href="#sign-up" className={styles.smallLink}>
-              Create an account
+              {t.login.createAccount}
             </a>
           </p>
         </div>

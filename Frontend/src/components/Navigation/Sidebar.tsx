@@ -1,5 +1,6 @@
 import { ChevronRight, Compass, LogIn, Sparkles } from 'lucide-react'
 import { TOPICS, TOPIC_ICONS } from '../../data/topics'
+import { useStrings } from '../../hooks/useStrings'
 import type { User } from '../../types'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
@@ -17,24 +18,25 @@ type Props = {
 }
 
 export function Sidebar({ user, account, checkingSession }: Props) {
+  const { t } = useStrings()
   return (
     <aside className={styles.sidebar}>
       <Logo />
       <SearchField id="sidebar-search" />
 
-      <nav aria-label="Main">
+      <nav aria-label={t.nav.main}>
         <ul className={styles.mainNav}>
           <li>
             <a href="/" className={styles.navItem} aria-current="page">
               <Sparkles size={20} aria-hidden="true" />
-              For You
+              {t.nav.forYou}
               <span className={styles.activeDot} aria-hidden="true" />
             </a>
           </li>
           <li>
             <a href="#explore" className={styles.navItem}>
               <Compass size={20} aria-hidden="true" />
-              Explore
+              {t.nav.explore}
             </a>
           </li>
         </ul>
@@ -43,10 +45,10 @@ export function Sidebar({ user, account, checkingSession }: Props) {
       <section className={styles.topics} aria-labelledby="topics-heading">
         <div className={styles.topicsHeader}>
           <h2 id="topics-heading" className={styles.sectionTitle}>
-            Topics
+            {t.nav.topics}
           </h2>
-          <button type="button" className={styles.editLink}>
-            Edit<span className="sr-only"> topics</span>
+          <button type="button" className={styles.editLink} aria-label={t.nav.editTopics}>
+            {t.nav.edit}
           </button>
         </div>
         <ul>
@@ -59,8 +61,8 @@ export function Sidebar({ user, account, checkingSession }: Props) {
                   <span className={styles.topicIcon} aria-hidden="true">
                     <Icon size={16} />
                   </span>
-                  <span className={styles.topicName}>{topic}</span>
-                  {following && <span className={styles.following}>Following</span>}
+                  <span className={styles.topicName}>{t.topics[topic]}</span>
+                  {following && <span className={styles.following}>{t.nav.following}</span>}
                 </a>
               </li>
             )
@@ -86,12 +88,12 @@ export function Sidebar({ user, account, checkingSession }: Props) {
               {account.email && <span className={styles.profileEmail}>{account.email}</span>}
             </span>
             <ChevronRight size={18} className={styles.profileChevron} aria-hidden="true" />
-            <span className="sr-only">, view profile</span>
+            <span className="sr-only">{t.nav.viewProfile}</span>
           </a>
         ) : (
           <a href="#login" className={styles.loginButton}>
             <LogIn size={20} aria-hidden="true" />
-            Log in
+            {t.common.logIn}
           </a>
         )}
       </div>

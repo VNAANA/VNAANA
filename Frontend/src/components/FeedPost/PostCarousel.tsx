@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { useStrings } from '../../hooks/useStrings'
 import { CarouselArrows, CounterPill } from './CarouselControls'
 import { usePost } from './PostContext'
 import styles from './PostCarousel.module.css'
@@ -23,6 +24,7 @@ type Props = {
  */
 export function PostCarousel({ parts, className = '', partPadding }: Props) {
   const { article, carousel, partIds, partLabels } = usePost()
+  const { t } = useStrings()
 
   const paddingVars = {
     '--part-pad-top': partPadding?.top && `${partPadding.top}px`,
@@ -35,8 +37,8 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
         className={styles.viewport}
         style={paddingVars}
         role="region"
-        aria-roledescription="carousel"
-        aria-label={`${article.title}, in ${carousel.count} parts. Use the left and right arrow keys to move.`}
+        aria-roledescription={t.post.carousel.roleCarousel}
+        aria-label={t.post.carousel.label(article.title, carousel.count)}
         tabIndex={0}
         {...carousel.keyHandlers}
         {...carousel.swipeHandlers}
@@ -48,8 +50,8 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
               id={partIds[i]}
               className={styles.slide}
               role="group"
-              aria-roledescription="part"
-              aria-label={`${i + 1} of ${carousel.count}: ${partLabels[i]}`}
+              aria-roledescription={t.post.carousel.rolePart}
+              aria-label={t.post.carousel.partLabel(i + 1, carousel.count, partLabels[i])}
               inert={i !== carousel.index}
             >
               {part}
@@ -62,7 +64,7 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
       <CarouselArrows />
 
       <p className="sr-only" aria-live="polite">
-        Part {carousel.index + 1} of {carousel.count}: {partLabels[carousel.index]}
+        {t.post.carousel.announce(carousel.index + 1, carousel.count, partLabels[carousel.index])}
       </p>
     </div>
   )

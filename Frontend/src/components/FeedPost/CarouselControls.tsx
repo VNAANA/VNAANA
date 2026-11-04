@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useStrings } from '../../hooks/useStrings'
 import { usePost } from './PostContext'
 import styles from './CarouselControls.module.css'
 
@@ -10,6 +11,7 @@ import styles from './CarouselControls.module.css'
 /* Arrows that float over the carousel */
 export function CarouselArrows() {
   const { carousel, partLabels } = usePost()
+  const { t } = useStrings()
   return (
     // data-text-part: the middle parts are scrolling text, so the arrows get a solid bar on small screens.
     // The last part doesn't need one: its chat input makes room for the arrow.
@@ -18,7 +20,7 @@ export function CarouselArrows() {
         type="button"
         className={`${styles.arrow} ${styles.prev}`}
         onClick={carousel.prev}
-        aria-label={`Previous: ${partLabels[carousel.index - 1] ?? ''}`}
+        aria-label={t.post.carousel.previous(partLabels[carousel.index - 1] ?? '')}
         hidden={carousel.isFirst}
       >
         <ChevronLeft size={22} aria-hidden="true" />
@@ -27,7 +29,7 @@ export function CarouselArrows() {
         type="button"
         className={`${styles.arrow} ${styles.next}`}
         onClick={carousel.next}
-        aria-label={`Next: ${partLabels[carousel.index + 1] ?? ''}`}
+        aria-label={t.post.carousel.next(partLabels[carousel.index + 1] ?? '')}
         hidden={carousel.isLast}
       >
         <ChevronRight size={22} aria-hidden="true" />

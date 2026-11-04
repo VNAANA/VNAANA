@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import type { AuthStatus } from '../data/strings'
 import { apiUrl } from '../utils/api'
 import { supabase } from '../utils/supabase'
 import { useHash } from './useHash'
@@ -8,7 +9,8 @@ import { useHash } from './useHash'
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
-  const [backendStatus, setBackendStatus] = useState('')
+  // A message for the user while signing in or out; the page shows it in the display language
+  const [backendStatus, setBackendStatus] = useState<AuthStatus | null>(null)
   const [signingOut, setSigningOut] = useState(false)
   const [readyToken, setReadyToken] = useState<string | null>(null)
   const hash = useHash()
@@ -29,7 +31,7 @@ export function useAuth() {
 
   useEffect(() => {
     if (!session) {
-      setBackendStatus('')
+      setBackendStatus(null)
       setReadyToken(null)
       return
     }
@@ -40,7 +42,6 @@ export function useAuth() {
 
     async function bootstrap() {
       // No "in progress" text: this runs on every load with a saved session, so it would flash each time.
-      setBackendStatus('')
       try {
         const response = await fetch(apiUrl('/users/me/bootstrap'), {
           method: 'POST',
@@ -51,7 +52,7 @@ export function useAuth() {
         const profile = await response.json()
         if (typeof profile.id !== 'string') throw new Error('Invalid profile')
         if (active) {
-          setBackendStatus('')
+          setBackendStatus(null)
           setReadyToken(token)
           if (window.location.hash === '#login') window.location.hash = ''
           // The SDK has exchanged the OAuth code before emitting the session.
@@ -62,7 +63,7 @@ export function useAuth() {
           }
         }
       } catch {
-        if (active) setBackendStatus('We could not finish signing you in. Please refresh to try again.')
+        if (active) setBackendStatus('signInFailed')
       } finally {
         window.clearTimeout(timeout)
       }
@@ -81,10 +82,10 @@ export function useAuth() {
       const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) throw error
       setSession(null)
-      setBackendStatus('')
+      setBackendStatus(null)
       window.location.hash = ''
     } catch {
-      setBackendStatus('Could not sign out. Please try again.')
+      setBackendStatus('signOutFailed')
     } finally {
       setSigningOut(false)
     }
