@@ -63,7 +63,7 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(Story.__table__.c.status.server_default.arg, "draft")
         self.assertEqual(Story.__table__.c.status.type.enums, ["draft", "published", "archived"])
         self.assertEqual(len(Base.metadata.tables), 12)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 75)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 76)
         expected_server_defaults = {
             ("users", "analytics_consent"),
             ("providers", "created_at"),
@@ -159,6 +159,18 @@ class PersistenceTests(unittest.TestCase):
         self.assertIsNone(repo.get_by_identity("google", subject))
         rows = list(self.db.scalars(select(User).where(User.auth_subject == subject)))
         self.assertEqual(len(rows), 1)
+
+    def test_ingestion_keeps_latest_publisher_update(self):
+        repo = ArticleRepository(self.db)
+        fields = dict(provider_id=self.provider.id, canonical_url="https://example.test/update", title="News")
+        first, _ = repo.ingest(**fields)
+        self.assertIsNone(first.last_updated_at)
+        older = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        newer = datetime(2025, 1, 2, tzinfo=timezone.utc)
+        for incoming in (older, newer, None, older):
+            result, _ = repo.ingest(**fields, last_updated_at=incoming)
+        # SQLite returns naive datetimes for timezone-aware columns.
+        self.assertEqual(result.last_updated_at.replace(tzinfo=timezone.utc), newer)
 
     def test_ingestion_preserves_identity_and_non_null_content(self):
         repo = ArticleRepository(self.db)

@@ -46,6 +46,7 @@ class ArticleNormalizationService:
                 getattr(raw_article, "published_at", None)
             ),
             "first_seen_at": now,
+            "last_updated_at": self._normalize_date(raw_article.last_updated_at),
             "last_seen_at": now,
         }
 
