@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 # Copy application code and database migration configuration
 COPY Backend/ ./Backend/
+COPY Backend/jobs/run_news_pipeline.sh /app/run_news_pipeline.sh
+RUN chmod +x /app/run_news_pipeline.sh
 COPY alembic.ini .
 
 # Expose the FastAPI port
