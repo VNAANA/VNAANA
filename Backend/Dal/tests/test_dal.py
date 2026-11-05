@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session, configure_mappers
 from sqlalchemy.schema import CreateTable
 
 from Backend.Dal.models import (
-    Article, Base, EngagementEvent, Provider, Story,
+    Article, Base, EngagementEvent, Provider, ProviderSource, Story,
     StoryArticle, StoryStatus, StoryTag, Tag, User, UserTag,
     EventWeight, StoryReaction,
 )
@@ -62,8 +62,8 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(Story.__table__.c.status.default.arg, StoryStatus.draft)
         self.assertEqual(Story.__table__.c.status.server_default.arg, "draft")
         self.assertEqual(Story.__table__.c.status.type.enums, ["draft", "published", "archived"])
-        self.assertEqual(len(Base.metadata.tables), 11)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 67)
+        self.assertEqual(len(Base.metadata.tables), 12)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 75)
         expected_server_defaults = {
             ("users", "analytics_consent"),
             ("providers", "created_at"),
@@ -116,6 +116,24 @@ class PersistenceTests(unittest.TestCase):
     def tearDown(self):
         self.db.close()
         self.engine.dispose()
+
+    def test_provider_sources_relationship_defaults_and_cascade(self):
+        self.provider.sources = [
+            ProviderSource(name="Headlines", source_type="rss", url="https://example.test/news"),
+            ProviderSource(name="Sport", source_type="rss", url="https://example.test/sport"),
+        ]
+        self.db.commit()
+        self.db.expire_all()
+        self.assertEqual({source.name for source in self.provider.sources}, {"Headlines", "Sport"})
+        for source in self.provider.sources:
+            self.assertIs(source.provider, self.provider)
+            self.assertEqual(source.poll_interval_minutes, 60)
+            self.assertTrue(source.is_active)
+            self.assertEqual(source.configuration, {})
+
+        # Bypass ORM deletion to exercise the database foreign-key cascade.
+        self.db.execute(text("DELETE FROM providers WHERE id = :id"), {"id": self.provider.id.hex})
+        self.assertEqual(self.db.scalars(select(ProviderSource.id)).all(), [])
 
     def test_user_bootstrap_preserves_identity_preferences_and_consent(self):
         repo = UserRepository(self.db)
