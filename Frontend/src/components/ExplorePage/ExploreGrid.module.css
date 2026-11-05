@@ -1,0 +1,30 @@
+/*
+ * CSS columns masonry: cards fill each column top to bottom.
+ * 3 columns on wide screens, 2 below 840px of page width (tablets and phones).
+ * The "explore" container is the page, see ExplorePage.module.css.
+ */
+.grid {
+  columns: 3;
+  column-gap: 20px;
+}
+
+.grid > * {
+  break-inside: avoid;
+  margin-bottom: 20px;
+}
+
+@container explore (max-width: 839.98px) {
+  .grid {
+    columns: 2;
+  }
+}
+
+@container explore (max-width: 559.98px) {
+  .grid {
+    column-gap: 12px;
+  }
+
+  .grid > * {
+    margin-bottom: 12px;
+  }
+}

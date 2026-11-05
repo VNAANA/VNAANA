@@ -1,0 +1,75 @@
+/*
+ * The page scrolls on its own, like the feed. It is also the "explore"
+ * container the grid and cards measure for their column count and compact size.
+ */
+.page {
+  container: explore / inline-size;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
+.page:focus {
+  outline: none;
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* never wider than the screen */
+  gap: 24px;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding: 40px 32px 48px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+/* Error / empty message */
+.message {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.button {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+@media (max-width: 819.98px) {
+  .page {
+    flex: 1;
+    min-height: 0;
+    scrollbar-gutter: auto;
+  }
+
+  .inner {
+    gap: 16px;
+    padding: 20px 16px 32px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+}

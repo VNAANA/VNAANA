@@ -23,6 +23,24 @@
   --foryou-bg: #E8EAFE;
   --foryou-ink: #2433C4;    /* "For you" tag */
 
+  /* Topics: soft background / dark text (Explore cards). Every pair passes WCAG AA. */
+  --topic-technology-bg: #DDE3FB;
+  --topic-technology-ink: #2433C4;
+  --topic-sports-bg: #DCEFE6;
+  --topic-sports-ink: #0E6B4E;
+  --topic-politics-bg: #E9E6F7;
+  --topic-politics-ink: #4B3A9E;
+  --topic-entertainment-bg: #FBE1EC;
+  --topic-entertainment-ink: #9D1F55;
+  --topic-science-bg: #E3EEF7;
+  --topic-science-ink: #1F5A85;
+  --topic-world-bg: #FBE3D3;
+  --topic-world-ink: #9A3F06;
+  --topic-business-bg: #F1EDE0;
+  --topic-business-ink: #6B5512;
+  --topic-unknown-bg: #EEF0F3;
+  --topic-unknown-ink: #374151;
+
   /* Form errors */
   --error: #B42318;
 
@@ -33,6 +51,7 @@
   /* Shape */
   --radius-card: 22px;
   --radius-ui: 12px;
+  --radius-tile: 20px;      /* Explore cards and tiles */
   --radius-pill: 999px;
 
   /* Type */

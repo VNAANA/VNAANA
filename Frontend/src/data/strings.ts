@@ -4,6 +4,7 @@
  * Dutch is typed against English, so a missing translation fails the build.
  */
 import type { Topic } from '../types'
+import type { ExploreFilter } from '../utils/explore'
 import type { Language } from '../utils/language'
 
 function plural(count: number, one: string, many: string) {
@@ -88,6 +89,22 @@ const en = {
     loadFailed: 'We couldn’t load the news right now.',
     retry: 'Try again',
     caughtUp: 'You’re all caught up for this morning.',
+  },
+  explore: {
+    title: 'Explore',
+    subtitle: 'Discover news beyond your usual topics.',
+    skipToContent: 'Skip to Explore',
+    filtersLabel: 'Filter articles',
+    filters: {
+      all: 'All',
+    } as Record<ExploreFilter, string>,
+    loading: 'Loading articles…',
+    loadFailed: 'We couldn’t load articles right now.',
+    retry: 'Try again',
+    empty: (filter: string) => `Nothing in ${filter} right now — try another topic.`,
+    emptyAll: 'Nothing to explore right now. Check back soon.',
+    showAll: 'Show all',
+    explainer: 'Explainer',
   },
   briefing: {
     label: 'Nova · your news anchor',
@@ -268,6 +285,22 @@ const nl: Strings = {
     loadFailed: 'We konden het nieuws nu niet laden.',
     retry: 'Opnieuw proberen',
     caughtUp: 'Je bent helemaal bij voor vanochtend.',
+  },
+  explore: {
+    title: 'Ontdekken',
+    subtitle: 'Ontdek nieuws buiten je vaste onderwerpen.',
+    skipToContent: 'Naar Ontdekken',
+    filtersLabel: 'Artikelen filteren',
+    filters: {
+      all: 'Alles',
+    },
+    loading: 'Artikelen worden geladen…',
+    loadFailed: 'We konden de artikelen nu niet laden.',
+    retry: 'Opnieuw proberen',
+    empty: (filter) => `Nu niets in ${filter} — probeer een ander onderwerp.`,
+    emptyAll: 'Er is nu niets te ontdekken. Kom straks terug.',
+    showAll: 'Alles tonen',
+    explainer: 'Uitleg',
   },
   briefing: {
     label: 'Nova · je nieuwslezer',
