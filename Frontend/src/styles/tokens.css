@@ -22,8 +22,6 @@
   /* Feed reason tags */
   --foryou-bg: #E8EAFE;
   --foryou-ink: #2433C4;    /* "For you" tag */
-  --broad-bg: #FDEBDD;
-  --broad-ink: #9A3F06;     /* "Don't miss" tag */
 
   /* Form errors */
   --error: #B42318;
@@ -52,6 +50,5 @@
 
   /* Elevation & focus */
   --shadow-card: 0 1px 2px rgba(14, 17, 22, 0.05), 0 4px 16px rgba(14, 17, 22, 0.05);
-  --shadow-float: 0 2px 10px rgba(14, 17, 22, 0.22);
   --focus: var(--accent);
 }

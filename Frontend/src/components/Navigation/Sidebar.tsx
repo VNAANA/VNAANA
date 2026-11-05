@@ -1,7 +1,6 @@
 import { ChevronRight, Compass, LogIn, Sparkles } from 'lucide-react'
 import { TOPICS, TOPIC_ICONS } from '../../data/topics'
 import { useStrings } from '../../hooks/useStrings'
-import type { User } from '../../types'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Skeleton } from '../Skeleton/Skeleton'
@@ -11,13 +10,12 @@ import styles from './Navigation.module.css'
 
 /* Desktop navigation. Below 820px it is replaced by MobileTopBar + MobileTabBar. */
 type Props = {
-  user: User
   account: Account | null
   /** True until the saved session is read, so "Log in" doesn't flash before the profile. */
   checkingSession: boolean
 }
 
-export function Sidebar({ user, account, checkingSession }: Props) {
+export function Sidebar({ account, checkingSession }: Props) {
   const { t } = useStrings()
   return (
     <aside className={styles.sidebar}>
@@ -54,7 +52,6 @@ export function Sidebar({ user, account, checkingSession }: Props) {
         <ul>
           {TOPICS.map((topic) => {
             const Icon = TOPIC_ICONS[topic]
-            const following = user.followedTopics.includes(topic)
             return (
               <li key={topic}>
                 <a href={`#topic-${topic.toLowerCase()}`} className={styles.topicRow}>
@@ -62,7 +59,6 @@ export function Sidebar({ user, account, checkingSession }: Props) {
                     <Icon size={16} />
                   </span>
                   <span className={styles.topicName}>{t.topics[topic]}</span>
-                  {following && <span className={styles.following}>{t.nav.following}</span>}
                 </a>
               </li>
             )

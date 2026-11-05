@@ -44,11 +44,3 @@ export type Article = {
     perspectives: { publisher: string; angle: string; url: string }[]
   }
 }
-
-export type User = {
-  firstName: string
-  name: string
-  username: string
-  initials: string
-  followedTopics: Topic[]
-}

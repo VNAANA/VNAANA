@@ -6,7 +6,6 @@ import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
 import { ProfilePage } from './components/ProfilePage/ProfilePage'
-import { briefingMeta, sampleUser } from './data/sampleData'
 import { useHash } from './hooks/useHash'
 import { useAuth } from './hooks/useAuth'
 import { useFeedArticles } from './hooks/useFeedArticles'
@@ -50,13 +49,19 @@ export default function App() {
   const account = getAccount(auth.session)
   const articles = feed.articles
   const forYouCount = articles.filter((article) => article.feedReason === 'forYou').length
+  // Articles without scraped content have no read time; count those as a one-minute skim.
+  const readMinutes = articles.reduce((sum, article) => sum + (article.readMore.readMinutes ?? 1), 0)
+  const newest = articles.reduce<Date | undefined>(
+    (latest, article) => (!latest || article.publishedAt > latest ? article.publishedAt : latest),
+    undefined,
+  )
 
   return (
     <div className={styles.app}>
       <a href="#feed" className={styles.skipLink}>
         {t.feed.skipToFeed}
       </a>
-      <Sidebar user={sampleUser} account={account} checkingSession={auth.checkingSession} />
+      <Sidebar account={account} checkingSession={auth.checkingSession} />
       <MobileTopBar />
 
       {/*
@@ -73,8 +78,8 @@ export default function App() {
                 forYouCount={forYouCount}
                 dontMissCount={articles.length - forYouCount}
                 openedCount={openedIds.size}
-                readMinutes={briefingMeta.readMinutes}
-                updatedAt={briefingMeta.updatedAt}
+                readMinutes={readMinutes}
+                updatedAt={newest ? updatedLabel(newest, t.locale) : ''}
                 onDismiss={dismissBriefing}
               />
             </div>
@@ -118,4 +123,11 @@ export default function App() {
       <MobileTabBar account={account} checkingSession={auth.checkingSession} />
     </div>
   )
+}
+
+/* "08:10" for today, "4 Nov 08:10" for older articles. */
+function updatedLabel(date: Date, locale: string) {
+  const time = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  if (date.toDateString() === new Date().toDateString()) return time
+  return `${date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} ${time}`
 }

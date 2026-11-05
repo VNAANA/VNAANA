@@ -179,11 +179,6 @@
   font-weight: 500;
 }
 
-.following {
-  font-size: 12px;
-  color: var(--muted);
-}
-
 /* Bottom of the sidebar: "Log in", or the signed-in user's profile */
 .account {
   margin-top: auto;

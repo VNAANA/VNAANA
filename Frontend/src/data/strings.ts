@@ -23,7 +23,6 @@ const en = {
   },
   /** Messages from useAuth while signing in or out */
   auth: {
-    finishingSignIn: 'Finishing sign-in…',
     signInFailed: 'We could not finish signing you in. Please refresh to try again.',
     signOutFailed: 'Could not sign out. Please try again.',
   },
@@ -37,7 +36,6 @@ const en = {
     topics: 'Topics',
     edit: 'Edit',
     editTopics: 'Edit topics',
-    following: 'Following',
     viewProfile: ', view profile',
     profile: 'Profile',
   },
@@ -205,7 +203,6 @@ const nl: Strings = {
     opensInNewTab: '(opent in een nieuw tabblad)',
   },
   auth: {
-    finishingSignIn: 'Inloggen wordt afgerond…',
     signInFailed: 'We konden het inloggen niet afronden. Vernieuw de pagina om het opnieuw te proberen.',
     signOutFailed: 'Uitloggen is niet gelukt. Probeer het opnieuw.',
   },
@@ -219,7 +216,6 @@ const nl: Strings = {
     topics: 'Onderwerpen',
     edit: 'Bewerken',
     editTopics: 'Onderwerpen bewerken',
-    following: 'Gevolgd',
     viewProfile: ', profiel bekijken',
     profile: 'Profiel',
   },
