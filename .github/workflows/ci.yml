@@ -90,6 +90,7 @@ jobs:
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+
     deploy:
         name: Deploy to Azure
         runs-on: ubuntu-latest
@@ -108,11 +109,26 @@ jobs:
                   tenant-id: ${{ vars.AZURE_TENANT_ID }}
                   subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-            - name: Deploy image to Azure Container Apps
+            - name: Deploy image to Azure Container Apps and Job
               uses: azure/CLI@v1
               with:
                   inlineScript: |
+                      set -e
+
+                      IMAGE="ghcr.io/vnaana/vnaana:sha-${GITHUB_SHA}"
+
+                      echo "Deploying image: $IMAGE"
+
+                      echo "Updating API Container App..."
                       az containerapp update \
                         --name vna-api \
                         --resource-group rb-vna-dev \
-                        --image ghcr.io/vnaana/vnaana:sha-${{ github.sha }}
+                        --image "$IMAGE"
+
+                      echo "Updating scheduled news pipeline Job..."
+                      az containerapp job update \
+                        --name news-pipeline-job \
+                        --resource-group rb-vna-dev \
+                        --image "$IMAGE"
+
+                      echo "Both Azure resources updated successfully."
