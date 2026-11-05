@@ -12,6 +12,7 @@ class RawArticle:
     language: str | None
     published_at: datetime | None
     provider_id: uuid.UUID
+    last_updated_at: datetime | None = None
 
 
 @dataclass
@@ -38,3 +39,4 @@ class Article:
     published_at: datetime | None
     first_seen_at: datetime
     last_seen_at: datetime
+    last_updated_at: datetime | None = None

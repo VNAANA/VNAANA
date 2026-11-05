@@ -1,7 +1,7 @@
 import uuid
 from typing import Any, List
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -40,6 +40,7 @@ class ArticleRepository(ArticleRepositoryPort):
             author=article_model.author,
             language=article_model.language,
             published_at=article_model.published_at,
+            last_updated_at=article_model.last_updated_at,
             first_seen_at=article_model.first_seen_at,
             last_seen_at=article_model.last_seen_at,
         )
@@ -146,6 +147,14 @@ class ArticleRepository(ArticleRepositoryPort):
         }
 
         changes["last_seen_at"] = func.now()
+        if fields.get("last_updated_at") is not None:
+            stored = ArticleModel.last_updated_at
+            incoming = stmt.excluded.last_updated_at
+            changes["last_updated_at"] = case(
+                (stored.is_(None), incoming),
+                (incoming > stored, incoming),
+                else_=stored,
+            )
 
         stmt = stmt.on_conflict_do_update(
             index_elements=[ArticleModel.canonical_url],
@@ -160,6 +169,25 @@ class ArticleRepository(ArticleRepositoryPort):
         article = self._to_domain(article_model)
 
         return article, article_model.id == candidate_id
+
+    def list_random(
+        self,
+        *,
+        limit: int = 3,
+    ) -> ArticleList:
+        """Return a random sample of articles."""
+        stmt = (
+            select(ArticleModel)
+            .order_by(func.random())
+            .limit(limit)
+        )
+
+        article_models = self.db.scalars(stmt)
+
+        return [
+            self._to_domain(article_model)
+            for article_model in article_models
+        ]
 
     def list_unscraped(
         self,

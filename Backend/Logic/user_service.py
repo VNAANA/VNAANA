@@ -58,6 +58,22 @@ class UserService:
 
         return self.users.add(**data)
 
+    def get_authenticated_user(self, subject: uuid.UUID) -> User:
+        """Resolve an existing application profile without creating one on reads."""
+        user = self.users.get_by_identity("supabase", str(subject))
+        if user is None:
+            raise NotFoundError("User", subject)
+        return user
+
+    def get_or_create_authenticated_user(
+        self,
+        subject: uuid.UUID,
+    ) -> User:
+        return self.users.get_or_create_by_identity(
+            auth_provider="supabase",
+            auth_subject=str(subject),
+        )
+
     def update_user(
         self,
         user_id: uuid.UUID,
@@ -87,7 +103,6 @@ class UserService:
             if not consent:
                 # Consent went from on to off. Reactions and tag scores only
                 # exist while consent is on, so this is exactly when there is
-                # data to remove (design doc D3).
                 self.algorithm.delete_algorithm_data(user_id)
 
         return user

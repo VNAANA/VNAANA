@@ -20,3 +20,7 @@ class ConflictError(DomainError):
 
 class ConsentRequiredError(DomainError):
     pass
+
+
+class InvalidSearchError(DomainError):
+    pass

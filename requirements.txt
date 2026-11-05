@@ -10,8 +10,18 @@ SQLAlchemy==2.1.1
 psycopg[binary]==3.3.6
 alembic==1.20.0
 
+# Google Authentication
+httpx==0.28.1
 #testing
-pytest
+pytest==9.2.0
 pytest-asyncio
 feedparser
+
+# News gathering and scraping
+requests
+trafilatura
+
+# Loading .env in migrations (also pulled in by pydantic-settings, listed because we import it directly)
+python-dotenv
+
 import-linter==2.15

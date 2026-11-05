@@ -22,6 +22,7 @@ class ArticleCreate(BaseModel):
     author: str | None = None
     language: str | None = Field(default=None, max_length=5)
     published_at: datetime | None = None
+    last_updated_at: datetime | None = Field(default=None, description="Last modification reported by the publisher")
 
 
 class ArticleSummary(ORMModel):
@@ -31,6 +32,7 @@ class ArticleSummary(ORMModel):
     title: str
     canonical_url: str
     published_at: datetime | None
+    last_updated_at: datetime | None = None
     provider: ProviderRead
 
 
@@ -47,3 +49,4 @@ class ArticleRead(ORMModel):
     published_at: datetime | None
     first_seen_at: datetime
     last_seen_at: datetime
+    last_updated_at: datetime | None = None

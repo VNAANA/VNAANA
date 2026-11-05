@@ -1,0 +1,101 @@
+/* Same page frame and card as the login page */
+.page {
+  composes: page from '../LoginPage/LoginPage.module.css';
+}
+
+.top {
+  composes: top from '../LoginPage/LoginPage.module.css';
+}
+
+.back {
+  composes: back from '../LoginPage/LoginPage.module.css';
+}
+
+.main {
+  composes: main from '../LoginPage/LoginPage.module.css';
+}
+
+.card {
+  composes: card from '../LoginPage/LoginPage.module.css';
+}
+
+.title {
+  composes: title from '../LoginPage/LoginPage.module.css';
+}
+
+.intro {
+  composes: intro from '../LoginPage/LoginPage.module.css';
+}
+
+.notice {
+  composes: notice from '../LoginPage/LoginPage.module.css';
+}
+
+/* ---------- Who you are ---------- */
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.who {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.email {
+  font-size: 15px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Account actions ---------- */
+
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.signOut {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.signOut:hover {
+  background: var(--surface-2);
+}
+
+.signOut:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

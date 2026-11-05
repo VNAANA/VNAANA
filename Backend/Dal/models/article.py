@@ -32,6 +32,7 @@ class Article(Base):
     author: Mapped[str | None] = mapped_column(String)
     language: Mapped[str | None] = mapped_column(String(5))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
