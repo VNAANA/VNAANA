@@ -1,7 +1,6 @@
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
-
+from sqlalchemy.orm import Session, selectinload
 from Backend.Dal.models import ProviderSource as ProviderSourceModel
 from Backend.Logic.domain.provider_source import ProviderSource
 from Backend.Logic.ports.provider_source_repository import (
@@ -32,6 +31,7 @@ class ProviderSourceRepository(ProviderSourceRepositoryPort):
     async def get_active_sources(self) -> list[ProviderSource]:
         stmt = (
             select(ProviderSourceModel)
+            .options(selectinload(ProviderSourceModel.provider))
             .where(ProviderSourceModel.is_active.is_(True))
             .order_by(ProviderSourceModel.name)
         )
