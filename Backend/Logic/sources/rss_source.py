@@ -27,9 +27,10 @@ class RSSSource(NewsSource):
         articles: list[RawArticle] = []
 
         for entry in feed.entries:
+            updated = dict.get(entry, "updated_parsed")
             parsed_date = (
                 entry.get("published_parsed")
-                or entry.get("updated_parsed")
+                or updated
             )
 
             published_at = None
@@ -56,6 +57,10 @@ class RSSSource(NewsSource):
                         or feed.feed.get("language")
                     ),
                     published_at=published_at,
+                    last_updated_at=(
+                        datetime.fromtimestamp(calendar.timegm(updated), tz=timezone.utc)
+                        if updated else None
+                    ),
                     provider_id=source.provider_id,
                 )
             )

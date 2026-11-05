@@ -59,6 +59,7 @@ async def test_fetch_maps_feed_entry_to_raw_article(monkeypatch, source):
     assert article.author == "Author"
     assert article.language == "en"
     assert article.provider_id == source.provider_id
+    assert article.last_updated_at is None
     assert article.published_at == datetime(
         2025, 2, 3, 4, 5, 6, tzinfo=timezone.utc
     )
@@ -78,6 +79,7 @@ async def test_fetch_uses_feed_language_and_updated_date(monkeypatch, source):
     articles = await RSSSource().fetch(source)
 
     assert articles[0].language == "fr"
+    assert articles[0].last_updated_at == datetime.fromtimestamp(calendar.timegm(updated), tz=timezone.utc)
     assert articles[0].published_at == datetime.fromtimestamp(
         calendar.timegm(updated), tz=timezone.utc
     )

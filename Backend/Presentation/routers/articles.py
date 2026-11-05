@@ -48,6 +48,25 @@ def list_articles(
     )
 
 
+# Must stay above GET /{article_id}: FastAPI matches routes in order, and
+# "random" would otherwise be parsed as an article id (422).
+@router.get(
+    "/random",
+    response_model=list[ArticleRead],
+)
+def list_random_articles(
+    service: ArticleServiceDep,
+    limit: int = Query(
+        3,
+        ge=1,
+        le=20,
+    ),
+):
+    return service.list_random_articles(
+        limit=limit,
+    )
+
+
 @router.post(
     "",
     response_model=ArticleRead,
