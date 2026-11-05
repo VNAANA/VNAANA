@@ -1,91 +1,91 @@
+
+"""Entry point for the scheduled news-gathering pipeline."""
+
 import asyncio
 import logging
 
 from Backend.database import SessionLocal
-
 from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Dal.repositories.provider_repository import ProviderRepository
-
+from Backend.Dal.repositories.provider_source_repository import (
+    ProviderSourceRepository,
+)
+from Backend.Logic.article_service import ArticleService
 from Backend.Logic.article_normalization_service import (
     ArticleNormalizationService,
 )
-from Backend.Logic.article_service import ArticleService
-from Backend.Logic.article_scraping_service import (
-    ArticleScrapingService,
-)
-from Backend.Logic.news_gathering_service import (
-    NewsGatheringService,
-)
-from Backend.Logic.provider_source_service import (
-    ProviderSourceService,
-)
+from Backend.Logic.article_scraping_service import ArticleScrapingService
+from Backend.Logic.provider_source_service import ProviderSourceService
+from Backend.Logic.news_gathering_service import NewsGatheringService
 from Backend.Logic.sources.rss_source import RSSSource
 
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
 
 logger = logging.getLogger(__name__)
 
 
-async def main() -> None:
+def main() -> None:
+    logger.info("Starting news pipeline")
+
     db = SessionLocal()
 
     try:
-        logger.info("Starting news pipeline")
-
+        # Create repositories using the same database session.
         article_repository = ArticleRepository(db)
         provider_repository = ProviderRepository(db)
+        provider_source_repository = ProviderSourceRepository(db)
 
-        provider_source_repository = ProviderRepository(db)
-
+        # Create services.
         provider_source_service = ProviderSourceService(
             provider_source_repository
         )
 
-        # 1. Gather news
-        gathering_service = NewsGatheringService(
+        article_service = ArticleService(
+            article_repository,
+            provider_repository,
+        )
+
+        normalization_service = ArticleNormalizationService()
+
+        news_gathering_service = NewsGatheringService(
             provider_source_service=provider_source_service,
-            article_service=ArticleService(
-                articles=article_repository,
-                providers=provider_repository,
-            ),
+            article_service=article_service,
             article_repository=article_repository,
             provider_repository=provider_repository,
             source_handlers={
                 "rss": RSSSource(),
             },
-            article_normalization_service=ArticleNormalizationService(),
+            article_normalization_service=normalization_service,
         )
 
-        logger.info("Starting news gathering")
+        # Phase 1: Fetch feeds and ingest articles.
+        logger.info("Starting article gathering")
 
-        await gathering_service.gather()
+        asyncio.run(news_gathering_service.gather())
 
         db.commit()
+        logger.info("Article gathering committed successfully")
 
-        logger.info("News gathering completed")
-
-        # 2. Scrape article content
-        scraping_service = ArticleScrapingService(
-            article_repository=article_repository,
-        )
-
+        # Phase 2: Scrape content for articles that have not been scraped.
         logger.info("Starting article scraping")
 
-        results = scraping_service.scrape_pending_articles(
-            limit=100,
+        scraping_service = ArticleScrapingService(article_repository)
+
+        scraping_results = scraping_service.scrape_pending_articles(
+            limit=100
         )
 
         db.commit()
 
         logger.info(
-            "Scraping completed: total=%s successful=%s failed=%s",
-            results["total"],
-            results["successful"],
-            results["failed"],
+            "Article scraping finished: total=%s successful=%s failed=%s",
+            scraping_results["total"],
+            scraping_results["successful"],
+            scraping_results["failed"],
         )
 
         logger.info("News pipeline completed successfully")
@@ -97,7 +97,8 @@ async def main() -> None:
 
     finally:
         db.close()
+        logger.info("Database session closed")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
