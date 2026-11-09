@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useCarousel } from '../../hooks/useCarousel'
 import { useNovaChat } from '../../hooks/useNovaChat'
-import type { Story } from '../../types'
+import { useStrings } from '../../hooks/useStrings'
+import type { Article } from '../../types'
 import { PartDots } from './CarouselControls'
 import { PostCarousel } from './PostCarousel'
-import { getParts, PART_LABELS, PostContext } from './PostContext'
+import { getParts, PostContext } from './PostContext'
 import type { PartKey } from './PostContext'
 import { PostHeader } from './PostHeader'
 import { ReactionBar } from './ReactionBar'
@@ -14,9 +15,9 @@ import { usePostActions } from './usePostActions'
 import styles from './FeedPost.module.css'
 
 type Props = {
-  story: Story
-  /** Called when the user opens the story (moves past part 1, reads more or asks Nova). */
-  onOpened: (storyId: string) => void
+  article: Article
+  /** Called when the user opens the article (moves past part 1, reads more or asks Nova). */
+  onOpened: (articleId: string) => void
 }
 
 const PART_ELEMENTS: Record<PartKey, ReactNode> = {
@@ -27,18 +28,19 @@ const PART_ELEMENTS: Record<PartKey, ReactNode> = {
 }
 
 /*
- * One news story in the feed. Holds the state (carousel, reactions, Ask Nova
+ * One news article in the feed. Holds the state (carousel, reactions, Ask Nova
  * chat, hidden) and shares it with the pieces through PostContext.
  *
  * Layout: top bar, then a 3- or 4-part carousel (see getParts) whose part 1 shows the headline and
  * summary before the image (they swipe away together), progress dots, then
  * heart / share / Ask Nova.
  */
-export function FeedPost({ story, onOpened }: Props) {
-  const parts = getParts(story)
-  const partLabels = parts.map((part) => PART_LABELS[part])
+export function FeedPost({ article, onOpened }: Props) {
+  const { t } = useStrings()
+  const parts = getParts(article)
+  const partLabels = parts.map((part) => t.post.parts[part])
   const carousel = useCarousel(parts.length)
-  const chat = useNovaChat(story)
+  const chat = useNovaChat(article.novaArticle)
   const [hidden, setHidden] = useState(false)
   const [composerFocusRequest, setComposerFocusRequest] = useState(0)
   const undoRef = useRef<HTMLButtonElement>(null)
@@ -48,21 +50,21 @@ export function FeedPost({ story, onOpened }: Props) {
   // Every Ask Nova button in the post leads here: go to the chat part,
   // focus its input, and send the question if there is one.
   const askNova = (question?: string) => {
-    onOpened(story.id)
+    onOpened(article.id)
     carousel.goTo(parts.indexOf('readMore'))
     setComposerFocusRequest((n) => n + 1)
     if (question) void chat.send(question)
   }
 
-  const actions = usePostActions(story, {
+  const actions = usePostActions(article, {
     onHide: () => setHidden(true),
-    onOpened: () => onOpened(story.id),
+    onOpened: () => onOpened(article.id),
     onAskNova: askNova,
   })
 
   useEffect(() => {
-    if (carousel.index > 0) onOpened(story.id)
-  }, [carousel.index, onOpened, story.id])
+    if (carousel.index > 0) onOpened(article.id)
+  }, [carousel.index, onOpened, article.id])
 
   // Keep keyboard focus in a sensible place when hiding / undoing.
   useEffect(() => {
@@ -73,23 +75,23 @@ export function FeedPost({ story, onOpened }: Props) {
 
   if (hidden) {
     return (
-      <article className={styles.hidden} data-hidden="true" aria-label={`Hidden: ${story.title}`}>
+      <article className={styles.hidden} data-hidden="true" aria-label={t.post.hiddenLabel(article.title)}>
         <p>
-          <strong>Hidden</strong> · You’ll see fewer stories like this.
+          <strong>{t.post.hidden}</strong> · {t.post.hiddenText}
         </p>
         <button ref={undoRef} type="button" className={styles.undo} onClick={() => setHidden(false)}>
-          Undo
+          {t.post.undo}
         </button>
       </article>
     )
   }
 
-  const titleId = `${story.id}-title`
-  const partIds = parts.map((_, i) => `${story.id}-part-${i + 1}`)
+  const titleId = `${article.id}-title`
+  const partIds = parts.map((_, i) => `${article.id}-part-${i + 1}`)
 
   return (
     <PostContext.Provider
-      value={{ story, carousel, actions, chat, composerFocusRequest, titleId, partIds, partLabels }}
+      value={{ article, carousel, actions, chat, composerFocusRequest, titleId, partIds, partLabels }}
     >
       <article ref={postRef} className={styles.post} aria-labelledby={titleId} tabIndex={-1}>
         <PostHeader />

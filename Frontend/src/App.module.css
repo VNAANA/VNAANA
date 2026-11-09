@@ -58,7 +58,7 @@
   margin-inline: auto;
 }
 
-/* Loading / error message while the stories come in */
+/* Loading / error message while the articles come in */
 .feedMessage {
   display: grid;
   justify-items: center;

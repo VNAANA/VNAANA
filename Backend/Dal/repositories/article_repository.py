@@ -173,11 +173,15 @@ class ArticleRepository(ArticleRepositoryPort):
     def list_random(
         self,
         *,
-        limit: int = 3,
+        limit: int = 5,
     ) -> ArticleList:
-        """Return a random sample of articles."""
+        """Return a random sample of articles that have a title and description."""
         stmt = (
             select(ArticleModel)
+            .where(
+                func.trim(ArticleModel.title) != "",
+                func.trim(ArticleModel.description) != "",
+            )
             .order_by(func.random())
             .limit(limit)
         )

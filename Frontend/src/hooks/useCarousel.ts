@@ -4,7 +4,7 @@ import type { KeyboardEvent, TouchEvent } from 'react'
 const SWIPE_MIN_PX = 40
 
 /*
- * State for the story carousel.
+ * State for the article carousel.
  * One instance lives in FeedPost, so every piece of the post shares the same current part.
  */
 export function useCarousel(count: number) {

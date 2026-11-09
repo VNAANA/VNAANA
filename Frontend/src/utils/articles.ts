@@ -1,9 +1,10 @@
 /*
- * Articles from the backend, turned into feed stories.
+ * Articles from the backend, turned into the Article shape the feed uses.
  * The API only has the raw article (title, description, scraped content),
- * so Nova's analysis parts of a Story are left empty or filled with honest defaults.
+ * so Nova's analysis parts of an Article are left empty or filled with honest defaults.
  */
-import type { Story } from '../types'
+import type { Strings } from '../data/strings'
+import type { Article } from '../types'
 import { apiUrl } from './api'
 
 /* The parts of the backend's ArticleRead response that the feed uses. */
@@ -19,43 +20,53 @@ export type ApiArticle = {
   first_seen_at: string
 }
 
-export const FEED_SIZE = 3
+export const FEED_SIZE = 5
 
 const SUMMARY_MAX_CHARS = 320
 const WORDS_PER_MINUTE = 200
 
-export async function fetchRandomStories(signal?: AbortSignal): Promise<Story[]> {
+export async function fetchRandomArticles(signal?: AbortSignal): Promise<Article[]> {
   const response = await fetch(apiUrl(`/articles/random?limit=${FEED_SIZE}`), { signal })
   if (!response.ok) throw new Error('Articles request failed')
   const articles: ApiArticle[] = await response.json()
-  return articles.map(articleToStory)
+  return articles.map(toArticle)
 }
 
-export function articleToStory(article: ApiArticle): Story {
+export function toArticle(article: ApiArticle): Article {
   const content = toParagraphs(article.content)
-  const summary = shorten(htmlToText(article.description) || content[0] || '')
+  const description = htmlToText(article.description)
+  const summary = shorten(description || content[0] || '')
+  const hasFullArticle = !!article.content?.trim()
+  const previewText = [article.title.trim(), description].filter(Boolean).join('\n\n')
+  const groundingText = hasFullArticle ? article.content! : previewText
 
   return {
     id: article.id,
+    // Keep AI grounding separate from the shortened text used by the feed display.
+    ...(groundingText ? {
+      novaArticle: {
+        groundingText,
+        groundingMode: hasFullArticle ? 'full_article' : 'preview',
+        ...(!hasFullArticle ? { previewIncludesDescription: !!description } : {}),
+        ...(article.canonical_url?.trim() ? { sourceUrl: article.canonical_url } : {}),
+      },
+    } : {}),
     publisher: {
       name: article.provider.name,
       initials: initials(article.provider.name),
       verified: article.provider.reliability_status === 'verified',
     },
     author: article.author ?? undefined,
-    publishedAgo: timeAgo(new Date(article.published_at ?? article.first_seen_at)),
+    publishedAt: new Date(article.published_at ?? article.first_seen_at),
     feedReason: 'forYou',
     whyPicked: 'Picked at random from the latest articles while your personal feed is being built.',
     title: article.title,
     summary,
     content: content.length > 0 ? content : undefined,
-    aiNote: {
-      sourceCount: 1,
-      uncertainty: 'Nova hasn’t compared this article with other sources yet.',
-    },
+    aiNote: { sourceCount: 1 },
     readMore: {
       url: article.canonical_url,
-      readTime: readTime(article.content),
+      readMinutes: readMinutes(article.content),
       perspectives: [],
     },
   }
@@ -94,19 +105,20 @@ function initials(name: string) {
     .toUpperCase()
 }
 
-function readTime(content: string | null) {
+function readMinutes(content: string | null) {
   if (!content) return undefined
   const words = content.split(/\s+/).filter(Boolean).length
-  return `${Math.max(1, Math.round(words / WORDS_PER_MINUTE))} min read`
+  return Math.max(1, Math.round(words / WORDS_PER_MINUTE))
 }
 
-function timeAgo(date: Date) {
+/* "2h ago" in the display language; older than a week becomes a date. */
+export function timeAgo(date: Date, t: Strings) {
   const minutes = Math.round((Date.now() - date.getTime()) / 60000)
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 1) return t.post.timeAgo.justNow
+  if (minutes < 60) return t.post.timeAgo.minutes(minutes)
   const hours = Math.round(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t.post.timeAgo.hours(hours)
   const days = Math.round(hours / 24)
-  if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  if (days < 7) return t.post.timeAgo.days(days)
+  return date.toLocaleDateString(t.locale, { day: 'numeric', month: 'short' })
 }

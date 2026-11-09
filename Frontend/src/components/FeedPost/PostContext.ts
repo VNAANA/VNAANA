@@ -1,16 +1,16 @@
 import { createContext, useContext } from 'react'
 import type { Carousel } from '../../hooks/useCarousel'
 import type { NovaChat } from '../../hooks/useNovaChat'
-import type { Story } from '../../types'
+import type { Article } from '../../types'
 import type { PostActions } from './usePostActions'
 
 /*
- * Everything the pieces of a post need: the story, the shared carousel state,
+ * Everything the pieces of a post need: the article, the shared carousel state,
  * the reaction handlers and the Ask Nova conversation. FeedPost provides it;
  * the pieces read it with usePost().
  */
 export type PostContextValue = {
-  story: Story
+  article: Article
   carousel: Carousel
   actions: PostActions
   chat: NovaChat
@@ -18,7 +18,7 @@ export type PostContextValue = {
   composerFocusRequest: number
   titleId: string
   partIds: string[]
-  /** Labels of this story's parts, in carousel order. */
+  /** Labels of this article's parts, in carousel order. */
   partLabels: string[]
 }
 
@@ -30,21 +30,15 @@ export function usePost() {
   return context
 }
 
+/* The part names are in the post strings (t.post.parts). */
 export type PartKey = 'whatHappened' | 'why' | 'fullArticle' | 'readMore'
 
-export const PART_LABELS: Record<PartKey, string> = {
-  whatHappened: 'What happened',
-  why: 'Why it matters',
-  fullArticle: 'Full article',
-  readMore: 'Read more',
-}
-
 /*
- * The parts of a story's carousel, in order. "Full article" only appears when
+ * The parts of an article's carousel, in order. "Full article" only appears when
  * the article text has been scraped. "Read more" (with the Ask Nova chat) is always last.
  */
-export function getParts(story: Story): PartKey[] {
-  return story.content?.length
+export function getParts(article: Article): PartKey[] {
+  return article.content?.length
     ? ['whatHappened', 'why', 'fullArticle', 'readMore']
     : ['whatHappened', 'why', 'readMore']
 }

@@ -1,14 +1,15 @@
 import { useCallback, useRef, useState } from 'react'
 import { BriefingCard } from './components/BriefingCard/BriefingCard'
 import { FeedPost } from './components/FeedPost/FeedPost'
+import { PostSkeleton } from './components/FeedPost/PostSkeleton'
 import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
 import { ProfilePage } from './components/ProfilePage/ProfilePage'
-import { briefingMeta, sampleUser } from './data/sampleStories'
 import { useHash } from './hooks/useHash'
 import { useAuth } from './hooks/useAuth'
-import { useFeedStories } from './hooks/useFeedStories'
+import { useFeedArticles } from './hooks/useFeedArticles'
+import { useStrings } from './hooks/useStrings'
 import { getAccount } from './utils/account'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
@@ -19,11 +20,12 @@ const BRIEFING_STORAGE_KEY = 'vnaana.briefingDismissed'
 export default function App() {
   const hash = useHash()
   const auth = useAuth()
-  const feed = useFeedStories()
+  const feed = useFeedArticles()
+  const { t } = useStrings()
   const metadata = auth.session?.user.user_metadata
   const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
-  const firstName = displayName?.trim() || 'there'
+  const firstName = displayName?.trim()
   const [openedIds, setOpenedIds] = useState<Set<string>>(() => new Set())
   const [briefingDismissed, setBriefingDismissed] = useState(
     () => readStorage(BRIEFING_STORAGE_KEY, 'session') === 'true',
@@ -37,41 +39,47 @@ export default function App() {
     feedRef.current?.focus()
   }
 
-  const markOpened = useCallback((storyId: string) => {
-    setOpenedIds((ids) => (ids.has(storyId) ? ids : new Set(ids).add(storyId)))
+  const markOpened = useCallback((articleId: string) => {
+    setOpenedIds((ids) => (ids.has(articleId) ? ids : new Set(ids).add(articleId)))
   }, [])
 
   if (hash === '#login') return <LoginPage auth={auth} />
   if (hash === '#profile') return <ProfilePage auth={auth} />
 
   const account = getAccount(auth.session)
-  const stories = feed.stories
-  const forYouCount = stories.filter((story) => story.feedReason === 'forYou').length
+  const articles = feed.articles
+  const forYouCount = articles.filter((article) => article.feedReason === 'forYou').length
+  // Articles without scraped content have no read time; count those as a one-minute skim.
+  const readMinutes = articles.reduce((sum, article) => sum + (article.readMore.readMinutes ?? 1), 0)
+  const newest = articles.reduce<Date | undefined>(
+    (latest, article) => (!latest || article.publishedAt > latest ? article.publishedAt : latest),
+    undefined,
+  )
 
   return (
     <div className={styles.app}>
       <a href="#feed" className={styles.skipLink}>
-        Skip to feed
+        {t.feed.skipToFeed}
       </a>
-      <Sidebar user={sampleUser} account={account} />
+      <Sidebar account={account} checkingSession={auth.checkingSession} />
       <MobileTopBar />
 
       {/*
         The feed scrolls on its own and snaps to one post at a time:
         every post sits in a full-height "slide".
       */}
-      <main ref={feedRef} id="feed" className={styles.feed} tabIndex={-1} aria-label="For You feed">
-        {auth.backendStatus && <p role="status">{auth.backendStatus}</p>}
+      <main ref={feedRef} id="feed" className={styles.feed} tabIndex={-1} aria-label={t.feed.label}>
+        {auth.backendStatus && <p role="status">{t.auth[auth.backendStatus]}</p>}
         {!briefingDismissed && feed.status === 'ready' && (
           <div className={styles.intro}>
             <div className={styles.column}>
               <BriefingCard
                 firstName={firstName}
                 forYouCount={forYouCount}
-                dontMissCount={stories.length - forYouCount}
+                dontMissCount={articles.length - forYouCount}
                 openedCount={openedIds.size}
-                readTime={briefingMeta.readTime}
-                updatedAt={briefingMeta.updatedAt}
+                readMinutes={readMinutes}
+                updatedAt={newest ? updatedLabel(newest, t.locale) : ''}
                 onDismiss={dismissBriefing}
               />
             </div>
@@ -79,35 +87,47 @@ export default function App() {
         )}
 
         {feed.status === 'loading' && (
-          <p className={styles.feedMessage} role="status">
-            Nova is gathering today’s stories…
-          </p>
+          <div className={styles.slide}>
+            <div className={styles.column}>
+              <p className="sr-only" role="status">
+                {t.feed.loading}
+              </p>
+              <PostSkeleton />
+            </div>
+          </div>
         )}
         {feed.status === 'error' && (
           <div className={styles.feedMessage} role="alert">
-            <p>We couldn’t load the news right now.</p>
+            <p>{t.feed.loadFailed}</p>
             <button type="button" className={styles.retry} onClick={feed.reload}>
-              Try again
+              {t.feed.retry}
             </button>
           </div>
         )}
 
-        {stories.map((story) => (
-          <div key={story.id} className={styles.slide}>
+        {articles.map((article) => (
+          <div key={article.id} className={styles.slide}>
             <div className={styles.column}>
-              <FeedPost story={story} onOpened={markOpened} />
+              <FeedPost article={article} onOpened={markOpened} />
             </div>
           </div>
         ))}
 
         {feed.status === 'ready' && (
           <footer className={styles.feedEnd}>
-            <p>You’re all caught up for this morning.</p>
+            <p>{t.feed.caughtUp}</p>
           </footer>
         )}
       </main>
 
-      <MobileTabBar account={account} />
+      <MobileTabBar account={account} checkingSession={auth.checkingSession} />
     </div>
   )
+}
+
+/* "08:10" for today, "4 Nov 08:10" for older articles. */
+function updatedLabel(date: Date, locale: string) {
+  const time = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  if (date.toDateString() === new Date().toDateString()) return time
+  return `${date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} ${time}`
 }

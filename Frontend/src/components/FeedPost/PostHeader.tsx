@@ -2,27 +2,30 @@ import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent } from 'react'
 import { BadgeCheck, Ellipsis, EyeOff, MapPin } from 'lucide-react'
 import { TOPIC_ICONS } from '../../data/topics'
+import { useStrings } from '../../hooks/useStrings'
+import { timeAgo } from '../../utils/articles'
 import { usePost } from './PostContext'
 import styles from './PostHeader.module.css'
 
 /* The post's top bar and the small pieces it is made of (who, when, what, where). */
 
 function PublisherAvatar() {
-  const { story } = usePost()
+  const { article } = usePost()
   return (
     <span className={styles.avatar} aria-hidden="true">
-      {story.publisher.initials}
+      {article.publisher.initials}
     </span>
   )
 }
 
 function PublisherName() {
-  const { story } = usePost()
+  const { article } = usePost()
+  const { t } = useStrings()
   return (
     <span className={styles.publisher}>
-      {story.publisher.name}
-      {story.publisher.verified && (
-        <span className={styles.verified} role="img" aria-label="Verified publisher">
+      {article.publisher.name}
+      {article.publisher.verified && (
+        <span className={styles.verified} role="img" aria-label={t.post.verifiedPublisher}>
           <BadgeCheck size={16} aria-hidden="true" />
         </span>
       )}
@@ -32,15 +35,16 @@ function PublisherName() {
 
 /* Avatar + publisher + "By author · time" in one compact block. */
 function Byline() {
-  const { story } = usePost()
+  const { article } = usePost()
+  const { t } = useStrings()
   return (
     <div className={styles.byline}>
       <PublisherAvatar />
       <div className={styles.who}>
         <PublisherName />
         <span className={styles.meta}>
-          {story.author && `By ${story.author} · `}
-          {story.publishedAgo}
+          {article.author && t.post.byAuthor(article.author)}
+          {timeAgo(article.publishedAt, t)}
         </span>
       </div>
     </div>
@@ -48,25 +52,27 @@ function Byline() {
 }
 
 function TopicPill() {
-  const { story } = usePost()
-  if (!story.topic) return null
-  const Icon = TOPIC_ICONS[story.topic]
+  const { article } = usePost()
+  const { t } = useStrings()
+  if (!article.topic) return null
+  const Icon = TOPIC_ICONS[article.topic]
   return (
     <span className={styles.pill}>
       <Icon size={14} aria-hidden="true" />
-      {story.topic}
+      {t.topics[article.topic]}
     </span>
   )
 }
 
 function LocationPill() {
-  const { story } = usePost()
-  if (!story.location) return null
+  const { article } = usePost()
+  const { t } = useStrings()
+  if (!article.location) return null
   return (
     <span className={styles.pill}>
       <MapPin size={14} aria-hidden="true" />
-      <span className="sr-only">Location: </span>
-      {story.location}
+      <span className="sr-only">{t.post.location}</span>
+      {article.location}
     </span>
   )
 }
@@ -76,12 +82,13 @@ function LocationPill() {
  * Esc, clicking outside or tabbing away closes it.
  */
 function MoreMenu() {
-  const { story, actions } = usePost()
+  const { article, actions } = usePost()
+  const { t } = useStrings()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const firstItemRef = useRef<HTMLButtonElement>(null)
-  const menuId = `${story.id}-menu`
+  const menuId = `${article.id}-menu`
 
   useEffect(() => {
     if (!open) return
@@ -115,7 +122,7 @@ function MoreMenu() {
         ref={buttonRef}
         type="button"
         className={styles.iconButton}
-        aria-label="More options"
+        aria-label={t.post.moreOptions}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
@@ -124,7 +131,7 @@ function MoreMenu() {
         <Ellipsis size={20} aria-hidden="true" />
       </button>
       {open && (
-        <div id={menuId} role="menu" aria-label="Post options" className={styles.menu}>
+        <div id={menuId} role="menu" aria-label={t.post.postOptions} className={styles.menu}>
           <button
             ref={firstItemRef}
             type="button"
@@ -137,8 +144,8 @@ function MoreMenu() {
           >
             <EyeOff size={18} aria-hidden="true" />
             <span>
-              <span className={styles.menuItemTitle}>Not interested</span>
-              <span className={styles.menuItemHint}>Show fewer stories like this</span>
+              <span className={styles.menuItemTitle}>{t.post.notInterested}</span>
+              <span className={styles.menuItemHint}>{t.post.notInterestedHint}</span>
             </span>
           </button>
         </div>
