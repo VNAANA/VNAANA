@@ -19,6 +19,7 @@ class ArticleCreate(BaseModel):
     canonical_url: str = Field(min_length=1, examples=["https://nos.nl/artikel/123456"])
     title: str = Field(min_length=1)
     description: str | None = None
+    img_url: str | None = None
     author: str | None = None
     language: str | None = Field(default=None, max_length=5)
     published_at: datetime | None = None
@@ -37,6 +38,7 @@ class ArticleSummary(ORMModel):
 
 
 class ArticleRead(ORMModel):
+    img_url: str | None = None
     id: uuid.UUID
     provider: ProviderRead
     canonical_url: str
