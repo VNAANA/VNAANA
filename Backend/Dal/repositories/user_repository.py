@@ -32,6 +32,7 @@ class UserRepository(UserRepositoryPort):
             auth_provider=user.auth_provider,
             auth_subject=user.auth_subject,
             affinity_updated_at=user.affinity_updated_at,
+            onboarding_completed=user.onboarding_completed,
         )
 
     def get(self, user_id: uuid.UUID) -> User | None:

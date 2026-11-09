@@ -29,6 +29,9 @@ class User(Base):
     analytics_consent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     consent_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     affinity_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
 
     tags: Mapped[list["UserTag"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True

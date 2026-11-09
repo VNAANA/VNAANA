@@ -63,8 +63,9 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(Story.__table__.c.status.server_default.arg, "draft")
         self.assertEqual(Story.__table__.c.status.type.enums, ["draft", "published", "archived"])
         self.assertEqual(len(Base.metadata.tables), 12)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 76)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 79)
         expected_server_defaults = {
+            ("users", "onboarding_completed"),
             ("users", "analytics_consent"),
             ("providers", "created_at"),
             ("articles", "first_seen_at"),
@@ -141,6 +142,8 @@ class PersistenceTests(unittest.TestCase):
         self.assertIsNone(repo.get_by_identity("supabase", subject))
         first = repo.get_or_create_by_identity("supabase", subject)
         self.assertFalse(first.analytics_consent)
+        self.assertFalse(UserRead.model_validate(first).onboarding_completed)
+        repo.update(first, onboarding_completed=True)
         consent_time = datetime.now(timezone.utc)
         repo.update(first, language="en", preferences={"theme": "dark"},
                     analytics_consent=True, consent_updated_at=consent_time)
@@ -151,6 +154,7 @@ class PersistenceTests(unittest.TestCase):
         again = repo.get_or_create_by_identity("supabase", subject)
         self.db.commit()
         self.assertEqual(again.id, first.id)
+        self.assertTrue(UserRead.model_validate(again).onboarding_completed)
         self.assertEqual(again.language, "en")
         self.assertEqual(again.preferences, {"theme": "dark"})
         self.assertTrue(again.analytics_consent)

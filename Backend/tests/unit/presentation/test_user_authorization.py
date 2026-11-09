@@ -23,6 +23,7 @@ def context():
         id=user_id, auth_provider="supabase", auth_subject=str(subject),
         age_band=None, language=None, region=None, preferences=None,
         analytics_consent=False, consent_updated_at=None, affinity_updated_at=None,
+        onboarding_completed=False,
     )
     service = Mock()
     service.get_user.return_value = profile

@@ -16,3 +16,4 @@ class User:
     auth_provider: str
     auth_subject: str
     affinity_updated_at: datetime | None
+    onboarding_completed: bool = False

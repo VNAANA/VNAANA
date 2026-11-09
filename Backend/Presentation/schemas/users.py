@@ -40,6 +40,7 @@ class UserRead(ORMModel):
     analytics_consent: bool
     consent_updated_at: datetime | None
     affinity_updated_at: datetime | None
+    onboarding_completed: bool
 
 
 class UserTagsUpdate(BaseModel):
