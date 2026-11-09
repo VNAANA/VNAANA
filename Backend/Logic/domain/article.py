@@ -13,6 +13,8 @@ class RawArticle:
     published_at: datetime | None
     provider_id: uuid.UUID
     last_updated_at: datetime | None = None
+    image_url: str | None = None
+
 
 
 @dataclass
