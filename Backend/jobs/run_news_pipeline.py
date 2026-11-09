@@ -10,11 +10,13 @@ from Backend.Dal.repositories.provider_repository import ProviderRepository
 from Backend.Dal.repositories.provider_source_repository import (
     ProviderSourceRepository,
 )
+from Backend.Dal.repositories.story_repository import StoryRepository
 from Backend.Logic.article_service import ArticleService
 from Backend.Logic.article_normalization_service import (
     ArticleNormalizationService,
 )
 from Backend.Logic.article_scraping_service import ArticleScrapingService
+from Backend.Logic.cleanup_service import CleanupService
 from Backend.Logic.provider_source_service import ProviderSourceService
 from Backend.Logic.news_gathering_service import NewsGatheringService
 from Backend.Logic.sources.rss_source import RSSSource
@@ -86,6 +88,26 @@ def main() -> None:
             scraping_results["total"],
             scraping_results["successful"],
             scraping_results["failed"],
+        )
+
+        # Phase 3: Delete stories and articles older than 30 days.
+        # Runs after gathering, so articles still in a feed have just had
+        # their last_seen_at refreshed and are kept.
+        logger.info("Starting cleanup")
+
+        cleanup_service = CleanupService(
+            StoryRepository(db),
+            article_repository,
+        )
+
+        cleanup_results = cleanup_service.delete_expired()
+
+        db.commit()
+
+        logger.info(
+            "Cleanup finished: stories_deleted=%s articles_deleted=%s",
+            cleanup_results["stories"],
+            cleanup_results["articles"],
         )
 
         logger.info("News pipeline completed successfully")

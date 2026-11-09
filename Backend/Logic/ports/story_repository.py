@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from typing import Any, Protocol
 
@@ -60,4 +61,8 @@ class StoryRepository(Protocol):
         story_id: uuid.UUID,
         article_id: uuid.UUID,
     ) -> None:
+        ...
+
+    def delete_older_than(self, cutoff: datetime) -> int:
+        """Delete every story last updated before cutoff. Returns how many."""
         ...
