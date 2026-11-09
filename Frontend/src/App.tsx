@@ -8,8 +8,11 @@ import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
 import { ProfilePage } from './components/ProfilePage/ProfilePage'
+import { RegisterPage } from './components/RegisterPage/RegisterPage'
 import { useHash } from './hooks/useHash'
+import { TopicPreferencesDialog } from './components/TopicPreferences/TopicPreferencesDialog'
 import { useAuth } from './hooks/useAuth'
+import { useTopicPreferences } from './hooks/useTopicPreferences'
 import { useFeedArticles } from './hooks/useFeedArticles'
 import { useStrings } from './hooks/useStrings'
 import { getAccount } from './utils/account'
@@ -25,6 +28,7 @@ export default function App() {
   const auth = useAuth()
   const feed = useFeedArticles()
   const { t } = useStrings()
+  const topicState = useTopicPreferences()
   const metadata = auth.session?.user.user_metadata
   const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -46,7 +50,14 @@ export default function App() {
     setOpenedIds((ids) => (ids.has(articleId) ? ids : new Set(ids).add(articleId)))
   }, [])
 
+  // After logging in: ask for liked/disliked topics once, on the feed or Explore.
+  // Manual login requests it; a Google session gets it until the user saves or skips.
+  const showTopicPrompt =
+    topicState.promptRequested || (auth.session !== null && !topicState.preferences.asked)
+  const topicPrompt = showTopicPrompt && <TopicPreferencesDialog />
+
   if (hash === '#login') return <LoginPage auth={auth} />
+  if (hash === '#sign-up') return <RegisterPage auth={auth} />
   if (hash === '#profile') return <ProfilePage auth={auth} />
 
   const account = getAccount(auth.session)
@@ -61,6 +72,7 @@ export default function App() {
         <MobileTopBar />
         <ExplorePage filter={exploreFilterFromHash(hash)} />
         <MobileTabBar account={account} checkingSession={auth.checkingSession} current="explore" />
+        {topicPrompt}
       </div>
     )
   }
@@ -139,6 +151,7 @@ export default function App() {
       </main>
 
       <MobileTabBar account={account} checkingSession={auth.checkingSession} current="forYou" />
+      {topicPrompt}
     </div>
   )
 }

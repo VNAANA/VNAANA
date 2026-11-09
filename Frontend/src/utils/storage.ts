@@ -25,3 +25,11 @@ export function writeStorage(key: string, value: string, area: Area = 'local') {
     // Ignore: the setting just won't be remembered.
   }
 }
+
+export function removeStorage(key: string, area: Area = 'local') {
+  try {
+    getArea(area).removeItem(key)
+  } catch {
+    // Ignore: nothing was stored.
+  }
+}

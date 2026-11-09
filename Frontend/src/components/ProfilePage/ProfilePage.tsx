@@ -5,14 +5,18 @@ import { useStrings } from '../../hooks/useStrings'
 import { getAccount } from '../../utils/account'
 import { setLanguage } from '../../utils/language'
 import type { Language } from '../../utils/language'
+import { useTopicPreferences } from '../../hooks/useTopicPreferences'
+import { setTopicPreferences } from '../../utils/topicPreferences'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
+import { TopicPreferencesEditor } from '../TopicPreferences/TopicPreferencesEditor'
 import { Logo } from '../Navigation/Logo'
 import styles from './ProfilePage.module.css'
 
-/* The signed-in user's name and email, the display language, and account actions (for now: sign out). */
+/* The signed-in user's name and email, display language, liked/disliked topics, and account actions. */
 export function ProfilePage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const { session, checkingSession, backendStatus, signingOut, signOut } = auth
   const { language, t } = useStrings()
+  const { preferences } = useTopicPreferences()
   const account = getAccount(session)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
@@ -65,6 +69,17 @@ export function ProfilePage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                 <p id="language-hint" className={styles.hint}>
                   {t.profile.languageHint}
                 </p>
+              </section>
+
+              <section id="topics" className={styles.actions} aria-labelledby="topics-heading">
+                <h2 id="topics-heading" className={styles.sectionTitle}>
+                  {t.nav.topics}
+                </h2>
+                <p className={styles.hint}>{t.topicPrefs.profileHint}</p>
+                <TopicPreferencesEditor
+                  value={preferences}
+                  onChange={(next) => setTopicPreferences({ ...next, asked: true })}
+                />
               </section>
 
               <section className={styles.actions} aria-labelledby="account-actions-heading">
