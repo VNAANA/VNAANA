@@ -3,7 +3,7 @@ import feedparser
 from html import unescape
 from urllib.parse import urljoin, urlparse
 from datetime import datetime, timedelta, timezone
-
+import re
 from Backend.Logic.domain.article import RawArticle
 from Backend.Logic.domain.provider_source import ProviderSource
 from Backend.Logic.sources.news_source import NewsSource
@@ -152,7 +152,7 @@ class RSSSource(NewsSource):
                     published_at=published_at,
                     last_updated_at=last_updated_at,
                     provider_id=source.provider_id,
-                    image_url=self._extract_image_url(entry, source.url),
+                    img_url=self._extract_image_url(entry, source.url),
                 )
             )
 
