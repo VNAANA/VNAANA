@@ -17,8 +17,9 @@ export type NovaArticle = {
 }
 
 /*
- * Articles from the API don't have a topic, image or Nova's "why it matters"
- * analysis yet, so those are optional and the post shows a fallback instead.
+ * Articles from the API don't have a topic or Nova's "why it matters" analysis
+ * yet, and not every article has an image, so those are optional and the post
+ * shows a fallback instead.
  */
 export type Article = {
   id: string

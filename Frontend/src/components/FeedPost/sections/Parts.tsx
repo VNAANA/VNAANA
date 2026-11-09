@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ExternalLink, Info } from 'lucide-react'
 import { useStrings } from '../../../hooks/useStrings'
 import { NovaChatLog, NovaComposer } from '../NovaChat'
@@ -7,10 +7,11 @@ import styles from './Parts.module.css'
 
 /* The three parts of an article. FeedPost puts these inside a carousel. */
 
-/* Articles from the API have no image yet: show the publisher on a plain panel instead. */
+/* The article's image; without one, or when it fails to load, the publisher on a plain panel. */
 function ArticleImage({ className = '' }: { className?: string }) {
   const { article } = usePost()
-  if (!article.image) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  if (!article.image || failedSrc === article.image.src) {
     return (
       <div className={`${styles.imageFallback} ${className}`} aria-hidden="true">
         <span className={styles.imageFallbackName}>{article.publisher.name}</span>
@@ -25,6 +26,7 @@ function ArticleImage({ className = '' }: { className?: string }) {
       width={1200}
       height={800}
       draggable={false}
+      onError={() => setFailedSrc(article.image!.src)}
     />
   )
 }

@@ -8,7 +8,7 @@ import { apiUrl } from './api'
 import type { ApiArticle } from './articles'
 
 /*
- * Image, topic, location and explainer aren't in the articles API yet. The
+ * Topic, location and explainer aren't in the articles API yet. The
  * cards already show them when present, so only toExploreItem() has to change.
  */
 export type ExploreItem = {
@@ -66,6 +66,7 @@ export function toExploreItem(article: ApiArticle): ExploreItem {
   return {
     id: article.id,
     title: article.title,
+    imageUrl: article.img_url?.trim() || undefined,
     publisher: article.provider.name,
     publishedAt: new Date(article.published_at ?? article.first_seen_at),
     // There's no article page in the app yet, so the card opens the original article.

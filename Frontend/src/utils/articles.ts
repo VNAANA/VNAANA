@@ -12,6 +12,7 @@ export type ApiArticle = {
   id: string
   provider: { name: string; domain: string; reliability_status: string }
   canonical_url: string
+  img_url: string | null
   title: string
   description: string | null
   content: string | null
@@ -61,6 +62,7 @@ export function toArticle(article: ApiArticle): Article {
     feedReason: 'forYou',
     whyPicked: 'Picked at random from the latest articles while your personal feed is being built.',
     title: article.title,
+    ...(article.img_url?.trim() ? { image: { src: article.img_url, alt: article.title } } : {}),
     summary,
     content: content.length > 0 ? content : undefined,
     aiNote: { sourceCount: 1 },
