@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3.2"
     ollama_timeout_seconds: int = 90
 
-    supabase_url: str
-    supabase_publishable_key: str
+    supabase_url: str | None = None
+    supabase_publishable_key: str | None = None
 
 @lru_cache
 def get_settings() -> Settings:

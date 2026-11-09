@@ -1,11 +1,15 @@
 import uuid
+from datetime import datetime
 from typing import Any, List
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, exists, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from Backend.Dal.models import Article as ArticleModel
+from Backend.Dal.models import (
+    Article as ArticleModel,
+    StoryArticle as StoryArticleModel,
+)
 from Backend.Logic.domain.article import Article, ArticleProvider
 from Backend.Logic.ports.article_repository import (
     ArticleRepository as ArticleRepositoryPort,
@@ -233,3 +237,24 @@ class ArticleRepository(ArticleRepositoryPort):
         self.db.flush()
 
         return self._to_domain(article_model)
+
+    def delete_unlinked_older_than(
+        self,
+        cutoff: datetime,
+    ) -> int:
+        linked_to_a_story = exists().where(
+            StoryArticleModel.article_id == ArticleModel.id
+        )
+
+        # Engagement events keep their row, with article_id set to NULL
+        # by the database (ON DELETE SET NULL).
+        result = self.db.execute(
+            delete(ArticleModel)
+            .where(
+                ArticleModel.last_seen_at < cutoff,
+                ~linked_to_a_story,
+            )
+            .execution_options(synchronize_session=False)
+        )
+
+        return result.rowcount

@@ -107,7 +107,13 @@ class ArticleScrapingService:
         response = requests.get(
             url,
             timeout=self.timeout,
-            headers={"User-Agent": self.user_agent},
+            headers = {
+                "User-Agent": (
+                    "VNAANA/1.0 "
+                    "(https://github.com/VNAANA/VNAANA)"
+                ),
+                "Accept": "text/html,application/xhtml+xml",
+            }
         )
         response.raise_for_status()
 
