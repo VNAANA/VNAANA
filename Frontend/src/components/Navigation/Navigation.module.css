@@ -134,6 +134,10 @@
 }
 
 .editLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   min-height: var(--tap);
   min-width: var(--tap);
   padding: 0 8px;
@@ -177,6 +181,11 @@
 .topicName {
   flex: 1;
   font-weight: 500;
+}
+
+.likedMark {
+  flex: none;
+  color: var(--foryou-ink);
 }
 
 /* Bottom of the sidebar: "Log in", or the signed-in user's profile */

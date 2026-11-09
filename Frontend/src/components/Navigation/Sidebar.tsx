@@ -1,6 +1,8 @@
-import { ChevronRight, LogIn } from 'lucide-react'
-import { TOPICS, TOPIC_ICONS } from '../../data/topics'
+import { ChevronRight, LogIn, ThumbsUp } from 'lucide-react'
+import { TAG_ICONS, TAG_NAMES } from '../../data/tags'
+import type { TagName } from '../../data/tags'
 import { useStrings } from '../../hooks/useStrings'
+import { useTopicPreferences } from '../../hooks/useTopicPreferences'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Skeleton } from '../Skeleton/Skeleton'
@@ -18,8 +20,14 @@ type Props = {
   current: MainPage
 }
 
+/* Every tag; liked ones first, the rest in the default order. */
+function sidebarTags(liked: TagName[]) {
+  return [...liked, ...TAG_NAMES.filter((tag) => !liked.includes(tag))]
+}
+
 export function Sidebar({ account, checkingSession, current }: Props) {
   const { t } = useStrings()
+  const { liked } = useTopicPreferences().preferences
   return (
     <aside className={styles.sidebar}>
       <Logo />
@@ -44,20 +52,27 @@ export function Sidebar({ account, checkingSession, current }: Props) {
           <h2 id="topics-heading" className={styles.sectionTitle}>
             {t.nav.topics}
           </h2>
-          <button type="button" className={styles.editLink} aria-label={t.nav.editTopics}>
+          <a href="#profile" className={styles.editLink} aria-label={t.nav.editTopics}>
             {t.nav.edit}
-          </button>
+          </a>
         </div>
         <ul>
-          {TOPICS.map((topic) => {
-            const Icon = TOPIC_ICONS[topic]
+          {sidebarTags(liked).map((tag) => {
+            const Icon = TAG_ICONS[tag]
+            const isLiked = liked.includes(tag)
             return (
-              <li key={topic}>
-                <a href={`#topic-${topic.toLowerCase()}`} className={styles.topicRow}>
+              <li key={tag}>
+                <a href={`#topic-${tag.toLowerCase()}`} className={styles.topicRow}>
                   <span className={styles.topicIcon} aria-hidden="true">
                     <Icon size={16} />
                   </span>
-                  <span className={styles.topicName}>{t.topics[topic]}</span>
+                  <span className={styles.topicName}>{t.tags[tag]}</span>
+                  {isLiked && (
+                    <>
+                      <ThumbsUp size={14} className={styles.likedMark} aria-hidden="true" />
+                      <span className="sr-only">{t.topicPrefs.likedMark}</span>
+                    </>
+                  )}
                 </a>
               </li>
             )

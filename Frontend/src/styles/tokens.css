@@ -43,6 +43,7 @@
 
   /* Form errors */
   --error: #B42318;
+  --error-bg: #FDECEA;      /* disliked topic chips */
 
   /* Dark surfaces (briefing card) */
   --on-dark-muted: #C7CBD4;

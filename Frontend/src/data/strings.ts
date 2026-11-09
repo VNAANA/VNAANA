@@ -3,6 +3,7 @@
  * language; components read the labels with useStrings().
  * Dutch is typed against English, so a missing translation fails the build.
  */
+import type { TagName } from './tags'
 import type { Topic } from '../types'
 import type { ExploreFilter } from '../utils/explore'
 import type { Language } from '../utils/language'
@@ -66,10 +67,63 @@ const en = {
       passwordMissing: 'Enter your password.',
     },
     notices: {
-      notConnected: 'Logging in isn’t connected yet. This page is a design preview.',
       openingGoogle: 'Opening Google sign-in…',
       googleFailed: 'Could not start Google sign-in. Please try again.',
+      registered: 'Your account is ready. Log in to choose your topics.',    },
+  },
+  register: {
+    title: 'Create an account',
+    intro: 'Tell Nova what you care about and get a briefing made for you.',
+    firstName: 'First name',
+    lastName: 'Last name',
+    email: 'Email',
+    password: 'Password',
+    passwordHint: 'At least 8 characters.',
+    language: 'Language',
+    languageHint: 'Used for every label in the app and for Nova’s answers.',
+    consent:
+      'I agree that Virtual News Anchor may use my data and topic preferences to personalise the news it shows me.',
+    submit: 'Create account',
+    signUpWithGoogle: 'Sign up with Google',
+    haveAccount: 'Already have an account?',
+    errors: {
+      firstNameMissing: 'Enter your first name.',
+      lastNameMissing: 'Enter your last name.',
+      emailMissing: 'Enter your email address.',
+      emailInvalid: 'Enter an email address like name@example.com.',
+      passwordMissing: 'Choose a password.',
+      passwordShort: 'Use at least 8 characters.',
+      consentMissing: 'Tick the box to agree, so Nova can personalise your news.',
     },
+  },
+  /** The topics a user can like or dislike (TAG_NAMES) */
+  tags: {
+    Politics: 'Politics',
+    Technology: 'Technology',
+    Sports: 'Sports',
+    Climate: 'Climate',
+    Economy: 'Economy',
+    Health: 'Health',
+    Entertainment: 'Entertainment',
+    World: 'World',
+    Culture: 'Culture',
+    Science: 'Science',
+    Domestic: 'Domestic',
+    International: 'International',
+  } as Record<TagName, string>,
+  topicPrefs: {
+    title: 'What news do you want?',
+    intro: 'Pick topics you like and topics you’d rather see less of. A topic can be in only one list.',
+    liked: 'Liked topics',
+    likedHint: 'Shown first in your feed and sidebar.',
+    disliked: 'Disliked topics',
+    dislikedHint: 'You’ll see less of these.',
+    inLiked: '(already in liked topics)',
+    inDisliked: '(already in disliked topics)',
+    save: 'Save topics',
+    skip: 'Skip for now',
+    profileHint: 'Changes are saved straight away.',
+    likedMark: '(liked)',
   },
   profile: {
     title: 'Profile',
@@ -207,6 +261,7 @@ export type Strings = typeof en
 export type AuthStatus = keyof Strings['auth']
 export type LoginError = keyof Strings['login']['errors']
 export type LoginNotice = keyof Strings['login']['notices']
+export type RegisterError = keyof Strings['register']['errors']
 export type NovaErrorCode = keyof Strings['nova']['errors']
 
 const nl: Strings = {
@@ -262,10 +317,62 @@ const nl: Strings = {
       passwordMissing: 'Vul je wachtwoord in.',
     },
     notices: {
-      notConnected: 'Inloggen is nog niet gekoppeld. Deze pagina is een ontwerpvoorbeeld.',
       openingGoogle: 'Inloggen met Google wordt geopend…',
       googleFailed: 'Inloggen met Google kon niet worden gestart. Probeer het opnieuw.',
+      registered: 'Je account staat klaar. Log in om je onderwerpen te kiezen.',    },
+  },
+  register: {
+    title: 'Account aanmaken',
+    intro: 'Vertel Nova wat je interesseert en krijg een briefing op maat.',
+    firstName: 'Voornaam',
+    lastName: 'Achternaam',
+    email: 'E-mailadres',
+    password: 'Wachtwoord',
+    passwordHint: 'Minstens 8 tekens.',
+    language: 'Taal',
+    languageHint: 'Geldt voor alle teksten in de app en voor de antwoorden van Nova.',
+    consent:
+      'Ik ga ermee akkoord dat Virtual News Anchor mijn gegevens en voorkeuren voor onderwerpen gebruikt om het nieuws voor mij te personaliseren.',
+    submit: 'Account aanmaken',
+    signUpWithGoogle: 'Registreren met Google',
+    haveAccount: 'Heb je al een account?',
+    errors: {
+      firstNameMissing: 'Vul je voornaam in.',
+      lastNameMissing: 'Vul je achternaam in.',
+      emailMissing: 'Vul je e-mailadres in.',
+      emailInvalid: 'Vul een e-mailadres in zoals naam@voorbeeld.nl.',
+      passwordMissing: 'Kies een wachtwoord.',
+      passwordShort: 'Gebruik minstens 8 tekens.',
+      consentMissing: 'Vink het vakje aan om akkoord te gaan, zodat Nova je nieuws kan personaliseren.',
     },
+  },
+  tags: {
+    Politics: 'Politiek',
+    Technology: 'Technologie',
+    Sports: 'Sport',
+    Climate: 'Klimaat',
+    Economy: 'Economie',
+    Health: 'Gezondheid',
+    Entertainment: 'Entertainment',
+    World: 'Wereld',
+    Culture: 'Cultuur',
+    Science: 'Wetenschap',
+    Domestic: 'Binnenland',
+    International: 'Buitenland',
+  },
+  topicPrefs: {
+    title: 'Welk nieuws wil je zien?',
+    intro: 'Kies onderwerpen die je leuk vindt en onderwerpen waar je minder van wilt zien. Een onderwerp kan maar in één lijst staan.',
+    liked: 'Leuke onderwerpen',
+    likedHint: 'Komen als eerste in je feed en zijbalk.',
+    disliked: 'Minder leuke onderwerpen',
+    dislikedHint: 'Hier zie je minder van.',
+    inLiked: '(staat al bij leuke onderwerpen)',
+    inDisliked: '(staat al bij minder leuke onderwerpen)',
+    save: 'Onderwerpen opslaan',
+    skip: 'Nu overslaan',
+    profileHint: 'Wijzigingen worden meteen opgeslagen.',
+    likedMark: '(leuk)',
   },
   profile: {
     title: 'Profiel',
