@@ -10,6 +10,9 @@ from Backend.Logic.sources.news_source import NewsSource
 
 class RSSSource(NewsSource):
 
+    def __init__(self, max_age_days: int = 30):
+        self.max_age_days = max_age_days
+
     async def fetch(
         self,
         source: ProviderSource,
@@ -23,33 +26,37 @@ class RSSSource(NewsSource):
                 f"{getattr(feed, 'bozo_exception', 'unknown error')}"
             )
 
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(
+            days=self.max_age_days
+        )
 
         articles: list[RawArticle] = []
         skipped_old = 0
-        skipped_without_date = 0
 
         for entry in feed.entries:
             updated = entry.get("updated_parsed")
-            parsed_date = (
-                entry.get("published_parsed")
-                or updated
+            parsed_date = entry.get("published_parsed") or updated
+
+            published_at = None
+
+            if parsed_date:
+                published_at = datetime.fromtimestamp(
+                    calendar.timegm(parsed_date),
+                    tz=timezone.utc,
+                )
+
+                # Skip old articles only when a date is available.
+                if published_at < cutoff_date:
+                    skipped_old += 1
+                    continue
+
+            last_updated_at = (
+                datetime.fromtimestamp(
+                    calendar.timegm(updated),
+                    tz=timezone.utc,
+                )
+                if updated else None
             )
-
-            # Skip articles without a publication or update date.
-            if not parsed_date:
-                skipped_without_date += 1
-                continue
-
-            published_at = datetime.fromtimestamp(
-                calendar.timegm(parsed_date),
-                tz=timezone.utc,
-            )
-
-            # Skip articles older than 30 days.
-            if published_at < cutoff_date:
-                skipped_old += 1
-                continue
 
             articles.append(
                 RawArticle(
@@ -68,13 +75,7 @@ class RSSSource(NewsSource):
                         or feed.feed.get("language")
                     ),
                     published_at=published_at,
-                    last_updated_at=(
-                        datetime.fromtimestamp(
-                            calendar.timegm(updated),
-                            tz=timezone.utc,
-                        )
-                        if updated else None
-                    ),
+                    last_updated_at=last_updated_at,
                     provider_id=source.provider_id,
                 )
             )
@@ -83,7 +84,7 @@ class RSSSource(NewsSource):
             f"RSS source {source.name}: "
             f"accepted={len(articles)}, "
             f"skipped_old={skipped_old}, "
-            f"skipped_without_date={skipped_without_date}"
+            f"skipped_without_date=0"
         )
 
         return articles
