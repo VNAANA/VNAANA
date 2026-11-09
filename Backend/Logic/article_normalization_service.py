@@ -78,7 +78,7 @@ class ArticleNormalizationService:
         if parsed.scheme not in ("http", "https"):
             return None
 
-        if not parsed.netloc:
+        if not parsed.hostname:
             return None
 
         return value
