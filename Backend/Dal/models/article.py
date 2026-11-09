@@ -20,6 +20,7 @@ class Article(Base):
         UUID(as_uuid=True), ForeignKey("providers.id"), nullable=False
     )
     canonical_url: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    img_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)

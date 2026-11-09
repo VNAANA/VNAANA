@@ -38,3 +38,4 @@ class Article:
     published_at: datetime | None
     first_seen_at: datetime
     last_seen_at: datetime
+    img_url: str | None = None
