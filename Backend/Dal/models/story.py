@@ -27,6 +27,7 @@ class Story(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(Text, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text)
+    img_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     context: Mapped[str | None] = mapped_column(Text)
     status: Mapped[StoryStatus] = mapped_column(
         # Persist the enum values as PostgreSQL story_status labels.
