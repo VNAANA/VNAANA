@@ -1,10 +1,12 @@
-import { ChevronRight, Compass, LogIn, Sparkles } from 'lucide-react'
+import { ChevronRight, LogIn } from 'lucide-react'
 import { TOPICS, TOPIC_ICONS } from '../../data/topics'
 import { useStrings } from '../../hooks/useStrings'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Skeleton } from '../Skeleton/Skeleton'
 import { Logo } from './Logo'
+import { MAIN_PAGES } from './mainPages'
+import type { MainPage } from './mainPages'
 import { SearchField } from './SearchField'
 import styles from './Navigation.module.css'
 
@@ -13,9 +15,10 @@ type Props = {
   account: Account | null
   /** True until the saved session is read, so "Log in" doesn't flash before the profile. */
   checkingSession: boolean
+  current: MainPage
 }
 
-export function Sidebar({ account, checkingSession }: Props) {
+export function Sidebar({ account, checkingSession, current }: Props) {
   const { t } = useStrings()
   return (
     <aside className={styles.sidebar}>
@@ -24,19 +27,15 @@ export function Sidebar({ account, checkingSession }: Props) {
 
       <nav aria-label={t.nav.main}>
         <ul className={styles.mainNav}>
-          <li>
-            <a href="/" className={styles.navItem} aria-current="page">
-              <Sparkles size={20} aria-hidden="true" />
-              {t.nav.forYou}
-              <span className={styles.activeDot} aria-hidden="true" />
-            </a>
-          </li>
-          <li>
-            <a href="#explore" className={styles.navItem}>
-              <Compass size={20} aria-hidden="true" />
-              {t.nav.explore}
-            </a>
-          </li>
+          {MAIN_PAGES.map(({ label, href, Icon }) => (
+            <li key={label}>
+              <a href={href} className={styles.navItem} aria-current={label === current ? 'page' : undefined}>
+                <Icon size={20} aria-hidden="true" />
+                {t.nav[label]}
+                {label === current && <span className={styles.activeDot} aria-hidden="true" />}
+              </a>
+            </li>
+          ))}
         </ul>
       </nav>
 

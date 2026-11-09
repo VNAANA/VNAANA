@@ -1,0 +1,34 @@
+/* Parts shared by image cards and text tiles. The card must be position: relative. */
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* The card draws the focus ring around itself instead (see the card styles). */
+.link:focus-visible {
+  outline: none;
+}
+
+.meta {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.publisher {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+@container explore (max-width: 559.98px) {
+  .meta {
+    font-size: 12px;
+  }
+}
