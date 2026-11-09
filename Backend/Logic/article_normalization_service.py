@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from html import unescape
 
+from urllib.parse import urlparse
 from Backend.Logic.domain.article import RawArticle
 
 
@@ -48,8 +49,8 @@ class ArticleNormalizationService:
             "first_seen_at": now,
             "last_updated_at": self._normalize_date(raw_article.last_updated_at),
             "last_seen_at": now,
-            "image_url": self._normalize_image_url(
-                raw_article.image_url
+            "img_url": self._normalize_image_url(
+                raw_article.img_url
             ),
         }
 
@@ -77,7 +78,7 @@ class ArticleNormalizationService:
         if parsed.scheme not in ("http", "https"):
             return None
 
-        if not parsed.netloc:
+        if not parsed.hostname:
             return None
 
         return value
