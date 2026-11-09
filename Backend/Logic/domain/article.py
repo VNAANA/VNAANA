@@ -40,3 +40,5 @@ class Article:
     first_seen_at: datetime
     last_seen_at: datetime
     last_updated_at: datetime | None = None
+
+    img_url: str | None = None

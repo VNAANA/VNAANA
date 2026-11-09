@@ -31,6 +31,7 @@ class StoryRepository(StoryRepositoryPort):
             id=story.id,
             title=story.title,
             summary=story.summary,
+            img_url=story.img_url,
             context=story.context,
             status=story.status,
             first_published_at=story.first_published_at,

@@ -19,3 +19,4 @@ class Story:
     status: StoryStatus
     first_published_at: datetime | None
     last_updated_at: datetime
+    img_url: str | None = None
