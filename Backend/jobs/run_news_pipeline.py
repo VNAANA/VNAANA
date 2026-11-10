@@ -78,7 +78,7 @@ def main() -> None:
         scraping_service = ArticleScrapingService(article_repository)
 
         scraping_results = scraping_service.scrape_pending_articles(
-            limit=100
+            limit=1000
         )
 
         db.commit()
