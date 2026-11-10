@@ -56,7 +56,7 @@ export function Sidebar({ account, checkingSession, current }: Props) {
             {t.nav.edit}
           </a>
         </div>
-        <ul>
+        <ul className={styles.topicsList}>
           {sidebarTags(liked).map((tag) => {
             const Icon = TAG_ICONS[tag]
             const isLiked = liked.includes(tag)
