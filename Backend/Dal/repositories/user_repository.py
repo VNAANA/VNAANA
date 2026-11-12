@@ -23,15 +23,14 @@ class UserRepository(UserRepositoryPort):
     def _to_domain(user: UserModel) -> User:
         return User(
             id=user.id,
-            age_band=user.age_band,
             language=user.language,
-            region=user.region,
             preferences=user.preferences,
             analytics_consent=user.analytics_consent,
             consent_updated_at=user.consent_updated_at,
             auth_provider=user.auth_provider,
             auth_subject=user.auth_subject,
             affinity_updated_at=user.affinity_updated_at,
+            onboarding_completed=user.onboarding_completed,
         )
 
     def get(self, user_id: uuid.UUID) -> User | None:
@@ -124,6 +123,12 @@ class UserRepository(UserRepositoryPort):
         auth_provider: str,
         auth_subject: str,
     ) -> User:
+        existing = self.get_by_identity(auth_provider, auth_subject)
+        if existing is not None:
+            return existing
+
+        # Two first sign-ins may race. The unique identity constraint resolves both
+        # to one profile, preserving the winner's application ID and preferences.
         stmt = insert(UserModel).values(
             auth_provider=auth_provider,
             auth_subject=auth_subject,

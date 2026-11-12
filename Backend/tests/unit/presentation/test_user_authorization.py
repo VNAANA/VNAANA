@@ -13,6 +13,7 @@ from Backend.main import app
 from Backend.Logic.exceptions import NotFoundError
 from Backend.Logic.user_service import UserService
 from Backend.Presentation.auth import get_authenticated_subject
+from Backend.database import get_db
 from Backend.Presentation.dependencies import get_user_service, get_algorithm_service
 
 
@@ -21,8 +22,9 @@ def context():
     subject, user_id, story_id = uuid4(), uuid4(), uuid4()
     profile = SimpleNamespace(
         id=user_id, auth_provider="supabase", auth_subject=str(subject),
-        age_band=None, language=None, region=None, preferences=None,
+        language=None, preferences=None,
         analytics_consent=False, consent_updated_at=None, affinity_updated_at=None,
+        onboarding_completed=False,
     )
     service = Mock()
     service.get_user.return_value = profile
@@ -49,6 +51,8 @@ def context():
     cases = [
         ("GET", f"/users/{user_id}", None, 200),
         ("PATCH", f"/users/{user_id}", {"language": "en"}, 200),
+        ("PUT", f"/users/{user_id}/preferences", {"preferences": {"liked": ["Science"], "disliked": ["Sports"]}}, 200),
+        ("PUT", f"/users/{user_id}/onboarding", {"onboarding_completed": True}, 200),
         ("DELETE", f"/users/{user_id}", None, 204),
         ("PUT", f"/users/{user_id}/consent", {"analytics_consent": True}, 200),
         ("GET", f"/users/{user_id}/tags", None, 200),
@@ -67,7 +71,7 @@ def context():
         app.dependency_overrides.update(previous)
 
 
-@pytest.mark.parametrize("case_index", range(10))
+@pytest.mark.parametrize("case_index", range(12))
 @pytest.mark.parametrize("identity", ["missing", "owner", "other", "wrong_provider"])
 def test_all_user_routes_enforce_ownership(context, case_index, identity):
     c = context
@@ -156,6 +160,48 @@ def test_cors_allows_protected_browser_operations(context, method):
 def test_public_user_creation_remains_removed(context):
     assert context.client.post("/users", json={}).status_code in (404, 405)
     assert not context.service.mock_calls
+
+
+@pytest.mark.parametrize("enabled", [False, True, None])
+def test_password_status_is_private_to_verified_subject(context, enabled):
+    app.dependency_overrides[get_db] = lambda: Mock()
+    path = f"/auth/me/password-status?user_id={uuid4()}"
+    with patch("Backend.Presentation.routers.auth.has_password", return_value=enabled) as lookup:
+        assert context.client.get(path).status_code == 401
+        lookup.assert_not_called()
+        app.dependency_overrides[get_authenticated_subject] = lambda: context.subject
+        response = context.client.get(path)
+        assert lookup.call_args.args[1] == context.subject
+        if enabled is None:
+            assert response.status_code == 401
+        else:
+            assert response.json() == {"enabled": enabled}
+            assert response.headers["cache-control"] == "no-store"
+
+
+@pytest.mark.parametrize("methods", [("email", "google"), ("google", "email")])
+def test_linked_methods_bootstrap_with_the_verified_subject(context, methods):
+    """Supabase decides identity linking. VNA uses the resulting verified UUID."""
+    c = context
+    with patch("Backend.Presentation.auth.httpx.AsyncClient") as factory:
+        upstream = factory.return_value.__aenter__.return_value
+        for method in methods:
+            upstream.get = AsyncMock(return_value=httpx.Response(200, json={
+                "id": str(c.subject), "email": "reader@example.com",
+                "email_confirmed_at": "2026-01-01T00:00:00Z",
+                "app_metadata": {"provider": method},
+            }))
+            response = c.client.post("/users/me/bootstrap",
+                                     headers={"Authorization": f"Bearer mocked-{method}-token"},
+                                     json={"auth_subject": str(uuid4()), "auth_provider": method})
+            assert response.status_code == 200
+            assert response.json()["id"] == str(c.profile.id)
+            c.service.get_or_create_authenticated_user.assert_called_with(c.subject)
+        # An unconfirmed signup without a session cannot claim the same email.
+        c.service.reset_mock()
+        response = c.client.post("/users/me/bootstrap", json={"email": "reader@example.com"})
+        assert response.status_code == 401
+        assert not c.service.mock_calls
 
 
 def test_identity_lookup_is_read_only(context):

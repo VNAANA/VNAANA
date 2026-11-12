@@ -1,0 +1,173 @@
+/* ---------- Pop-up ---------- */
+
+.dialog {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 12px 48px rgba(14, 17, 22, 0.18);
+}
+
+.dialog::backdrop {
+  background: rgba(14, 17, 22, 0.45);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.intro {
+  margin-top: 6px;
+  font-size: 15px;
+  color: var(--body);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.save,
+.skip {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.save {
+  background: var(--ink);
+  color: #fff;
+}
+
+.save:hover {
+  background: #262b34;
+}
+
+.skip {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.skip:hover {
+  background: var(--surface-2);
+}
+
+/* ---------- Liked / disliked groups ---------- */
+
+.editor {
+  display: grid;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.group {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* The checkbox stays in the page for keyboards and screen readers; the label is the visible chip */
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--surface-2);
+}
+
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.group[data-list='liked'] .chip:has(input:checked) {
+  border-color: var(--foryou-ink);
+  background: var(--foryou-bg);
+  color: var(--foryou-ink);
+}
+
+.group[data-list='disliked'] .chip:has(input:checked) {
+  border-color: var(--error);
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* Picked in the other list */
+.chip:has(input:disabled) {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.chip:has(input:disabled) input {
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .dialog {
+    padding: 22px 18px;
+  }
+
+  .actions > * {
+    flex: 1;
+  }
+}

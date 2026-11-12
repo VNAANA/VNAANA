@@ -28,9 +28,7 @@ def new_id() -> uuid.UUID:
 def make_user(*, consent: bool = True) -> User:
     return User(
         id=new_id(),
-        age_band=None,
         language=None,
-        region=None,
         preferences=None,
         analytics_consent=consent,
         consent_updated_at=None,

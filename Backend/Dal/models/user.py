@@ -19,9 +19,7 @@ class User(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    age_band: Mapped[str | None] = mapped_column(String)
     language: Mapped[str | None] = mapped_column(String(5))
-    region: Mapped[str | None] = mapped_column(String)
     preferences: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     auth_provider: Mapped[str] = mapped_column(String, nullable=False)
     auth_subject: Mapped[str] = mapped_column(String, nullable=False)
@@ -29,6 +27,9 @@ class User(Base):
     analytics_consent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
     consent_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     affinity_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
 
     tags: Mapped[list["UserTag"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
