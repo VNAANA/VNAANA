@@ -11,6 +11,7 @@ import { useStrings } from '../../hooks/useStrings'
 import { setLanguage } from '../../utils/language'
 import type { Language } from '../../utils/language'
 import { rememberRegisteredEmail } from '../../utils/registration'
+import { registerWithPassword } from '../../utils/accountAuth'
 
 type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'consent'
 type TextField = Exclude<Field, 'consent'>
@@ -34,12 +35,6 @@ function validate(form: Form): Errors {
   return errors
 }
 
-/*
- * Manual sign-up: name, email, password, language and consent.
- * Topics are chosen after the first login, in the topic pop-up.
- * The backend isn't connected yet: a valid form goes straight to the login page.
- * The language choice applies straight away, like on the profile page.
- */
 export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const { checkingSession } = auth
   const { language, t } = useStrings()
@@ -47,6 +42,7 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const [notice, setNotice] = useState<LoginNotice | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const fieldRefs = useRef<Partial<Record<Field, HTMLInputElement | null>>>({})
 
@@ -56,8 +52,9 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
 
   const update = (field: TextField, value: string) => setForm((current) => ({ ...current, [field]: value }))
 
-  const onSubmit = (event: FormEvent) => {
+  const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    if (submitting || checkingSession || auth.session) return
     const found = validate(form)
     setErrors(found)
     const first = FIELD_ORDER.find((field) => found[field])
@@ -65,10 +62,28 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
       fieldRefs.current[first]?.focus()
       return
     }
-    // TODO backend: POST the account here, then redirect. Payload:
-    // { firstName, lastName, email, password, language, consent: true }
-    rememberRegisteredEmail(form.email.trim())
-    window.location.hash = '#login'
+    setSubmitting(true)
+    setNotice(null)
+    const email = form.email.trim()
+    try {
+      const { data, error } = await registerWithPassword({ ...form, language })
+      if (error) {
+        if (error.code === 'user_already_exists' || error.code === 'email_exists') {
+          rememberRegisteredEmail(email)
+          window.location.hash = '#login'
+          return
+        }
+        setNotice(error.code === 'weak_password' ? 'weakPassword' : 'registrationFailed')
+        return
+      }
+      if (!data.session) rememberRegisteredEmail(email)
+      // With an immediate session, useAuth opens the feed after profile bootstrap.
+      window.location.hash = '#login'
+    } catch {
+      setNotice('connectionFailed')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const onGoogle = async () => {
@@ -131,6 +146,7 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             {t.register.title}
           </h1>
           <p className={styles.intro}>{t.register.intro}</p>
+          {auth.session && <a href="#profile">{t.profile.managePassword}</a>}
 
           <form className={styles.form} onSubmit={onSubmit} noValidate>
             <div className={styles.nameRow}>
@@ -211,7 +227,7 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               {errorText('consent')}
             </div>
 
-            <button type="submit" className={styles.submit}>
+            <button type="submit" className={styles.submit} disabled={submitting || checkingSession || !!auth.session}>
               {t.register.submit}
             </button>
           </form>
@@ -220,9 +236,9 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             <span>{t.login.or}</span>
           </p>
 
-          <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession}>
+          <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession || submitting || !!auth.session}>
             <GoogleIcon />
-            {t.register.signUpWithGoogle}
+            {t.login.continueWithGoogle}
           </button>
 
           <p className={styles.notice} role="status">

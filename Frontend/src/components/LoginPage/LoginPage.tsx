@@ -6,7 +6,7 @@ import styles from './LoginPage.module.css'
 import { GoogleIcon } from './GoogleIcon'
 import { startGoogleSignIn } from '../../utils/googleSignIn'
 import { clearRegisteredEmail, readRegisteredEmail } from '../../utils/registration'
-import { requestTopicPrompt } from '../../utils/topicPreferences'
+import { loginWithPassword } from '../../utils/accountAuth'
 import type { LoginError, LoginNotice } from '../../data/strings'
 import type { useAuth } from '../../hooks/useAuth'
 import { useStrings } from '../../hooks/useStrings'
@@ -23,17 +23,13 @@ function validate(email: string, password: string): Errors {
   return errors
 }
 
-/*
- * Google sign-in uses Supabase and initializes the verified backend profile.
- * Email/password login is frontend only: a valid form opens the feed with the topic pop-up.
- */
 export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const { session, checkingSession, backendStatus, signingOut, signOut: onSignOut } = auth
   const { t } = useStrings()
-  // Coming from the register page: say the account is ready and fill in its email
   const [registeredEmail] = useState(readRegisteredEmail)
   const [email, setEmail] = useState(registeredEmail ?? '')
   const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const [notice, setNotice] = useState<LoginNotice | null>(registeredEmail ? 'registered' : null)
@@ -46,16 +42,25 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     if (registeredEmail) passwordRef.current?.focus()
   }, [registeredEmail])
 
-  const onSubmit = (event: FormEvent) => {
+  const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    if (submitting || session || checkingSession) return
     const found = validate(email, password)
     setErrors(found)
     if (found.email) emailRef.current?.focus()
     else if (found.password) passwordRef.current?.focus()
     else {
-      // TODO backend: sign in with email + password here. For now a valid form counts as logged in.
-      requestTopicPrompt()
-      window.location.hash = ''
+      setSubmitting(true)
+      setNotice(null)
+      try {
+        const { error } = await loginWithPassword(email, password)
+        if (error) setNotice(error.code === 'email_not_confirmed' ? 'registered' : 'loginFailed')
+        else setPassword('')
+      } catch {
+        setNotice('connectionFailed')
+      } finally {
+        setSubmitting(false)
+      }
     }
   }
 
@@ -146,7 +151,7 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               )}
             </div>
 
-            <button type="submit" className={styles.submit}>
+            <button type="submit" className={styles.submit} disabled={submitting || checkingSession || !!session}>
               {t.common.logIn}
             </button>
           </form>
@@ -160,7 +165,7 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               {signingOut ? t.common.signingOut : t.common.signOut}
             </button>
           ) : (
-            <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession}>
+            <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession || submitting}>
               <GoogleIcon />
               {t.login.continueWithGoogle}
             </button>

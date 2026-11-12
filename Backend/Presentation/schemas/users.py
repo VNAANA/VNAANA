@@ -1,30 +1,53 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from Backend.Logic.domain.story_reaction import Reaction
 from Backend.Presentation.schemas.common import ORMModel, TagRead
 
 
+TopicName = Literal[
+    "Politics", "Technology", "Sports", "Climate", "Economy", "Health",
+    "Entertainment", "World", "Culture", "Science", "Domestic", "International",
+]
+
+
+class TopicPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    liked: list[TopicName] = Field(default_factory=list)
+    disliked: list[TopicName] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def normalize_topics(self):
+        self.liked = list(dict.fromkeys(self.liked))
+        self.disliked = [topic for topic in dict.fromkeys(self.disliked) if topic not in self.liked]
+        return self
+
+
 class UserCreate(BaseModel):
     auth_provider: str = Field(min_length=1)
     auth_subject: str = Field(min_length=1)
-    age_band: str | None = Field(default=None, examples=["18-24"])
     language: str | None = Field(default=None, max_length=5, examples=["nl"])
-    region: str | None = Field(default=None, examples=["Noord-Brabant"])
-    preferences: dict[str, Any] | None = None
+    preferences: TopicPreferences | None = None
     analytics_consent: bool = False
 
 
 class UserUpdate(BaseModel):
     """Profile fields only. Consent has its own endpoint so it always gets a timestamp."""
 
-    age_band: str | None = None
     language: str | None = Field(default=None, max_length=5)
-    region: str | None = None
-    preferences: dict[str, Any] | None = None
+    preferences: TopicPreferences | None = None
+
+
+class PreferencesUpdate(BaseModel):
+    preferences: TopicPreferences
+
+
+class OnboardingUpdate(BaseModel):
+    onboarding_completed: bool
 
 
 class ConsentUpdate(BaseModel):
@@ -33,9 +56,7 @@ class ConsentUpdate(BaseModel):
 
 class UserRead(ORMModel):
     id: uuid.UUID
-    age_band: str | None
     language: str | None
-    region: str | None
     preferences: dict[str, Any] | None
     analytics_consent: bool
     consent_updated_at: datetime | None

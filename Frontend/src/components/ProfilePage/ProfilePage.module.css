@@ -114,3 +114,70 @@
   opacity: 0.6;
   cursor: wait;
 }
+
+.passwordPanel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ui);
+  background: var(--surface-2);
+}
+
+.passwordToggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: inherit;
+  color: var(--foryou-ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.passwordToggle::-webkit-details-marker { display: none; }
+.passwordToggle:hover, .passwordPanel[open] .passwordToggle { background: var(--foryou-bg); }
+.passwordToggle:focus-visible, .savePassword:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.passwordPanel[open] .chevron { transform: rotate(180deg); }
+.passwordHint {
+  display: block;
+  margin-top: 4px;
+  color: var(--body);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.passwordForm {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+.passwordForm input { width: 100%; min-width: 0; }
+.passwordForm label { display: grid; gap: 6px; }
+.passwordForm p:empty { margin: 0; }
+.savePassword {
+  justify-self: start;
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+.savePassword:hover { background: var(--foryou-ink); }
+.savePassword:disabled { opacity: 0.65; cursor: wait; }
+
+.verified {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-ui);
+  background: var(--topic-sports-bg);
+  color: var(--topic-sports-ink);
+  font-weight: 600;
+}
+.verified svg { flex-shrink: 0; }

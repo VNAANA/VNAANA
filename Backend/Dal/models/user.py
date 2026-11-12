@@ -19,9 +19,7 @@ class User(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    age_band: Mapped[str | None] = mapped_column(String)
     language: Mapped[str | None] = mapped_column(String(5))
-    region: Mapped[str | None] = mapped_column(String)
     preferences: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     auth_provider: Mapped[str] = mapped_column(String, nullable=False)
     auth_subject: Mapped[str] = mapped_column(String, nullable=False)

@@ -46,6 +46,18 @@ jobs:
             - name: Check architectural boundaries
               run: lint-imports
 
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+                  cache-dependency-path: Frontend/package-lock.json
+            - name: Run frontend authentication tests
+              working-directory: Frontend
+              run: |
+                  npm ci
+                  npm run test:auth
+
     publish:
         name: Build and Publish Docker Image
         runs-on: ubuntu-latest
