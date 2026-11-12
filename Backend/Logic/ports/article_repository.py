@@ -1,5 +1,6 @@
 import uuid
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Any, List
 
 from Backend.Logic.domain.article import Article
@@ -38,7 +39,7 @@ class ArticleRepository(ABC):
     def list_random(
         self,
         *,
-        limit: int = 3,
+        limit: int = 5,
     ) -> ArticleList:
         ...
 
@@ -70,4 +71,15 @@ class ArticleRepository(ABC):
         article: Article,
         **fields: Any,
     ) -> Article:
+        ...
+
+    @abstractmethod
+    def delete_unlinked_older_than(
+        self,
+        cutoff: datetime,
+    ) -> int:
+        """Delete articles last seen before cutoff that no story links to.
+
+        Returns how many were deleted.
+        """
         ...

@@ -1,8 +1,9 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import or_, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
@@ -30,6 +31,7 @@ class StoryRepository(StoryRepositoryPort):
             id=story.id,
             title=story.title,
             summary=story.summary,
+            img_url=story.img_url,
             context=story.context,
             status=story.status,
             first_published_at=story.first_published_at,
@@ -231,3 +233,17 @@ class StoryRepository(StoryRepositoryPort):
 
         self.db.delete(link)
         self.db.flush()
+
+    # ---- cleanup ----
+
+    def delete_older_than(self, cutoff: datetime) -> int:
+        # The database removes the story's tags, article links and reactions
+        # through ON DELETE CASCADE. Engagement events keep their row, with
+        # story_id set to NULL.
+        result = self.db.execute(
+            delete(StoryModel)
+            .where(StoryModel.last_updated_at < cutoff)
+            .execution_options(synchronize_session=False)
+        )
+
+        return result.rowcount

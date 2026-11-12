@@ -8,7 +8,7 @@
   user-select: none;
 }
 
-/* Stand-in when the story has no image: the publisher's name on a tinted panel */
+/* Stand-in when the article has no image: the publisher's name on a tinted panel */
 .imageFallback {
   display: grid;
   place-items: center;
@@ -39,9 +39,10 @@
  * The text keeps its height and sits below the "1 / 3" pill (--part-pad-top).
  * The image fills the rest, and gives up its height when the carousel has to shrink.
  */
+/* Side padding clears the arrows, so a long summary never runs under them */
 .leadText {
   flex: none;
-  padding: var(--part-pad-top, 18px) 20px 16px;
+  padding: var(--part-pad-top, 18px) var(--part-pad-x, 20px) 16px;
 }
 
 .leadImage {
@@ -67,10 +68,6 @@
 }
 
 @container parts (max-width: 520px) {
-  .leadText {
-    padding-inline: 18px;
-  }
-
   .headline {
     font-size: 26px;
   }

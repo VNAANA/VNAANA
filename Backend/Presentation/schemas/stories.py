@@ -9,6 +9,7 @@ from Backend.Presentation.schemas.common import ORMModel, TagRead
 
 
 class StoryCreate(BaseModel):
+    img_url: str | None = None
     title: str = Field(min_length=1)
     summary: str | None = None
     context: str | None = None
@@ -16,6 +17,7 @@ class StoryCreate(BaseModel):
 
 
 class StoryUpdate(BaseModel):
+    img_url: str | None = None
     title: str | None = Field(default=None, min_length=1)
     summary: str | None = None
     context: str | None = None
@@ -50,6 +52,7 @@ class StoryArticleRead(ORMModel):
 
 
 class StoryListItem(ORMModel):
+    img_url: str | None = None
     id: uuid.UUID
     title: str
     summary: str | None

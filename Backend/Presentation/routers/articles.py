@@ -57,7 +57,7 @@ def list_articles(
 def list_random_articles(
     service: ArticleServiceDep,
     limit: int = Query(
-        3,
+        5,
         ge=1,
         le=20,
     ),

@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { useStrings } from '../../hooks/useStrings'
 import { CarouselArrows, CounterPill } from './CarouselControls'
 import { usePost } from './PostContext'
 import styles from './PostCarousel.module.css'
@@ -15,13 +16,15 @@ type Props = {
 }
 
 /*
- * The side-to-side story carousel. Every part has the same height,
+ * The side-to-side article carousel. Every part has the same height,
  * so moving between parts never changes the size of the post.
  * Arrow keys and touch swipes work when it has focus / is touched.
- * The arrows are vertically centred; on narrow carousels they move to the bottom corners.
+ * The arrows are vertically centred; on narrow desktop carousels they move to the
+ * bottom corners, and phones don't show them (they swipe).
  */
 export function PostCarousel({ parts, className = '', partPadding }: Props) {
-  const { story, carousel, partIds, partLabels } = usePost()
+  const { article, carousel, partIds, partLabels } = usePost()
+  const { t } = useStrings()
 
   const paddingVars = {
     '--part-pad-top': partPadding?.top && `${partPadding.top}px`,
@@ -34,8 +37,8 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
         className={styles.viewport}
         style={paddingVars}
         role="region"
-        aria-roledescription="carousel"
-        aria-label={`${story.title}, in ${carousel.count} parts. Use the left and right arrow keys to move.`}
+        aria-roledescription={t.post.carousel.roleCarousel}
+        aria-label={t.post.carousel.label(article.title, carousel.count)}
         tabIndex={0}
         {...carousel.keyHandlers}
         {...carousel.swipeHandlers}
@@ -47,8 +50,8 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
               id={partIds[i]}
               className={styles.slide}
               role="group"
-              aria-roledescription="part"
-              aria-label={`${i + 1} of ${carousel.count}: ${partLabels[i]}`}
+              aria-roledescription={t.post.carousel.rolePart}
+              aria-label={t.post.carousel.partLabel(i + 1, carousel.count, partLabels[i])}
               inert={i !== carousel.index}
             >
               {part}
@@ -61,7 +64,7 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
       <CarouselArrows />
 
       <p className="sr-only" aria-live="polite">
-        Part {carousel.index + 1} of {carousel.count}: {partLabels[carousel.index]}
+        {t.post.carousel.announce(carousel.index + 1, carousel.count, partLabels[carousel.index])}
       </p>
     </div>
   )

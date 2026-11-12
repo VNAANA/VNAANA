@@ -1,0 +1,24 @@
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+}
+
+.gap {
+  margin-top: 8px;
+}
+
+/* Meta line at the bottom, like the real cards */
+.meta {
+  margin-top: auto;
+}
+
+@container explore (max-width: 559.98px) {
+  .tile {
+    padding: 14px;
+  }
+}

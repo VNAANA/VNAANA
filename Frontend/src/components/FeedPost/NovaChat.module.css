@@ -12,10 +12,6 @@
   color: var(--muted);
 }
 
-.prototype {
-  font-style: italic;
-}
-
 .user {
   align-self: flex-end;
   max-width: 85%;

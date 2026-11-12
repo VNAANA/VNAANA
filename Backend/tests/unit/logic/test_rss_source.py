@@ -48,7 +48,7 @@ async def test_fetch_maps_feed_entry_to_raw_article(monkeypatch, source):
     parse = Mock(return_value=feed)
     monkeypatch.setattr(rss_module.feedparser, "parse", parse)
 
-    articles = await RSSSource().fetch(source)
+    articles = await RSSSource(max_age_days=1000).fetch(source)
 
     parse.assert_called_once_with(source.url)
     assert len(articles) == 1
@@ -76,7 +76,7 @@ async def test_fetch_uses_feed_language_and_updated_date(monkeypatch, source):
     )
     monkeypatch.setattr(rss_module.feedparser, "parse", Mock(return_value=feed))
 
-    articles = await RSSSource().fetch(source)
+    articles = await RSSSource(max_age_days=3650).fetch(source)
 
     assert articles[0].language == "fr"
     assert articles[0].last_updated_at == datetime.fromtimestamp(calendar.timegm(updated), tz=timezone.utc)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Story } from '../../types'
+import type { Article } from '../../types'
 
 type Reaction = 'like' | 'dislike' | null
 
@@ -11,7 +11,7 @@ type Handlers = {
 }
 
 /* Reaction state and handlers for one post. */
-export function usePostActions(story: Story, { onHide, onOpened, onAskNova }: Handlers) {
+export function usePostActions(article: Article, { onHide, onOpened, onAskNova }: Handlers) {
   const [reaction, setReaction] = useState<Reaction>(null)
   const [saved, setSaved] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
@@ -21,10 +21,10 @@ export function usePostActions(story: Story, { onHide, onOpened, onAskNova }: Ha
     setReaction((current) => (current === value ? null : value))
 
   const share = async () => {
-    const url = story.readMore.url
+    const url = article.readMore.url
     try {
       if (navigator.share) {
-        await navigator.share({ title: story.title, url })
+        await navigator.share({ title: article.title, url })
       } else {
         await navigator.clipboard.writeText(url)
         setLinkCopied(true)

@@ -1,62 +1,98 @@
-/*
- * Ask Nova – MOCK version.
- * There is no AI behind this yet. Answers are built from the story data
- * after a short delay, so the UI can be designed and tested.
- * Swap the body of `askNova` for a real API call later; the UI only
- * depends on the `NovaAnswer` shape.
- */
-import type { Story } from '../types'
+/* Ask Nova's single article-grounded API request. */
+import type { NovaArticle } from '../types'
+import type { NovaErrorCode } from '../data/strings'
+import { apiUrl } from './api'
+import type { Language } from './language'
+
+/* Nova answers in the display language chosen on the profile page. */
+export type NovaLanguage = Language
+export const MAX_NOVA_ARTICLE_CHARS = 12_000
+
+/* A failed request. The chat shows the message for `code` in the display language. */
+export class NovaError extends Error {
+  readonly code: NovaErrorCode
+
+  constructor(code: NovaErrorCode) {
+    super(`Nova request failed: ${code}`)
+    this.code = code
+  }
+}
+
+export type NovaSuggestion = {
+  label: string
+  action: 'ask' | 'simplify'
+}
 
 export type NovaAnswer = {
   text: string
   sources: string[]
   uncertainty: string
+  status: 'answered' | 'insufficient_information'
 }
 
-export const SUGGESTED_QUESTIONS = [
-  'Explain it simpler',
-  'What led to this?',
-  'What happens next?',
-] as const
-
-const FAKE_DELAY_MS = 900
-
-function firstSentence(text: string) {
-  return text.split(/(?<=\.)\s/)[0]
+// Shown in the answer language; the label is also the question sent to Nova.
+export const NOVA_SUGGESTIONS: Record<NovaLanguage, readonly NovaSuggestion[]> = {
+  en: [
+    { label: 'Explain it simpler', action: 'simplify' },
+    { label: 'What led to this?', action: 'ask' },
+    { label: 'What happens next?', action: 'ask' },
+  ],
+  nl: [
+    { label: 'Leg het eenvoudiger uit', action: 'simplify' },
+    { label: 'Wat leidde hiertoe?', action: 'ask' },
+    { label: 'Wat gebeurt er nu?', action: 'ask' },
+  ],
 }
 
-function lastSentence(text: string) {
-  const sentences = text.split(/(?<=\.)\s/)
-  return sentences[sentences.length - 1]
+export async function askNova(article: NovaArticle, question: string, language: NovaLanguage): Promise<NovaAnswer> {
+  return requestNova('/ai/ask', {
+    article_text: article.groundingText,
+    question,
+    language,
+    ...(article.sourceUrl ? { source_url: article.sourceUrl } : {}),
+  })
 }
 
-export async function askNova(story: Story, question: string): Promise<NovaAnswer> {
-  await new Promise((resolve) => setTimeout(resolve, FAKE_DELAY_MS))
+export async function simplifyNova(article: NovaArticle, language: NovaLanguage): Promise<NovaAnswer> {
+  return requestNova('/ai/summarize', {
+    article_text: article.groundingText,
+    language,
+    ...(article.sourceUrl ? { source_url: article.sourceUrl } : {}),
+  })
+}
 
-  const q = question.toLowerCase()
-  const { why } = story
-  // Stories from the API have no analysis yet; fall back to the article text.
-  const firstPoint = why?.points[0]?.text ?? story.content?.[1] ?? ''
-  const background = why?.background ?? story.content?.[2] ?? firstSentence(story.summary)
-  let text: string
-
-  if (q.includes('simple')) {
-    text = `In short: ${firstSentence(story.summary)} ${firstPoint}`
-  } else if (q.includes('led to') || q.includes('why')) {
-    text = `Some background: ${background} That is part of why this is news now.`
-  } else if (q.includes('next')) {
-    text = `Nothing is final yet. Based on the reporting so far: ${lastSentence(story.summary)}`
-  } else if (q.includes('for me')) {
-    text = `${story.whyPicked} The most direct effect: ${firstPoint}`
-  } else if (why) {
-    text = `Here is what the sources agree on: ${why.points.map((point) => `${point.keyword} – ${point.text}`).join(' ')}`
-  } else {
-    text = `Here is what the article says: ${story.summary}`
+async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<string, unknown>): Promise<NovaAnswer> {
+  const url = apiUrl(path)
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    throw new NovaError('unreachable')
   }
+  if (response.status === 422) throw new NovaError('invalidRequest')
+  if (response.status === 503) throw new NovaError('modelUnavailable')
+  if (!response.ok) throw new NovaError('failed')
 
-  return {
-    text,
-    sources: [story.publisher.name, ...story.readMore.perspectives.map((p) => p.publisher)],
-    uncertainty: story.aiNote.uncertainty,
+  let answer: unknown
+  try {
+    answer = await response.json()
+  } catch {
+    throw new NovaError('invalidResponse')
   }
+  if (
+    !answer || typeof answer !== 'object' ||
+    !('text' in answer) || typeof answer.text !== 'string' ||
+    !('sources' in answer) || !Array.isArray(answer.sources) ||
+    !answer.sources.every((source: unknown) => typeof source === 'string') ||
+    !('uncertainty' in answer) || typeof answer.uncertainty !== 'string' ||
+    !('status' in answer) ||
+    (answer.status !== 'answered' && answer.status !== 'insufficient_information')
+  ) {
+    throw new NovaError('invalidResponse')
+  }
+  return answer as NovaAnswer
 }
