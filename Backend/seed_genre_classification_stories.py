@@ -1,4 +1,4 @@
-"""Seed three draft Stories for Genre Classification development.
+"""Seed three draft Stories for Genre Classification testing.
 
 This utility is intentionally dry-run by default. It never imports
 ``Backend.database`` and therefore cannot fall back to the application's local
@@ -28,7 +28,7 @@ from Backend.Logic.story_service import StoryService
 
 ID_NAMESPACE = uuid.UUID("8b055cad-dfc9-4c8a-9417-e321dc35d642")
 TITLE_PREFIX = "[GC TEST]"
-ALLOWED_ENVIRONMENTS = {"test", "development"}
+ALLOWED_ENVIRONMENTS = {"test", "development", "production"}
 
 
 @dataclass(frozen=True)
@@ -123,7 +123,7 @@ def _safe_target(url: URL) -> str:
     return f"{host}/{database}"
 
 
-def _verified_database_url(confirm_target: str) -> URL:
+def _verified_database_url(confirm_target: str, confirm_production: bool) -> URL:
     raw_url = os.getenv("GENRE_CLASSIFICATION_DATABASE_URL")
     environment = os.getenv("GENRE_CLASSIFICATION_DATABASE_ENV", "").lower()
     expected_host = os.getenv("GENRE_CLASSIFICATION_EXPECTED_DB_HOST")
@@ -133,8 +133,13 @@ def _verified_database_url(confirm_target: str) -> URL:
         raise RuntimeError("GENRE_CLASSIFICATION_DATABASE_URL is required; no fallback is allowed")
     if environment not in ALLOWED_ENVIRONMENTS:
         raise RuntimeError(
-            "GENRE_CLASSIFICATION_DATABASE_ENV must be 'test' or 'development'"
+            "GENRE_CLASSIFICATION_DATABASE_ENV must be 'test', 'development', "
+            "or 'production'"
         )
+    if environment == "production" and not confirm_production:
+        raise RuntimeError("Pass --confirm-production for an approved production write")
+    if environment != "production" and confirm_production:
+        raise RuntimeError("--confirm-production requires a production environment")
     if not expected_host or not expected_database:
         raise RuntimeError(
             "GENRE_CLASSIFICATION_EXPECTED_DB_HOST and "
@@ -209,13 +214,18 @@ def main() -> None:
         default="",
         help="exact host/database confirmation required for a write",
     )
+    parser.add_argument(
+        "--confirm-production",
+        action="store_true",
+        help="acknowledge that the approved write targets production",
+    )
     args = parser.parse_args()
 
     if not args.apply and not args.cleanup:
         _print_fixtures()
         return
 
-    url = _verified_database_url(args.confirm_target)
+    url = _verified_database_url(args.confirm_target, args.confirm_production)
     engine = create_engine(url, pool_pre_ping=True)
     try:
         with Session(engine) as session, session.begin():

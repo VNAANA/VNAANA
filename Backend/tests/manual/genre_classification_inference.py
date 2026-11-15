@@ -10,6 +10,7 @@ import argparse
 import os
 from pathlib import Path
 
+from Backend.config import get_settings
 from Backend.Logic.genre_classification_service import (
     MAX_INPUT_LENGTH,
     MAX_TAGS,
@@ -58,12 +59,12 @@ def run(checkpoint: Path, labels_path: Path | None, device_name: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    checkpoint_from_env = os.getenv("GENRE_CLASSIFICATION_CHECKPOINT")
+    settings = get_settings()
     labels_from_env = os.getenv("GENRE_CLASSIFICATION_LABELS_FILE")
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path(checkpoint_from_env) if checkpoint_from_env else None,
+        default=settings.genre_classification_model_path,
         help="local Hugging Face/PyTorch checkpoint directory",
     )
     parser.add_argument(
@@ -72,12 +73,21 @@ def main() -> None:
         default=Path(labels_from_env) if labels_from_env else None,
         help="optional JSON array giving the checkpoint's trained label order",
     )
-    parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument(
+        "--device",
+        choices=("cpu", "cuda"),
+        default=None,
+        help="override GENRE_CLASSIFICATION_DEVICE (default: cpu)",
+    )
     args = parser.parse_args()
 
     if args.checkpoint is None:
-        parser.error("provide --checkpoint or set GENRE_CLASSIFICATION_CHECKPOINT")
-    run(args.checkpoint, args.labels_file, args.device)
+        parser.error("provide --checkpoint or set GENRE_CLASSIFICATION_MODEL_PATH")
+    run(
+        args.checkpoint,
+        args.labels_file,
+        args.device or settings.genre_classification_device,
+    )
 
 
 if __name__ == "__main__":

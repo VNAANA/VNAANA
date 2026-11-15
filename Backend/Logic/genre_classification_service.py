@@ -1,7 +1,3 @@
-"""Reusable local RobBERT V2 inference for Story genre classification."""
-
-from __future__ import annotations
-
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,19 +21,14 @@ class GenrePrediction:
     score: float
 
 
-def _read_labels(path: Path) -> list[str]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise RuntimeError(f"Could not read label order from {path}") from exc
-    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        raise RuntimeError("The labels file must be a JSON array of genre names")
-    return value
-
-
-def _validated_labels(model, labels_path: Path | None) -> tuple[str, ...]:
+def _get_labels(model, labels_path: Path | None) -> list[str]:
     if labels_path is not None:
-        labels = _read_labels(labels_path)
+        try:
+            labels = json.loads(labels_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(f"Could not read labels from {labels_path}") from exc
+        if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
+            raise RuntimeError("Labels must be a JSON list of genre names")
     else:
         mapping = model.config.id2label or {}
         labels = [mapping.get(index) for index in range(model.config.num_labels)]
@@ -49,24 +40,12 @@ def _validated_labels(model, labels_path: Path | None) -> tuple[str, ...]:
                 "label order through a labels file"
             )
 
-    if len(labels) != len(VNAANA_GENRES):
-        raise RuntimeError(
-            f"Expected {len(VNAANA_GENRES)} labels, checkpoint provides {len(labels)}"
-        )
-    if len(set(labels)) != len(labels):
-        raise RuntimeError("Checkpoint label names must be unique")
-    unknown = sorted(set(labels) - set(VNAANA_GENRES))
-    missing = sorted(set(VNAANA_GENRES) - set(labels))
-    if unknown or missing:
-        raise RuntimeError(
-            f"Checkpoint labels do not match VNAANA genres; unknown={unknown}, missing={missing}"
-        )
-    return tuple(labels)
+    if len(labels) != len(VNAANA_GENRES) or set(labels) != set(VNAANA_GENRES):
+        raise RuntimeError("Checkpoint labels do not match the VNAANA genres")
+    return labels
 
 
 class GenreClassificationService:
-    """Load one local model and reuse it for multiple Story predictions."""
-
     def __init__(self, *, model, tokenizer, labels: Sequence[str], torch_module, device):
         self.model = model
         self.tokenizer = tokenizer
@@ -103,7 +82,7 @@ class GenreClassificationService:
         model = AutoModelForSequenceClassification.from_pretrained(
             checkpoint, local_files_only=True
         )
-        labels = _validated_labels(model, labels_path)
+        labels = _get_labels(model, labels_path)
         model.to(device)
         model.eval()
         return cls(
@@ -111,20 +90,14 @@ class GenreClassificationService:
             torch_module=torch, device=device,
         )
 
-    @staticmethod
-    def classification_input(
-        title: str, summary: str | None, context: str | None
-    ) -> str:
-        return "\n\n".join(
+    def classify(
+        self, *, title: str, summary: str | None, context: str | None
+    ) -> list[GenrePrediction]:
+        text = "\n\n".join(
             part.strip()
             for part in (title, summary, context)
             if part and part.strip()
         )
-
-    def classify(
-        self, *, title: str, summary: str | None, context: str | None
-    ) -> list[GenrePrediction]:
-        text = self.classification_input(title, summary, context)
         if not text:
             raise ValueError("At least one non-blank Story text field is required")
 
@@ -151,4 +124,5 @@ class GenreClassificationService:
             key=lambda prediction: prediction.score,
             reverse=True,
         )
-        return [p for p in ranked if p.score >= THRESHOLD][:MAX_TAGS]
+        selected = [prediction for prediction in ranked if prediction.score >= THRESHOLD]
+        return selected[:MAX_TAGS]
