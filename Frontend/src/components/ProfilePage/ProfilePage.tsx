@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { readGoogleStatus, readPasswordStatus, setAccountPassword } from '../../utils/accountAuth'
 import { supabase } from '../../utils/supabase'
 import { startGoogleLink, type LinkResult } from '../../utils/googleLink'
@@ -11,9 +11,12 @@ import { setLanguage } from '../../utils/language'
 import type { Language } from '../../utils/language'
 import { useTopicPreferences } from '../../hooks/useTopicPreferences'
 import { setTopicPreferences } from '../../utils/topicPreferences'
+import { PROFILE_TABS, profileHash } from '../../utils/profileTabs'
+import type { ProfileTab } from '../../utils/profileTabs'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { TopicPreferencesEditor } from '../TopicPreferences/TopicPreferencesEditor'
 import { Logo } from '../Navigation/Logo'
+import { MobileTabBar } from '../Navigation/MobileBars'
 import styles from './ProfilePage.module.css'
 
 function PasswordForm({ userId, enabled, onSaved }: { userId: string; enabled: boolean; onSaved: () => void }) {
@@ -161,18 +164,48 @@ function AuthenticationMethods({ userId, token, linkResult }: { userId: string; 
   )
 }
 
-/* The signed-in user's name and email, display language, liked/disliked topics, and account actions. */
-export function ProfilePage({ auth }: { auth: ReturnType<typeof useAuth> }) {
+type Props = {
+  auth: ReturnType<typeof useAuth>
+  /** The open tab, read from the URL hash by App. */
+  tab: ProfileTab
+}
+
+/*
+ * The signed-in user's profile, split into tabs along the top:
+ * "Profile settings" (name, email, language, authentication methods, sign out) and "Topics".
+ */
+export function ProfilePage({ auth, tab }: Props) {
   const { session, checkingSession, backendStatus, signingOut, signOut, linkResult } = auth
   const { language, t } = useStrings()
   const { preferences } = useTopicPreferences()
   const account = getAccount(session)
   const headingRef = useRef<HTMLHeadingElement>(null)
+  const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>({})
 
   // Coming from the feed, start keyboard and screen reader users at the page title
   useEffect(() => {
     headingRef.current?.focus()
   }, [])
+
+  // replace() so switching tabs doesn't fill the back button's history.
+  const openTab = (next: ProfileTab) => window.location.replace(profileHash(next))
+
+  // Tabs pattern: arrow keys, Home and End move between tabs and open them.
+  const onTabKeyDown = (event: KeyboardEvent) => {
+    const index = PROFILE_TABS.indexOf(tab)
+    const last = PROFILE_TABS.length - 1
+    const target = {
+      ArrowRight: index === last ? 0 : index + 1,
+      ArrowLeft: index === 0 ? last : index - 1,
+      Home: 0,
+      End: last,
+    }[event.key]
+    if (target === undefined) return
+    event.preventDefault()
+    const next = PROFILE_TABS[target]
+    openTab(next)
+    tabRefs.current[next]?.focus()
+  }
 
   return (
     <div className={styles.page}>
@@ -192,56 +225,91 @@ export function ProfilePage({ auth }: { auth: ReturnType<typeof useAuth> }) {
 
           {account ? (
             <>
-              <div className={styles.identity}>
-                <AccountAvatar account={account} size={64} />
-                <div className={styles.who}>
-                  <p className={styles.name}>{account.name}</p>
-                  {account.email && <p className={styles.email}>{account.email}</p>}
-                </div>
+              <div role="tablist" aria-label={t.profile.tabs.label} className={styles.tabs}>
+                {PROFILE_TABS.map((id) => (
+                  <button
+                    key={id}
+                    ref={(element) => {
+                      tabRefs.current[id] = element
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`profile-tab-${id}`}
+                    aria-controls={`profile-panel-${id}`}
+                    aria-selected={id === tab}
+                    tabIndex={id === tab ? 0 : -1}
+                    className={styles.tab}
+                    onClick={() => openTab(id)}
+                    onKeyDown={onTabKeyDown}
+                  >
+                    {t.profile.tabs[id]}
+                  </button>
+                ))}
               </div>
 
-              <section className={styles.actions} aria-labelledby="language-heading">
-                <h2 id="language-heading" className={styles.sectionTitle}>
-                  {t.profile.language}
-                </h2>
-                <select
-                  className={styles.select}
-                  value={language}
-                  onChange={(event) => setLanguage(event.target.value as Language)}
-                  aria-labelledby="language-heading"
-                  aria-describedby="language-hint"
-                >
-                  {/* Each language is named in itself, so it can be found whatever is selected */}
-                  <option value="en" lang="en">English</option>
-                  <option value="nl" lang="nl">Nederlands</option>
-                </select>
-                <p id="language-hint" className={styles.hint}>
-                  {t.profile.languageHint}
-                </p>
-              </section>
+              <div
+                role="tabpanel"
+                id={`profile-panel-${tab}`}
+                aria-labelledby={`profile-tab-${tab}`}
+                className={styles.panel}
+              >
+                {tab === 'settings' && (
+                  <>
+                    <div className={styles.identity}>
+                      <AccountAvatar account={account} size={64} />
+                      <div className={styles.who}>
+                        <p className={styles.name}>{account.name}</p>
+                        {account.email && <p className={styles.email}>{account.email}</p>}
+                      </div>
+                    </div>
 
-              <section id="topics" className={styles.actions} aria-labelledby="topics-heading">
-                <h2 id="topics-heading" className={styles.sectionTitle}>
-                  {t.nav.topics}
-                </h2>
-                <p className={styles.hint}>{t.topicPrefs.profileHint}</p>
-                <TopicPreferencesEditor
-                  value={preferences}
-                  onChange={(next) => setTopicPreferences({ ...next, asked: true })}
-                />
-              </section>
+                    <section className={styles.actions} aria-labelledby="language-heading">
+                      <h2 id="language-heading" className={styles.sectionTitle}>
+                        {t.profile.language}
+                      </h2>
+                      <select
+                        className={styles.select}
+                        value={language}
+                        onChange={(event) => setLanguage(event.target.value as Language)}
+                        aria-labelledby="language-heading"
+                        aria-describedby="language-hint"
+                      >
+                        {/* Each language is named in itself, so it can be found whatever is selected */}
+                        <option value="en" lang="en">English</option>
+                        <option value="nl" lang="nl">Nederlands</option>
+                      </select>
+                      <p id="language-hint" className={styles.hint}>
+                        {t.profile.languageHint}
+                      </p>
+                    </section>
 
-              {session && <AuthenticationMethods key={session.user.id} userId={session.user.id} token={session.access_token} linkResult={linkResult} />}
+                    {session && <AuthenticationMethods key={session.user.id} userId={session.user.id} token={session.access_token} linkResult={linkResult} />}
 
-              <section className={styles.actions} aria-labelledby="account-actions-heading">
-                <h2 id="account-actions-heading" className={styles.sectionTitle}>
-                  {t.profile.accountActions}
-                </h2>
-                <button type="button" className={styles.signOut} onClick={signOut} disabled={signingOut}>
-                  <LogOut size={20} aria-hidden="true" />
-                  {signingOut ? t.common.signingOut : t.common.signOut}
-                </button>
-              </section>
+                    <section className={styles.actions} aria-labelledby="account-actions-heading">
+                      <h2 id="account-actions-heading" className={styles.sectionTitle}>
+                        {t.profile.accountActions}
+                      </h2>
+                      <button type="button" className={styles.signOut} onClick={signOut} disabled={signingOut}>
+                        <LogOut size={20} aria-hidden="true" />
+                        {signingOut ? t.common.signingOut : t.common.signOut}
+                      </button>
+                    </section>
+                  </>
+                )}
+
+                {tab === 'topics' && (
+                  <section className={styles.actions} aria-labelledby="topics-heading">
+                    <h2 id="topics-heading" className={styles.sectionTitle}>
+                      {t.nav.topics}
+                    </h2>
+                    <p className={styles.hint}>{t.topicPrefs.profileHint}</p>
+                    <TopicPreferencesEditor
+                      value={preferences}
+                      onChange={(next) => setTopicPreferences({ ...next, asked: true })}
+                    />
+                  </section>
+                )}
+              </div>
             </>
           ) : (
             <p className={styles.intro}>
@@ -263,6 +331,11 @@ export function ProfilePage({ auth }: { auth: ReturnType<typeof useAuth> }) {
           </p>
         </div>
       </main>
+
+      {/* Phones keep the bottom tab bar here too; on desktop it hides itself. */}
+      <div className={styles.tabBar}>
+        <MobileTabBar account={account} checkingSession={checkingSession} current="profile" />
+      </div>
     </div>
   )
 }

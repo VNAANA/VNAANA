@@ -157,6 +157,10 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
   min-height: var(--tap);
   min-width: var(--tap);
   padding: 0 8px;
@@ -339,6 +343,78 @@
 
 .tab:focus-visible {
   outline-offset: -3px;
+}
+
+/* ---------- Mobile Topics sheet ---------- */
+
+/* Slides up from the bottom, full width. No padding here: see TopicsSheet's backdrop click. */
+.sheet {
+  width: 100%;
+  max-width: 100%;
+  max-height: 80dvh;
+  margin: auto 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 -8px 32px rgba(14, 17, 22, 0.18);
+}
+
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+  animation: sheet-up 0.2s ease-out;
+}
+
+.sheet::backdrop {
+  background: rgba(14, 17, 22, 0.45);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* The header stays put; only the topic list scrolls (it already scrolls in the sidebar too). */
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+}
+
+.sheetTitle {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sheetClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: 0;
+  border-radius: var(--radius-ui);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.sheetClose:hover {
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 /* Desktop shows the sidebar; smaller screens show the top and bottom bars */

@@ -5,11 +5,21 @@ import { TopicPreferencesEditor } from './TopicPreferencesEditor'
 import type { TopicLists } from './TopicPreferencesEditor'
 import styles from './TopicPreferences.module.css'
 
+type Props = {
+  /**
+   * "prompt": the pop-up shown once after logging in ("Skip for now" marks it as asked).
+   * "edit": opened from the sidebar's Edit link ("Cancel" just closes it).
+   */
+  mode?: 'prompt' | 'edit'
+  /** Called after Save, Cancel/Skip or Escape. Defaults to closing the login prompt. */
+  onClose?: () => void
+}
+
 /*
- * The pop-up shown after logging in: asks which topics the user likes and dislikes.
- * A native modal <dialog> keeps focus inside and closes on Escape (same as "Skip").
+ * Pop-up that asks which topics the user likes and dislikes.
+ * A native modal <dialog> keeps focus inside and closes on Escape (same as Skip/Cancel).
  */
-export function TopicPreferencesDialog() {
+export function TopicPreferencesDialog({ mode = 'prompt', onClose = closeTopicPrompt }: Props) {
   const { t } = useStrings()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [draft, setDraft] = useState<TopicLists>(() => {
@@ -25,7 +35,7 @@ export function TopicPreferencesDialog() {
 
   const save = () => {
     setTopicPreferences({ ...draft, asked: true })
-    closeTopicPrompt()
+    onClose()
   }
 
   return (
@@ -34,7 +44,11 @@ export function TopicPreferencesDialog() {
       className={styles.dialog}
       aria-labelledby="topic-dialog-title"
       aria-describedby="topic-dialog-intro"
-      onCancel={closeTopicPrompt}
+      onCancel={(event) => {
+        // Let React unmount the dialog instead of the browser closing it underneath us.
+        event.preventDefault()
+        onClose()
+      }}
     >
       <h2 id="topic-dialog-title" className={styles.title}>
         {t.topicPrefs.title}
@@ -46,8 +60,8 @@ export function TopicPreferencesDialog() {
       <TopicPreferencesEditor value={draft} onChange={setDraft} />
 
       <div className={styles.actions}>
-        <button type="button" className={styles.skip} onClick={closeTopicPrompt}>
-          {t.topicPrefs.skip}
+        <button type="button" className={styles.skip} onClick={onClose}>
+          {mode === 'edit' ? t.topicPrefs.cancel : t.topicPrefs.skip}
         </button>
         <button type="button" className={styles.save} onClick={save}>
           {t.topicPrefs.save}

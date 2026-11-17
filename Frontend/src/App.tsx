@@ -17,6 +17,7 @@ import { useFeedArticles } from './hooks/useFeedArticles'
 import { useStrings } from './hooks/useStrings'
 import { getAccount } from './utils/account'
 import { exploreFilterFromHash, isExploreHash } from './utils/explore'
+import { isProfileHash, profileTabFromHash } from './utils/profileTabs'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
 
@@ -58,7 +59,7 @@ export default function App() {
 
   if (hash === '#login') return <LoginPage auth={auth} />
   if (hash === '#sign-up') return <RegisterPage auth={auth} />
-  if (hash === '#profile') return <ProfilePage auth={auth} />
+  if (isProfileHash(hash)) return <ProfilePage auth={auth} tab={profileTabFromHash(hash)} />
 
   const account = getAccount(auth.session)
   if (isExploreHash(hash)) {
