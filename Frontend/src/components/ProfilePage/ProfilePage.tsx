@@ -15,6 +15,7 @@ import { PROFILE_TABS, profileHash } from '../../utils/profileTabs'
 import type { ProfileTab } from '../../utils/profileTabs'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { TopicPreferencesEditor } from '../TopicPreferences/TopicPreferencesEditor'
+import type { TopicLists } from '../TopicPreferences/TopicPreferencesEditor'
 import { Logo } from '../Navigation/Logo'
 import { MobileTabBar } from '../Navigation/MobileBars'
 import styles from './ProfilePage.module.css'
@@ -177,7 +178,19 @@ type Props = {
 export function ProfilePage({ auth, tab }: Props) {
   const { session, checkingSession, backendStatus, signingOut, signOut, linkResult } = auth
   const { language, t } = useStrings()
-  const { preferences } = useTopicPreferences()
+  const { preferences, userId } = useTopicPreferences()
+  const [topicsFailed, setTopicsFailed] = useState(false)
+  const [languageFailed, setLanguageFailed] = useState(false)
+
+  const changeLanguage = (next: Language) => {
+    setLanguageFailed(false)
+    setLanguage(next).catch(() => setLanguageFailed(true))
+  }
+
+  const changeTopics = (next: TopicLists) => {
+    setTopicsFailed(false)
+    setTopicPreferences(next).catch(() => setTopicsFailed(true))
+  }
   const account = getAccount(session)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>({})
@@ -270,7 +283,7 @@ export function ProfilePage({ auth, tab }: Props) {
                       <select
                         className={styles.select}
                         value={language}
-                        onChange={(event) => setLanguage(event.target.value as Language)}
+                        onChange={(event) => changeLanguage(event.target.value as Language)}
                         aria-labelledby="language-heading"
                         aria-describedby="language-hint"
                       >
@@ -280,6 +293,9 @@ export function ProfilePage({ auth, tab }: Props) {
                       </select>
                       <p id="language-hint" className={styles.hint}>
                         {t.profile.languageHint}
+                      </p>
+                      <p className={styles.topicsError} role="alert">
+                        {languageFailed && t.profile.languageSaveFailed}
                       </p>
                     </section>
 
@@ -302,11 +318,17 @@ export function ProfilePage({ auth, tab }: Props) {
                     <h2 id="topics-heading" className={styles.sectionTitle}>
                       {t.nav.topics}
                     </h2>
-                    <p className={styles.hint}>{t.topicPrefs.profileHint}</p>
-                    <TopicPreferencesEditor
-                      value={preferences}
-                      onChange={(next) => setTopicPreferences({ ...next, asked: true })}
-                    />
+                    {userId ? (
+                      <>
+                        <p className={styles.hint}>{t.topicPrefs.profileHint}</p>
+                        <TopicPreferencesEditor value={preferences} onChange={changeTopics} />
+                        <p className={styles.topicsError} role="alert">
+                          {topicsFailed && t.topicPrefs.saveFailed}
+                        </p>
+                      </>
+                    ) : (
+                      <p className={styles.hint}>{t.common.checkingSession}</p>
+                    )}
                   </section>
                 )}
               </div>

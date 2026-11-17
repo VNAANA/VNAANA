@@ -11,7 +11,7 @@ Layers:
 from fastapi import FastAPI
 
 from Backend.Presentation.error_handlers import register_error_handlers
-from Backend.Presentation.routers import ai, articles, auth, stories, users
+from Backend.Presentation.routers import ai, articles, auth, stories, tags, users
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -35,3 +35,4 @@ app.include_router(stories.router)
 app.include_router(articles.router)
 app.include_router(auth.router)
 app.include_router(ai.router)
+app.include_router(tags.router)

@@ -38,6 +38,24 @@
   margin-top: 24px;
 }
 
+.error {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--error);
+}
+
+/* Stays in the page (not display: none) so screen readers announce the message when it appears */
+.error:empty {
+  margin: 0;
+}
+
+.save:disabled,
+.skip:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .save,
 .skip {
   min-height: 48px;

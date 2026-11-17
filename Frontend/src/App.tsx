@@ -11,6 +11,7 @@ import { ProfilePage } from './components/ProfilePage/ProfilePage'
 import { RegisterPage } from './components/RegisterPage/RegisterPage'
 import { useHash } from './hooks/useHash'
 import { TopicPreferencesDialog } from './components/TopicPreferences/TopicPreferencesDialog'
+import { ConsentDialog } from './components/ConsentDialog/ConsentDialog'
 import { useAuth } from './hooks/useAuth'
 import { useTopicPreferences } from './hooks/useTopicPreferences'
 import { useFeedArticles } from './hooks/useFeedArticles'
@@ -51,15 +52,19 @@ export default function App() {
     setOpenedIds((ids) => (ids.has(articleId) ? ids : new Set(ids).add(articleId)))
   }, [])
 
-  // After logging in: ask for liked/disliked topics once, on the feed or Explore.
-  // Manual login requests it; a Google session gets it until the user saves or skips.
-  const showTopicPrompt =
-    topicState.promptRequested || (auth.session !== null && !topicState.preferences.asked)
-  const topicPrompt = showTopicPrompt && <TopicPreferencesDialog />
+  // After login or registration, once the backend profile is loaded:
+  // 1. no consent yet → the required consent pop-up, on every page;
+  // 2. then, until onboarding is completed → the topic pop-up on the feed or Explore.
+  const profileLoaded = auth.session !== null && topicState.userId !== null
+  const consentPrompt = profileLoaded && !topicState.analyticsConsent && (
+    <ConsentDialog />
+  )
+  const topicPrompt =
+    profileLoaded && topicState.analyticsConsent && !topicState.onboardingCompleted && <TopicPreferencesDialog />
 
-  if (hash === '#login') return <LoginPage auth={auth} />
-  if (hash === '#sign-up') return <RegisterPage auth={auth} />
-  if (isProfileHash(hash)) return <ProfilePage auth={auth} tab={profileTabFromHash(hash)} />
+  if (hash === '#login') return <><LoginPage auth={auth} />{consentPrompt}</>
+  if (hash === '#sign-up') return <><RegisterPage auth={auth} />{consentPrompt}</>
+  if (isProfileHash(hash)) return <><ProfilePage auth={auth} tab={profileTabFromHash(hash)} />{consentPrompt}</>
 
   const account = getAccount(auth.session)
   if (isExploreHash(hash)) {
@@ -73,6 +78,7 @@ export default function App() {
         <MobileTopBar />
         <ExplorePage filter={exploreFilterFromHash(hash)} />
         <MobileTabBar account={account} checkingSession={auth.checkingSession} current="explore" />
+        {consentPrompt}
         {topicPrompt}
       </div>
     )
@@ -152,6 +158,7 @@ export default function App() {
       </main>
 
       <MobileTabBar account={account} checkingSession={auth.checkingSession} current="forYou" />
+      {consentPrompt}
       {topicPrompt}
     </div>
   )

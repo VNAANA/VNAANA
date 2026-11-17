@@ -190,6 +190,12 @@
   color: var(--muted);
 }
 
+.topicsError {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--error);
+}
+
 .signOut {
   display: flex;
   align-items: center;

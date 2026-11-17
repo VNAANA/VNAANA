@@ -1,15 +1,34 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import type { AuthStatus } from '../data/strings'
-import { apiUrl } from '../utils/api'
 import { supabase } from '../utils/supabase'
 import { useHash } from './useHash'
 import { finishGoogleLink, readLinkCallback, type LinkResult } from '../utils/googleLink'
+import { bootstrapProfile, giveAnalyticsConsent } from '../utils/profileApi'
+import type { Profile } from '../utils/profileApi'
+import { clearTopicState, loadTopicState } from '../utils/topicPreferences'
+import { clearProfileLanguage, loadProfileLanguage } from '../utils/language'
 
 const initialUrl = new URL(window.location.href)
 const linkCallback = readLinkCallback(initialUrl)
 const oauthError = initialUrl.searchParams.has('error') ||
   new URLSearchParams(initialUrl.hash.slice(1)).has('error')
+/*
+ * The registration form's required consent checkbox is kept in Supabase user
+ * metadata; copy it to the profile on the first login. Used only while consent
+ * was never set, so it can't undo a later choice. Without consent (e.g. a new
+ * Google account) App shows the consent pop-up instead. A failure is not
+ * fatal: the pop-up asks, or the next bootstrap tries again.
+ */
+async function applySignUpConsent(profile: Profile, session: Session): Promise<Profile> {
+  const agreedAtSignUp = session.user.user_metadata?.personalization_consent === true
+  if (profile.analyticsConsent || !agreedAtSignUp || profile.consentUpdatedAt !== null) return profile
+  try {
+    return await giveAnalyticsConsent(profile.id, session.access_token)
+  } catch {
+    return profile
+  }
+}
 
 /** Keep authentication alive on both the feed and the login page. */
 export function useAuth() {
@@ -70,6 +89,8 @@ export function useAuth() {
   useEffect(() => {
     if (!session) {
       setReadyToken(null)
+      clearTopicState()
+      clearProfileLanguage()
       return
     }
     // A stale or mismatched linking callback must never provision another profile.
@@ -78,19 +99,16 @@ export function useAuth() {
     const timeout = window.setTimeout(() => controller.abort(), 15000)
     let active = true
     const token = session.access_token
+    const current = session
 
     async function bootstrap() {
       // No "in progress" text: this runs on every load with a saved session, so it would flash each time.
       try {
-        const response = await fetch(apiUrl('/users/me/bootstrap'), {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error('Profile request failed')
-        const profile = await response.json()
-        if (typeof profile.id !== 'string') throw new Error('Invalid profile')
+        const profile = await applySignUpConsent(await bootstrapProfile(token, controller.signal), current)
         if (active) {
+          loadTopicState(profile)
+          // The registration form keeps its language in Supabase user metadata.
+          loadProfileLanguage(profile.id, profile.language, current.user.user_metadata?.language)
           setBackendStatus(null)
           setReadyToken(token)
           if (window.location.hash === '#login') window.location.hash = ''
