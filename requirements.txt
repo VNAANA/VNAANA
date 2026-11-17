@@ -25,3 +25,6 @@ trafilatura
 python-dotenv
 
 import-linter==2.15
+
+# IANA time zones for calendar-day grouping on Windows.
+tzdata>=2025.2
