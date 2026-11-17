@@ -11,6 +11,7 @@ from Backend.Presentation.schemas.feed import FeedRead
 from Backend.Presentation.schemas.stories import (
     StoryArticleLink,
     StoryArticleRead,
+    StoryArticlesPageRead,
     StoryCreate,
     StoryListItem,
     StoryRead,
@@ -19,6 +20,16 @@ from Backend.Presentation.schemas.stories import (
 )
 
 router = APIRouter(prefix="/stories", tags=["stories"])
+
+
+@router.get("/{story_id}/articles", response_model=StoryArticlesPageRead)
+def get_story_articles(
+    story_id: uuid.UUID,
+    service: StoryServiceDep,
+    limit: int = Query(20, ge=0, le=100),
+    offset: int = Query(0, ge=0),
+):    
+    return service.list_articles(story_id, limit=limit, offset=offset)
 
 
 @router.get("", response_model=list[StoryListItem])

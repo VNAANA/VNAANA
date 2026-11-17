@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from Backend.Logic.domain.story import StoryStatus
-from Backend.Presentation.schemas.articles import ArticleSummary
+from Backend.Presentation.schemas.articles import ArticleSummary, ArticleRead
 from Backend.Presentation.schemas.common import ORMModel, TagRead
 
 
@@ -51,7 +51,23 @@ class StoryArticleRead(ORMModel):
     added_at: datetime
 
 
+class StoryArticleDetailsRead(ORMModel):
+    article: ArticleRead
+    similarity_score: float | None
+    is_primary: bool
+    added_at: datetime
+
+
+class StoryArticlesPageRead(ORMModel):
+    story_id: uuid.UUID
+    articles_count: int
+    limit: int
+    offset: int
+    articles: list[StoryArticleDetailsRead]
+
+
 class StoryListItem(ORMModel):
+    articles_count: int = 0
     img_url: str | None = None
     id: uuid.UUID
     title: str

@@ -107,6 +107,63 @@ class SchemaTests(unittest.TestCase):
 
 
 class PersistenceTests(unittest.TestCase):
+    def test_story_list_and_detail_response_contract(self):
+        from Backend.Dal.repositories.story_repository import StoryRepository
+        from Backend.Presentation.schemas.stories import StoryRead, StoryListItem
+        story = Story(title="Published story", context="Main content", summary="Summary",
+                      status=StoryStatus.published, img_url="https://example.test/image.jpg")
+        draft = Story(title="Draft story")
+        tag = Tag(name="Science")
+        article = Article(provider_id=self.provider.id, canonical_url="https://example.test/story-source",
+                          title="Source", content="Source text")
+        self.db.add_all([story, draft, tag, article])
+        self.db.flush()
+        self.db.add(StoryTag(story_id=story.id, tag_id=tag.id, relevance_score=.9))
+        self.db.add(StoryArticle(story_id=story.id, article_id=article.id, is_primary=True, similarity_score=1))
+        self.db.commit()
+        repo = StoryRepository(self.db)
+        rows = repo.list(status=StoryStatus.published)
+        self.assertEqual(len(rows), 1)
+        card = StoryListItem.model_validate(rows[0])
+        self.assertEqual(card.articles_count, 1)
+        detail = StoryRead.model_validate(repo.get(story.id))
+        self.assertEqual(detail.context, "Main content")
+        self.assertEqual(detail.tags[0].tag.name, "Science")
+        self.assertEqual(detail.articles[0].article.id, article.id)
+        self.assertTrue(detail.articles[0].is_primary)
+        self.assertEqual(StoryRead.model_validate(repo.get(draft.id)).articles, [])
+        self.assertIsNone(repo.get(uuid.uuid4()))
+        self.assertEqual(repo.list(status=StoryStatus.published, offset=1), [])
+
+    def test_story_articles_endpoint_data_pagination_count_and_isolation(self):
+        from Backend.Dal.repositories.story_repository import StoryRepository
+        from Backend.Logic.story_service import StoryService
+        from Backend.Presentation.schemas.stories import StoryArticlesPageRead
+        first, other, empty = Story(title="First"), Story(title="Other"), Story(title="Empty")
+        self.db.add_all([first, other, empty])
+        self.db.flush()
+        for i in range(3):
+            article = Article(provider_id=self.provider.id, canonical_url=f"https://example.test/api/{i}",
+                              title=f"Article {i}", content="Full source text" if i != 0 else None)
+            self.db.add(article)
+            self.db.flush()
+            self.db.add(StoryArticle(story_id=first.id if i < 2 else other.id,
+                                    article_id=article.id, is_primary=i == 1, similarity_score=.8))
+        self.db.commit()
+        service = StoryService(StoryRepository(self.db), None, None)
+        page = StoryArticlesPageRead.model_validate(service.list_articles(first.id, limit=1))
+        self.assertEqual(page.articles_count, 2)
+        self.assertEqual(len(page.articles), 1)
+        self.assertTrue(page.articles[0].is_primary)
+        self.assertEqual(page.articles[0].article.content, "Full source text")
+        self.assertEqual(page.articles[0].article.provider.id, self.provider.id)
+        self.assertIsNone(service.list_articles(first.id, offset=1).articles[0].article.content)
+        self.assertEqual(service.list_articles(first.id, limit=0).articles, [])
+        self.assertEqual(service.list_articles(first.id, offset=99).articles_count, 2)
+        self.assertEqual(service.list_articles(empty.id).articles_count, 0)
+        with self.assertRaises(NotFoundError):
+            service.list_articles(uuid.uuid4())
+
     def setUp(self):
         self.engine = create_engine("sqlite://")
         event.listen(self.engine, "connect", lambda db, _: db.execute("PRAGMA foreign_keys=ON"))

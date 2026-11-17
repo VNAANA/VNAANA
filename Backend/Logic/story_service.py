@@ -13,6 +13,10 @@ MIN_SEARCH_LENGTH = 2
 
 
 class StoryService:
+    def list_articles(self, story_id: uuid.UUID, *, limit: int = 20, offset: int = 0):
+        self.get_story(story_id)
+        return self.stories.list_articles(story_id, limit=limit, offset=offset)
+
     def __init__(
         self,
         stories: StoryRepository,

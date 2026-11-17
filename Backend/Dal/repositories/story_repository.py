@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import delete, or_, select, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
@@ -12,8 +12,12 @@ from Backend.Dal.models import (
     StoryStatus,
     StoryTag as StoryTagModel,
 )
-from Backend.Logic.domain.story import Story
+from Backend.Logic.domain.story import Story, StoryDetails, StoryTagDetails
+from Backend.Logic.domain.tag import Tag
+from dataclasses import asdict
 from Backend.Logic.domain.story_article_link import StoryArticleLink
+from Backend.Logic.domain.story_articles import StoryArticleDetails, StoryArticlesPage
+from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Logic.ports.story_repository import (
     StoryRepository as StoryRepositoryPort,
 )
@@ -65,12 +69,23 @@ class StoryRepository(StoryRepositoryPort):
     # ---- stories ----
 
     def get(self, story_id: uuid.UUID) -> Story | None:
-        story = self.db.get(StoryModel, story_id)
+        story = self.db.scalar(select(StoryModel).where(StoryModel.id == story_id).execution_options(populate_existing=True).options(
+            selectinload(StoryModel.tags),
+            selectinload(StoryModel.articles).selectinload(StoryArticleModel.article),
+        ))
 
         if story is None:
             return None
 
-        return self._to_domain(story)
+        result = StoryDetails(**asdict(self._to_domain(story)))
+        result.tags = [StoryTagDetails(Tag(link.tag.id, link.tag.name), link.relevance_score)
+                       for link in sorted(story.tags, key=lambda link: str(link.tag_id))]
+        result.articles = [StoryArticleDetails(ArticleRepository._to_domain(link.article),
+                           link.similarity_score, link.is_primary, link.added_at)
+                           for link in sorted(story.articles,
+                               key=lambda link: (not link.is_primary, link.added_at, str(link.article_id)))]
+        result.articles_count = len(result.articles)
+        return result
 
     def list(
         self,
@@ -81,7 +96,10 @@ class StoryRepository(StoryRepositoryPort):
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
-        stmt = select(StoryModel)
+        count = (select(func.count()).select_from(StoryArticleModel)
+                 .where(StoryArticleModel.story_id == StoryModel.id)
+                 .correlate(StoryModel).scalar_subquery())
+        stmt = select(StoryModel, count.label("articles_count"))
 
         if status is not None:
             stmt = stmt.where(StoryModel.status == status)
@@ -104,14 +122,17 @@ class StoryRepository(StoryRepositoryPort):
 
         stmt = (
             stmt
-            .order_by(StoryModel.last_updated_at.desc())
+            .order_by(StoryModel.last_updated_at.desc(), StoryModel.id)
             .limit(limit)
             .offset(offset)
         )
 
-        stories = self.db.scalars(stmt)
-
-        return [self._to_domain(story) for story in stories]
+        results = []
+        for story, articles_count in self.db.execute(stmt):
+            item = self._to_domain(story)
+            item.articles_count = articles_count
+            results.append(item)
+        return results
 
     def add(self, **fields: Any) -> Story:
         story_model = StoryModel(**fields)
@@ -170,6 +191,22 @@ class StoryRepository(StoryRepositoryPort):
         self.db.flush()
 
     # ---- story_articles ----
+
+    def list_articles(self, story_id: uuid.UUID, *, limit: int, offset: int) -> StoryArticlesPage:
+        predicate = StoryArticleModel.story_id == story_id
+        count = self.db.scalar(select(func.count()).select_from(StoryArticleModel).where(predicate))
+        links = self.db.scalars(
+            select(StoryArticleModel).where(predicate)
+            .options(selectinload(StoryArticleModel.article))
+            .order_by(StoryArticleModel.is_primary.desc(), StoryArticleModel.added_at,
+                      StoryArticleModel.article_id)
+            .limit(limit).offset(offset)
+        ).all()
+        return StoryArticlesPage(story_id, count, limit, offset, [
+            StoryArticleDetails(ArticleRepository._to_domain(link.article), link.similarity_score,
+                                link.is_primary, link.added_at)
+            for link in links
+        ])
 
     def get_article_link(
         self,
