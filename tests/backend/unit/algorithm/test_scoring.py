@@ -4,7 +4,7 @@ import pytest
 
 from Backend.Logic.Algorithm.scoring import score_user
 from Backend.Logic.domain.story_reaction import Reaction
-from Backend.tests.unit.algorithm.builders import (
+from tests.backend.unit.algorithm.builders import (
     NOW,
     declared,
     make_event,

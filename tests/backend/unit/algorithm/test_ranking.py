@@ -8,7 +8,7 @@ from Backend.Logic.Algorithm.ranking import (
     rank_stories,
     story_score,
 )
-from Backend.tests.unit.algorithm.builders import NOW, days_ago, make_story, new_id
+from tests.backend.unit.algorithm.builders import NOW, days_ago, make_story, new_id
 
 HIKING, SPORT, POLITICS = new_id(), new_id(), new_id()
 

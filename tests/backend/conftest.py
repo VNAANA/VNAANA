@@ -4,7 +4,7 @@ import pytest
 
 from Backend.Logic.algorithm_service import AlgorithmService
 from Backend.Logic.user_service import UserService
-from Backend.tests.unit.algorithm.fakes import (
+from tests.backend.unit.algorithm.fakes import (
     FakeAlgorithmRepository,
     FakeStoryRepository,
     FakeUserRepository,

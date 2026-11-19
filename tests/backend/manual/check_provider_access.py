@@ -1,3 +1,4 @@
+"""Manual only: needs a real database. Run from the repository root with `python -m tests.backend.manual.check_provider_access`."""
 
 import logging
 from collections import defaultdict

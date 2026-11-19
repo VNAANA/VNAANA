@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import { after, before, beforeEach, mock, test } from 'node:test'
 import { createServer } from 'vite'
 import { createClient } from '@supabase/supabase-js'
+import { fileURLToPath } from 'node:url'
 
+const frontendRoot = fileURLToPath(new URL('../../../Frontend', import.meta.url))
 const origin = 'http://localhost:5173'
 const owner = 'bc23ace9-2ba8-46f2-b98b-12230f22eb3a'
 const other = 'ed916111-d043-472c-b9a7-1c7cb799e17e'
@@ -11,7 +13,7 @@ let server, account, google, link, sdk
 // Load the application's actual TypeScript modules with a controlled Auth client.
 before(async () => {
   server = await createServer({
-    configFile: false, envFile: false, logLevel: 'silent',
+    root: frontendRoot, configFile: false, envFile: false, logLevel: 'silent',
     server: { middlewareMode: true, hmr: false, watch: null },
     plugins: [{
       name: 'auth-test-double', enforce: 'pre',

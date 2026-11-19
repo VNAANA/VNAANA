@@ -1,3 +1,5 @@
+"""Manual only: needs a real database. Run from the repository root with `python -m tests.backend.manual.check_provider_connection`."""
+
 from uuid import UUID
 
 from Backend.database import SessionLocal

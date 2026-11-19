@@ -1,4 +1,4 @@
-"""Manual only: run from repository root with `python -m Backend.tests.manual.ai_ollama_smoke`."""
+"""Manual only: run from repository root with `python -m tests.backend.manual.ai_ollama_smoke`."""
 
 from Backend.Logic.ai_service import AIModelError
 from Backend.Presentation.dependencies import get_ai_service

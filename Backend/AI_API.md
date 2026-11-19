@@ -80,7 +80,7 @@ characters; text is never silently truncated for AI. `Frontend/src/utils/nova.ts
 uses the same `VITE_API_BASE_URL` helper as article fetching. The UI must not claim
 multiple verified sources based on this single-context API.
 
-Run offline unit tests with `python -m pytest -c Backend/pytest.ini
-Backend/tests/unit/logic/test_ai_service.py Backend/tests/unit/logic/test_ollama_client.py`.
+Run offline unit tests with `python -m pytest
+tests/backend/unit/logic/test_ai_service.py tests/backend/unit/logic/test_ollama_client.py`.
 Once Ollama is running and the configured model is installed, run the separate
-manual smoke test with `python -m Backend.tests.manual.ai_ollama_smoke`.
+manual smoke test with `python -m tests.backend.manual.ai_ollama_smoke`.

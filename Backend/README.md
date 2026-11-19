@@ -63,9 +63,9 @@ this launches the playground
 
 Run:
 ```powershell
-pytest Backend/tests   
+python -m pytest
 ```
-for the tests
+for the backend tests (they now live in `tests/backend/` in the project root)
 
 ## Troubleshooting
 
