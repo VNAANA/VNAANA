@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
     test:
-        name: Unit Tests
+        name: Tests
         runs-on: ubuntu-latest
 
         steps:
@@ -37,23 +37,30 @@ jobs:
             - name: Compile Python files
               run: python -m compileall -q Backend
 
-            - name: Run backend tests
-              run: python -m pytest tests/backend -v
-
-            - name: Check architectural boundaries
-              run: lint-imports
-
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
                   node-version: '22'
                   cache: npm
                   cache-dependency-path: Frontend/package-lock.json
-            - name: Run frontend tests
+
+            - name: Install frontend dependencies
               working-directory: Frontend
-              run: |
-                  npm ci
-                  npm test
+              run: npm ci
+
+            - name: Install the browser for the E2E tests
+              run: python -m playwright install --with-deps chromium
+
+            - name: Start local Supabase for the E2E tests
+              run: npx --yes supabase@3 start --workdir tests/e2e
+
+            - name: Run all tests
+              env:
+                  REQUIRE_ALL_TESTS: '1'
+              run: python -m pytest -v
+
+            - name: Check architectural boundaries
+              run: lint-imports
 
     publish:
         name: Build and Publish Docker Image
