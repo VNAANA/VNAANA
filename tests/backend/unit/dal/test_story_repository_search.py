@@ -15,7 +15,8 @@ from Backend.Dal.repositories.story_repository import StoryRepository
 @pytest.fixture
 def db():
     db = Mock()
-    db.scalars.return_value = []
+    # list() reads (story, articles_count) rows from execute(); no rows is enough here.
+    db.execute.return_value = []
     return db
 
 
@@ -24,9 +25,12 @@ def repository(db):
     return StoryRepository(db)
 
 
+def statement(db):
+    return db.execute.call_args.args[0]
+
+
 def compiled(db):
-    stmt = db.scalars.call_args.args[0]
-    return stmt.compile(dialect=postgresql.dialect())
+    return statement(db).compile(dialect=postgresql.dialect())
 
 
 def sql_sent(db) -> str:
@@ -35,6 +39,11 @@ def sql_sent(db) -> str:
 
 def values_sent(db) -> list:
     return list(compiled(db).params.values())
+
+
+def where_sent(db) -> str:
+    # Only the outer WHERE: the articles_count subquery has a WHERE of its own.
+    return str(statement(db).whereclause.compile(dialect=postgresql.dialect()))
 
 
 def test_without_search_terms_there_is_no_ilike(repository, db):
@@ -59,7 +68,7 @@ def test_each_word_must_match_in_title_or_summary(repository, db):
     assert values_sent(db).count("%flood%") == 2
     assert values_sent(db).count("%rotterdam%") == 2
     # Words are ANDed together, the two columns per word are ORed.
-    where = sql.split("WHERE", 1)[1].split("ORDER BY", 1)[0]
+    where = where_sent(db)
     assert where.count(" AND ") == 1
     assert where.count(" OR ") == 2
 
@@ -92,7 +101,7 @@ def test_search_is_combined_with_status_and_tag(repository, db):
         search_terms=["flood"],
     )
 
-    where = sql_sent(db).split("WHERE", 1)[1].split("ORDER BY", 1)[0]
+    where = where_sent(db)
 
     assert "stories.status" in where
     assert "story_tags.tag_id" in where
