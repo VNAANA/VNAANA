@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, Text, func
+from sqlalchemy import DateTime, Enum, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +29,7 @@ class Story(Base):
     summary: Mapped[str | None] = mapped_column(Text)
     img_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     context: Mapped[str | None] = mapped_column(Text)
+    language: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[StoryStatus] = mapped_column(
         # Persist the enum values as PostgreSQL story_status labels.
         Enum(StoryStatus, name="story_status", values_callable=lambda e: [m.value for m in e]),

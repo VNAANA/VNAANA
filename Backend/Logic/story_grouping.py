@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 STOPWORDS = set("de het een en van in op te met voor aan bij om tot uit naar is zijn was wordt worden door als dat die dit over ook of er na".split())
 GROUPING_TIMEZONE = ZoneInfo("Europe/Amsterdam")
-MIN_SCORE = 0.35
+MIN_SCORE = 0.45
 MIN_MARGIN = 0.04
 REPRESENTATIVE_LIMIT = 3
 

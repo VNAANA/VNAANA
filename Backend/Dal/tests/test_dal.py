@@ -66,7 +66,9 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(len(Base.metadata.tables), 12)
         self.assertNotIn("age_band", User.__table__.c)
         self.assertNotIn("region", User.__table__.c)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 77)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 78)
+        self.assertEqual(str(Story.__table__.c.language.type), "VARCHAR")
+        self.assertTrue(Story.__table__.c.language.nullable)
         expected_server_defaults = {
             ("users", "onboarding_completed"),
             ("users", "analytics_consent"),
