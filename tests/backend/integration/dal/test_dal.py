@@ -1,7 +1,7 @@
 """Checking the table schemas before continue"""
 import unittest
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import create_engine, event, inspect, select, text
@@ -18,6 +18,7 @@ from Backend.Dal.models import (
 )
 from Backend.Dal.repositories import ArticleRepository, UserRepository, EngagementEventRepository
 from Backend.Logic.exceptions import NotFoundError
+from Backend.Dal.repositories.story_grouping import group_articles
 from sqlalchemy.exc import IntegrityError
 from Backend.Presentation.schemas.users import UserCreate, UserRead, EngagementEventRead
 
@@ -65,7 +66,9 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(len(Base.metadata.tables), 12)
         self.assertNotIn("age_band", User.__table__.c)
         self.assertNotIn("region", User.__table__.c)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 77)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 78)
+        self.assertEqual(str(Story.__table__.c.language.type), "VARCHAR")
+        self.assertTrue(Story.__table__.c.language.nullable)
         expected_server_defaults = {
             ("users", "onboarding_completed"),
             ("users", "analytics_consent"),
@@ -106,11 +109,78 @@ class SchemaTests(unittest.TestCase):
 
 
 class PersistenceTests(unittest.TestCase):
+    def test_story_list_and_detail_response_contract(self):
+        from Backend.Dal.repositories.story_repository import StoryRepository
+        from Backend.Presentation.schemas.stories import StoryRead, StoryListItem
+        story = Story(title="Published story", context="Main content", summary="Summary",
+                      status=StoryStatus.published, img_url="https://example.test/image.jpg")
+        draft = Story(title="Draft story")
+        tag = Tag(name="Science")
+        article = Article(provider_id=self.provider.id, canonical_url="https://example.test/story-source",
+                          title="Source", content="Source text")
+        self.db.add_all([story, draft, tag, article])
+        self.db.flush()
+        self.db.add(StoryTag(story_id=story.id, tag_id=tag.id, relevance_score=.9))
+        self.db.add(StoryArticle(story_id=story.id, article_id=article.id, is_primary=True, similarity_score=1))
+        self.db.commit()
+        repo = StoryRepository(self.db)
+        rows = repo.list(status=StoryStatus.published)
+        self.assertEqual(len(rows), 1)
+        card = StoryListItem.model_validate(rows[0])
+        self.assertEqual(card.articles_count, 1)
+        detail = StoryRead.model_validate(repo.get(story.id))
+        self.assertEqual(detail.context, "Main content")
+        self.assertEqual(detail.tags[0].tag.name, "Science")
+        self.assertEqual(detail.articles[0].article.id, article.id)
+        self.assertTrue(detail.articles[0].is_primary)
+        self.assertEqual(StoryRead.model_validate(repo.get(draft.id)).articles, [])
+        self.assertIsNone(repo.get(uuid.uuid4()))
+        self.assertEqual(repo.list(status=StoryStatus.published, offset=1), [])
+
+    def test_story_articles_endpoint_data_pagination_count_and_isolation(self):
+        from Backend.Dal.repositories.story_repository import StoryRepository
+        from Backend.Logic.story_service import StoryService
+        from Backend.Presentation.schemas.stories import StoryArticlesPageRead
+        first, other, empty = Story(title="First"), Story(title="Other"), Story(title="Empty")
+        self.db.add_all([first, other, empty])
+        self.db.flush()
+        for i in range(3):
+            article = Article(provider_id=self.provider.id, canonical_url=f"https://example.test/api/{i}",
+                              title=f"Article {i}", content="Full source text" if i != 0 else None)
+            self.db.add(article)
+            self.db.flush()
+            self.db.add(StoryArticle(story_id=first.id if i < 2 else other.id,
+                                    article_id=article.id, is_primary=i == 1, similarity_score=.8))
+        self.db.commit()
+        service = StoryService(StoryRepository(self.db), None, None)
+        page = StoryArticlesPageRead.model_validate(service.list_articles(first.id, limit=1))
+        self.assertEqual(page.articles_count, 2)
+        self.assertEqual(len(page.articles), 1)
+        self.assertTrue(page.articles[0].is_primary)
+        self.assertEqual(page.articles[0].article.content, "Full source text")
+        self.assertEqual(page.articles[0].article.provider.id, self.provider.id)
+        self.assertIsNone(service.list_articles(first.id, offset=1).articles[0].article.content)
+        self.assertEqual(service.list_articles(first.id, limit=0).articles, [])
+        self.assertEqual(service.list_articles(first.id, offset=99).articles_count, 2)
+        self.assertEqual(service.list_articles(empty.id).articles_count, 0)
+        with self.assertRaises(NotFoundError):
+            service.list_articles(uuid.uuid4())
+
     def setUp(self):
         self.engine = create_engine("sqlite://")
         event.listen(self.engine, "connect", lambda db, _: db.execute("PRAGMA foreign_keys=ON"))
         Base.metadata.create_all(self.engine)
         self.db = Session(self.engine, expire_on_commit=False)
+        # SQLite loses tzinfo; emulate PostgreSQL timestamptz for these local tests.
+        def restore_timezone(article, *args):
+            for field in ("published_at", "first_seen_at"):
+                value = getattr(article, field)
+                if value is not None and value.tzinfo is None:
+                    from sqlalchemy.orm.attributes import set_committed_value
+                    set_committed_value(article, field, value.replace(tzinfo=timezone.utc))
+        self.restore_timezone = restore_timezone
+        event.listen(Article, "load", restore_timezone)
+        event.listen(Article, "refresh", restore_timezone)
         self.provider = Provider(name="Source", domain="example.test", reliability_status="verified")
         self.db.add(self.provider)
         self.db.add(EventWeight(event_type="view", weight=Decimal("1.00")))
@@ -118,7 +188,83 @@ class PersistenceTests(unittest.TestCase):
 
     def tearDown(self):
         self.db.close()
+        event.remove(Article, "load", self.restore_timezone)
+        event.remove(Article, "refresh", self.restore_timezone)
         self.engine.dispose()
+
+    def test_grouping_day_preview_apply_and_publication_fields(self):
+        from Backend.jobs.group_day import run
+        titles = ["Brand haven Rotterdam", "Brand haven Rotterdam", "Ajax wint wedstrijd"]
+        articles = []
+        for i, title in enumerate(titles):
+            item = Article(provider_id=self.provider.id, canonical_url=f"https://example.test/day/{i}",
+                           title=title, description=title, content=title, language="nl",
+                           published_at=datetime(2026, 11, 15, 23, i, tzinfo=timezone.utc),
+                           first_seen_at=datetime(2026, 11, 16, 1, i, tzinfo=timezone.utc),
+                           img_url="https://example.test/photo.jpg" if i == 1 else " ")
+            self.db.add(item)
+            articles.append(item)
+        # Next Amsterdam day: must not be processed.
+        self.db.add(Article(provider_id=self.provider.id, canonical_url="https://example.test/next",
+                            title=titles[0], description=titles[0], content=titles[0], language="nl",
+                            published_at=datetime(2026, 11, 16, 23, tzinfo=timezone.utc)))
+        self.db.commit()
+        preview = run(self.db, date(2026, 11, 16))
+        self.assertEqual(preview["assigned_articles"], 3)
+        self.assertFalse(preview["committed"])
+        self.assertEqual(self.db.scalars(select(Story)).all(), [])
+        result = run(self.db, date(2026, 11, 16), apply=True)
+        self.assertEqual(result["assigned_articles"], 3)
+        stories = self.db.scalars(select(Story)).all()
+        for story in stories:
+            primary, = [link.article for link in story.articles if link.is_primary]
+            self.assertEqual(story.title, primary.title)
+            self.assertEqual(story.context, primary.content)
+            self.assertEqual(story.status, StoryStatus.published)
+            self.assertIsNotNone(story.first_published_at)
+            self.assertEqual(story.img_url, "https://example.test/photo.jpg" if len(story.articles) == 2 else None)
+        first_times = {story.id: story.first_published_at for story in stories}
+        self.assertEqual(run(self.db, date(2026, 11, 16), apply=True)["assigned_articles"], 0)
+        self.assertEqual(first_times, {story.id: story.first_published_at for story in stories})
+
+    def test_dutch_story_grouping_and_retry(self):
+        for index, title in enumerate([
+            "Brand in haven Rotterdam legt scheepvaart stil",
+            "Scheepvaart stil na brand in Rotterdamse haven Rotterdam",
+            "Ajax contracteert jonge Spaanse doelman",
+        ]):
+            self.db.add(Article(provider_id=self.provider.id, canonical_url=f"https://example.test/{index}",
+                                title=title, description=title, content=title, language="nl"))
+        self.db.commit()
+        self.assertEqual(group_articles(self.db), 3)
+        self.db.rollback()
+        self.assertEqual(self.db.scalars(select(Story)).all(), [])
+        self.assertEqual(group_articles(self.db), 3)
+        self.db.commit()
+        stories = self.db.scalars(select(Story)).all()
+        self.assertEqual(sorted(len(s.articles) for s in stories), [1, 2])
+        for story in stories:
+            primary, = [link for link in story.articles if link.is_primary]
+            self.assertEqual(primary.similarity_score, 1)
+            self.assertEqual(story.title, primary.article.title)
+            self.assertEqual(story.status, StoryStatus.published)
+            self.assertEqual(story.context, primary.article.content)
+            self.assertIsNotNone(story.first_published_at)
+        self.assertEqual(group_articles(self.db), 0)
+
+    def test_grouping_limits_complete_articles_before_loading(self):
+        for index, missing in enumerate([None, "", " \t\n", "complete", "complete", "complete"]):
+            self.db.add(Article(
+                provider_id=self.provider.id, canonical_url=f"https://example.test/limit/{index}",
+                title="Brand haven Rotterdam", description="Brand haven Rotterdam",
+                content=missing, language="nl",
+            ))
+        self.db.commit()
+        self.assertEqual(group_articles(self.db, limit=2), 2)
+        self.db.commit()
+        self.assertEqual(group_articles(self.db, limit=2), 1)
+        self.db.commit()
+        self.assertEqual(group_articles(self.db, limit=2), 0)
 
     def test_provider_sources_relationship_defaults_and_cascade(self):
         self.provider.sources = [

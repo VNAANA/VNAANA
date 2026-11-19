@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3.2"
     ollama_timeout_seconds: int = 90
 
+    genre_classification_model_path: Path | None = None
+    genre_classification_device: str = "cpu"
+
     supabase_url: str | None = None
     supabase_publishable_key: str | None = None
 

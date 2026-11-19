@@ -5,9 +5,13 @@ from typing import Any, Protocol
 
 from Backend.Logic.domain.story import Story, StoryStatus
 from Backend.Logic.domain.story_article_link import StoryArticleLink
+from Backend.Logic.domain.story_articles import StoryArticlesPage
 
 
 class StoryRepository(Protocol):
+    def list_articles(self, story_id: uuid.UUID, *, limit: int, offset: int) -> StoryArticlesPage:
+        ...
+
     def get(self, story_id: uuid.UUID) -> Story | None:
         ...
 
