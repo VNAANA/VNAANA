@@ -1,15 +1,15 @@
-import { ChevronRight, LogIn, ThumbsUp } from 'lucide-react'
-import { TAG_ICONS, TAG_NAMES } from '../../data/tags'
-import type { TagName } from '../../data/tags'
+import { useState } from 'react'
+import { ChevronRight, LogIn } from 'lucide-react'
 import { useStrings } from '../../hooks/useStrings'
-import { useTopicPreferences } from '../../hooks/useTopicPreferences'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Skeleton } from '../Skeleton/Skeleton'
+import { TopicPreferencesDialog } from '../TopicPreferences/TopicPreferencesDialog'
 import { Logo } from './Logo'
 import { MAIN_PAGES } from './mainPages'
 import type { MainPage } from './mainPages'
 import { SearchField } from './SearchField'
+import { TopicLinks } from './TopicLinks'
 import styles from './Navigation.module.css'
 
 /* Desktop navigation. Below 820px it is replaced by MobileTopBar + MobileTabBar. */
@@ -20,14 +20,9 @@ type Props = {
   current: MainPage
 }
 
-/* Every tag; liked ones first, the rest in the default order. */
-function sidebarTags(liked: TagName[]) {
-  return [...liked, ...TAG_NAMES.filter((tag) => !liked.includes(tag))]
-}
-
 export function Sidebar({ account, checkingSession, current }: Props) {
   const { t } = useStrings()
-  const { liked } = useTopicPreferences().preferences
+  const [editingTopics, setEditingTopics] = useState(false)
   return (
     <aside className={styles.sidebar}>
       <Logo />
@@ -52,32 +47,20 @@ export function Sidebar({ account, checkingSession, current }: Props) {
           <h2 id="topics-heading" className={styles.sectionTitle}>
             {t.nav.topics}
           </h2>
-          <a href="#profile" className={styles.editLink} aria-label={t.nav.editTopics}>
-            {t.nav.edit}
-          </a>
+          {/* Customising topics is only for signed-in users. */}
+          {account && (
+            <button
+              type="button"
+              className={styles.editLink}
+              aria-label={t.nav.editTopics}
+              aria-haspopup="dialog"
+              onClick={() => setEditingTopics(true)}
+            >
+              {t.nav.edit}
+            </button>
+          )}
         </div>
-        <ul className={styles.topicsList}>
-          {sidebarTags(liked).map((tag) => {
-            const Icon = TAG_ICONS[tag]
-            const isLiked = liked.includes(tag)
-            return (
-              <li key={tag}>
-                <a href={`#topic-${tag.toLowerCase()}`} className={styles.topicRow}>
-                  <span className={styles.topicIcon} aria-hidden="true">
-                    <Icon size={16} />
-                  </span>
-                  <span className={styles.topicName}>{t.tags[tag]}</span>
-                  {isLiked && (
-                    <>
-                      <ThumbsUp size={14} className={styles.likedMark} aria-hidden="true" />
-                      <span className="sr-only">{t.topicPrefs.likedMark}</span>
-                    </>
-                  )}
-                </a>
-              </li>
-            )
-          })}
-        </ul>
+        <TopicLinks />
       </section>
 
       <div className={styles.account}>
@@ -107,6 +90,10 @@ export function Sidebar({ account, checkingSession, current }: Props) {
           </a>
         )}
       </div>
+
+      {account && editingTopics && (
+        <TopicPreferencesDialog mode="edit" onClose={() => setEditingTopics(false)} />
+      )}
     </aside>
   )
 }

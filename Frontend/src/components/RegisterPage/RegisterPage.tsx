@@ -13,7 +13,7 @@ import type { Language } from '../../utils/language'
 import { rememberRegisteredEmail } from '../../utils/registration'
 import { registerWithPassword } from '../../utils/accountAuth'
 
-type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'consent'
+type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword' | 'consent'
 type TextField = Exclude<Field, 'consent'>
 type Errors = Partial<Record<Field, RegisterError>>
 type Form = Record<TextField, string> & { consent: boolean }
@@ -21,7 +21,7 @@ type Form = Record<TextField, string> & { consent: boolean }
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD = 8
 // Focus order for the first error, matching the order on screen
-const FIELD_ORDER: Field[] = ['firstName', 'lastName', 'email', 'password', 'consent']
+const FIELD_ORDER: Field[] = ['firstName', 'lastName', 'email', 'password', 'confirmPassword', 'consent']
 
 function validate(form: Form): Errors {
   const errors: Errors = {}
@@ -31,6 +31,8 @@ function validate(form: Form): Errors {
   else if (!EMAIL_PATTERN.test(form.email.trim())) errors.email = 'emailInvalid'
   if (!form.password) errors.password = 'passwordMissing'
   else if (form.password.length < MIN_PASSWORD) errors.password = 'passwordShort'
+  if (!form.confirmPassword) errors.confirmPassword = 'confirmPasswordMissing'
+  else if (form.confirmPassword !== form.password) errors.confirmPassword = 'passwordMismatch'
   if (!form.consent) errors.consent = 'consentMissing'
   return errors
 }
@@ -38,7 +40,7 @@ function validate(form: Form): Errors {
 export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const { checkingSession } = auth
   const { language, t } = useStrings()
-  const [form, setForm] = useState<Form>({ firstName: '', lastName: '', email: '', password: '', consent: false })
+  const [form, setForm] = useState<Form>({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', consent: false })
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const [notice, setNotice] = useState<LoginNotice | null>(null)
@@ -86,6 +88,7 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     }
   }
 
+  // Google skips this form; the consent pop-up after sign-in asks for consent if the profile lacks it.
   const onGoogle = async () => {
     setNotice('openingGoogle')
     if (!(await startGoogleSignIn())) setNotice('googleFailed')
@@ -109,7 +112,7 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     )
   }
 
-  const textField = (field: Exclude<TextField, 'password'>, label: string, autoComplete: string, type = 'text') => (
+  const textField = (field: Exclude<TextField, 'password' | 'confirmPassword'>,label: string, autoComplete: string, type = 'text') => (
     <div className={styles.field}>
       <label htmlFor={`register-${field}`} className={styles.label}>
         {label}
@@ -190,6 +193,24 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             </div>
 
             <div className={styles.field}>
+              <label htmlFor="register-confirmPassword" className={styles.label}>
+                {t.register.confirmPassword}
+              </label>
+              <input
+                ref={setRef('confirmPassword')}
+                id="register-confirmPassword"
+                className={styles.input}
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                value={form.confirmPassword}
+                onChange={(event) => update('confirmPassword', event.target.value)}
+                aria-invalid={errors.confirmPassword ? true : undefined}
+                aria-describedby={describedBy('confirmPassword')}
+              />
+              {errorText('confirmPassword')}
+            </div>
+
+            <div className={styles.field}>
               <label htmlFor="register-language" className={styles.label}>
                 {t.register.language}
               </label>
@@ -197,7 +218,7 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                 id="register-language"
                 className={styles.select}
                 value={language}
-                onChange={(event) => setLanguage(event.target.value as Language)}
+                onChange={(event) => void setLanguage(event.target.value as Language)}
                 aria-describedby="register-language-hint"
               >
                 {/* Each language is named in itself, so it can be found whatever is selected */}

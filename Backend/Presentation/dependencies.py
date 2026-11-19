@@ -40,6 +40,7 @@ from Backend.Logic.ai_service import AIService
 from Backend.Logic.article_service import ArticleService
 from Backend.Logic.ollama_client import OllamaClient
 from Backend.Logic.story_service import StoryService
+from Backend.Logic.tag_service import TagService
 from Backend.Logic.user_service import UserService
 from Backend.config import get_settings
 
@@ -103,6 +104,22 @@ def get_story_service(
 StoryServiceDep = Annotated[
     StoryService,
     Depends(get_story_service),
+]
+
+
+# ---------------------------------------------------------------------------
+# Tag
+# ---------------------------------------------------------------------------
+
+def get_tag_service(
+    db: DbSession,
+) -> TagService:
+    return TagService(tags=DalTagRepository(db))
+
+
+TagServiceDep = Annotated[
+    TagService,
+    Depends(get_tag_service),
 ]
 
 
