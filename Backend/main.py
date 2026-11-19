@@ -11,13 +11,21 @@ Layers:
 from fastapi import FastAPI
 
 from Backend.Presentation.error_handlers import register_error_handlers
-from Backend.Presentation.routers import ai, articles, auth, stories, tags, users
+from Backend.Presentation.routers import ai, articles, auth, login, stories, tags, users
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="VNAANA API",
     description="Backend for the Virtual News Anchor Against News Avoidance project.",
     version="0.1.0",
+    openapi_tags=[
+        {"name": "Authentication"},
+        {"name": "users"},
+        {"name": "stories"},
+        {"name": "articles"},
+        {"name": "ai"},
+        {"name": "tags"},
+    ],
 )
 
 app.add_middleware(
@@ -30,9 +38,10 @@ app.add_middleware(
 
 register_error_handlers(app)
 
+app.include_router(login.router)
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(stories.router)
 app.include_router(articles.router)
-app.include_router(auth.router)
 app.include_router(ai.router)
 app.include_router(tags.router)
