@@ -14,7 +14,7 @@ from sqlalchemy.schema import CreateTable
 from Backend.Dal.models import (
     Article, Base, EngagementEvent, Provider, ProviderSource, Story,
     StoryArticle, StoryStatus, StoryTag, Tag, User, UserTag,
-    EventWeight, StoryReaction,
+    EventWeight, StoryReaction, StoryTranslation,
 )
 from Backend.Dal.repositories import ArticleRepository, UserRepository, EngagementEventRepository
 from Backend.Logic.exceptions import NotFoundError
@@ -63,12 +63,18 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(Story.__table__.c.status.default.arg, StoryStatus.draft)
         self.assertEqual(Story.__table__.c.status.server_default.arg, "draft")
         self.assertEqual(Story.__table__.c.status.type.enums, ["draft", "published", "archived"])
-        self.assertEqual(len(Base.metadata.tables), 12)
+        self.assertEqual(len(Base.metadata.tables), 13)
         self.assertNotIn("age_band", User.__table__.c)
         self.assertNotIn("region", User.__table__.c)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 78)
-        self.assertEqual(str(Story.__table__.c.language.type), "VARCHAR")
-        self.assertTrue(Story.__table__.c.language.nullable)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 83)
+        self.assertNotIn("language", Story.__table__.c)
+        for name in ("eng_title", "eng_summary", "eng_context"):
+            self.assertNotIn(name, Story.__table__.c)
+        for name in ("title", "summary", "context"):
+            self.assertEqual(str(StoryTranslation.__table__.c[name].type), "TEXT")
+            self.assertTrue(StoryTranslation.__table__.c[name].nullable)
+        self.assertEqual(str(StoryTranslation.__table__.c.language.type), "VARCHAR")
+        self.assertTrue(StoryTranslation.__table__.c.updated_at.type.timezone)
         expected_server_defaults = {
             ("users", "onboarding_completed"),
             ("users", "analytics_consent"),
@@ -83,6 +89,7 @@ class SchemaTests(unittest.TestCase):
             ("engagement_events", "occurred_at"),
             ("articles", "is_scraped"),
             ("story_reactions", "updated_at"),
+            ("story_translations", "updated_at"),
         }
         actual_server_defaults = {
             (table.name, column.name)
@@ -104,7 +111,8 @@ class SchemaTests(unittest.TestCase):
         for model, columns in [(StoryArticle, ["story_id", "article_id"]),
                                (StoryTag, ["story_id", "tag_id"]),
                                (UserTag, ["user_id", "tag_id"]),
-                               (StoryReaction, ["user_id", "story_id"]),]:
+                               (StoryReaction, ["user_id", "story_id"]),
+                               (StoryTranslation, ["story_id", "language"]),]:
             self.assertEqual(list(model.__table__.primary_key.columns.keys()), columns)
 
 

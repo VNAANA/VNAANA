@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, String, Text, func
+from sqlalchemy import DateTime, Enum, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,6 +12,7 @@ from Backend.Dal.models.base import Base
 if TYPE_CHECKING:
     from Backend.Dal.models.story_article import StoryArticle
     from Backend.Dal.models.story_tag import StoryTag
+    from Backend.Dal.models.story_translation import StoryTranslation
 
 
 class StoryStatus(str, enum.Enum):
@@ -29,7 +30,6 @@ class Story(Base):
     summary: Mapped[str | None] = mapped_column(Text)
     img_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     context: Mapped[str | None] = mapped_column(Text)
-    language: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[StoryStatus] = mapped_column(
         # Persist the enum values as PostgreSQL story_status labels.
         Enum(StoryStatus, name="story_status", values_callable=lambda e: [m.value for m in e]),
@@ -46,5 +46,8 @@ class Story(Base):
         back_populates="story", cascade="all, delete-orphan", passive_deletes=True
     )
     articles: Mapped[list["StoryArticle"]] = relationship(
+        back_populates="story", cascade="all, delete-orphan", passive_deletes=True
+    )
+    translations: Mapped[list["StoryTranslation"]] = relationship(
         back_populates="story", cascade="all, delete-orphan", passive_deletes=True
     )
