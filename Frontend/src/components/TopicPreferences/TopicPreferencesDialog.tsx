@@ -25,7 +25,9 @@ export function TopicPreferencesDialog({ mode = 'prompt', onClose = () => {} }: 
   const { t } = useStrings()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [draft, setDraft] = useState<TopicLists>(() => readTopicState().preferences)
-  const [busy, setBusy] = useState(false)
+  // Which button's request is running, so only that button shows progress.
+  const [pending, setPending] = useState<'save' | 'skip' | null>(null)
+  const busy = pending !== null
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
@@ -34,27 +36,27 @@ export function TopicPreferencesDialog({ mode = 'prompt', onClose = () => {} }: 
     return () => dialog?.close()
   }, [])
 
-  const run = async (action: () => Promise<void>) => {
+  const run = async (kind: 'save' | 'skip', action: () => Promise<void>) => {
     if (busy) return
-    setBusy(true)
+    setPending(kind)
     setFailed(false)
     try {
       await action()
       onClose()
     } catch {
       setFailed(true)
-      setBusy(false)
+      setPending(null)
     }
   }
 
   const save = () =>
-    run(async () => {
+    run('save', async () => {
       await setTopicPreferences(draft)
       if (mode === 'prompt') await finishOnboarding()
     })
 
-  // Skipping the first-time prompt still completes onboarding, so it isn't asked again.
-  const dismiss = () => (mode === 'prompt' ? run(finishOnboarding) : onClose())
+  // Skipping the first-time prompt saves no topics, only completes onboarding so it isn't asked again.
+  const dismiss = () => (mode === 'prompt' ? run('skip', finishOnboarding) : onClose())
 
   return (
     <dialog
@@ -87,7 +89,7 @@ export function TopicPreferencesDialog({ mode = 'prompt', onClose = () => {} }: 
           {mode === 'edit' ? t.topicPrefs.cancel : t.topicPrefs.skip}
         </button>
         <button type="button" className={styles.save} onClick={() => void save()} disabled={busy}>
-          {busy ? t.topicPrefs.saving : t.topicPrefs.save}
+          {pending === 'save' ? t.topicPrefs.saving : t.topicPrefs.save}
         </button>
       </div>
     </dialog>
