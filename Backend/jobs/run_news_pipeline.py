@@ -2,7 +2,6 @@
 """Entry point for the scheduled news-gathering pipeline."""
 
 import asyncio
-import argparse
 import logging
 
 from Backend.database import SessionLocal
@@ -13,7 +12,6 @@ from Backend.Dal.repositories.provider_source_repository import (
 )
 from Backend.Dal.repositories.story_repository import StoryRepository
 from Backend.Dal.repositories.story_grouping import group_articles
-from Backend.jobs.grouping_review import preview_review
 from Backend.Logic.article_service import ArticleService
 from Backend.Logic.article_normalization_service import (
     ArticleNormalizationService,
@@ -128,21 +126,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--preview-grouping", action="store_true",
-                        help="Preview grouping of saved articles and roll back all changes.")
-    parser.add_argument("--review-output", help="Write up to 40 pairs to a JSON file for manual labeling.")
-    args = parser.parse_args()
-    if args.review_output and not args.preview_grouping:
-        parser.error("--review-output requires --preview-grouping")
-    if args.preview_grouping:
-        with SessionLocal() as db:
-            try:
-                count = group_articles(db, review=lambda groups, vectors, touched, decisions:
-                                       preview_review(groups, vectors, touched, decisions,
-                                                      output=args.review_output))
-                print(f"Preview assigned {count} previously unlinked articles. All preview writes are rolled back.")
-            finally:
-                db.rollback()
-    else:
-        main()
+    main()
