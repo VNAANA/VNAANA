@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from Backend.Logic.domain.story import Story, StoryStatus
 from Backend.Logic.domain.story_article_link import StoryArticleLink
 from Backend.Logic.domain.story_articles import StoryArticlesPage
+
+GenreTagWrite = Literal["saved", "missing", "changed", "already_tagged"]
 
 
 class StoryRepository(Protocol):
@@ -38,6 +40,11 @@ class StoryRepository(Protocol):
         story: Story,
         tags: dict[uuid.UUID, Decimal | None],
     ) -> None:
+        ...
+
+    def add_genre_tags_if_current(
+        self, snapshot: Story, tags: dict[uuid.UUID, Decimal | None],
+    ) -> GenreTagWrite:
         ...
 
     def get_article_link(

@@ -6,7 +6,7 @@ from typing import Any
 from Backend.Logic.domain.story import Story, StoryStatus
 from Backend.Logic.exceptions import ConflictError, InvalidSearchError, NotFoundError
 from Backend.Logic.ports.article_repository import ArticleRepository
-from Backend.Logic.ports.story_repository import StoryRepository
+from Backend.Logic.ports.story_repository import GenreTagWrite, StoryRepository
 from Backend.Logic.ports.tag_repository import TagRepository
 
 MIN_SEARCH_LENGTH = 2
@@ -118,6 +118,19 @@ class StoryService:
     ) -> Story:
         story = self.get_story(story_id)
 
+        self.stories.replace_tags(story, self._tag_scores(tags))
+        return self.get_story(story_id)
+
+    def add_genre_tags_if_current(
+        self, snapshot: Story, tags: dict[uuid.UUID, float | None],
+    ) -> GenreTagWrite:
+        if not tags:
+            raise ValueError("Genre tags must not be empty")
+        return self.stories.add_genre_tags_if_current(snapshot, self._tag_scores(tags))
+
+    def _tag_scores(
+        self, tags: dict[uuid.UUID, float | None],
+    ) -> dict[uuid.UUID, Decimal | None]:
         found = {
             tag.id
             for tag in self.tags.get_many(list(tags))
@@ -135,14 +148,10 @@ class StoryService:
                 ", ".join(map(str, missing)),
             )
 
-        scores = {
+        return {
             tag_id: Decimal(str(score)) if score is not None else None
             for tag_id, score in tags.items()
         }
-
-        self.stories.replace_tags(story, scores)
-
-        return self.get_story(story_id)
 
     def link_article(
         self,

@@ -2,7 +2,7 @@
 
 We use a fine-tuned Dutch RobBERT V2 model to predict genres for news Stories in VNAANA.
 
-The classifier takes a Story's **title, summary and context** and returns up to three genres with scores. We currently use a threshold of **0.60**, so only genres above this threshold are selected.
+The classifier takes a Story's **title, summary and context** and returns up to three genres with scores. It selects genres with scores of at least **0.60**.
 
 ### Current status
 
@@ -13,7 +13,7 @@ So far, we have:
 - Built `GenreClassificationTagAdapter` to match predictions with database Tag IDs.
 - Tested the complete process using three draft Stories in Supabase, including saving their tags and scores.
 
-**Important:** The classifier works, but it is not automatically connected to Story generation yet. This still needs to be done when the Story-generation algorithm is ready.
+The standalone batch is ready for explicit Story IDs. Scheduled integration is still pending.
 
 ## 1. Set up the model
 
@@ -69,7 +69,7 @@ The model runs locally, so no API key is needed. Only the machine running the cl
 To check whether the model works on your laptop, run this from the repository root:
 
 ```powershell
-python -m Backend.tests.manual.genre_classification_inference
+python -m tests.backend.manual.genre_classification_inference
 ```
 
 This runs predictions on three example Stories and prints their genres and scores.
@@ -84,48 +84,15 @@ The main files are:
 |---|---|
 | `Logic/genre_classification_service.py` | Loads RobBERT and predicts genres |
 | `Logic/genre_classification_tag_adapter.py` | Matches predicted genres with database Tag IDs |
-| `StoryService.set_tags()` | Saves the selected tags and relevance scores |
+| `StoryService.add_genre_tags_if_current()` | Saves tags and relevance scores if the Story is still current and untagged |
 
-The idea is to classify a Story **after the Story-generation algorithm has finished creating its title, summary and context**.
-
-The workflow should be:
-
-1. Story generation creates a draft Story.
-2. RobBERT predicts the genres from its title, summary and context.
-3. The tag adapter finds the matching Tag IDs.
-4. `StoryService.set_tags()` saves the tags and their scores in `story_tags`.
-
-For example, after the services have been initialized:
-
-```python
-predictions = classifier.classify(
-    title=story.title,
-    summary=story.summary,
-    context=story.context,
-)
-
-tags = GenreClassificationTagAdapter(
-    tag_repository
-).to_story_tags(predictions)
-
-story_service.set_tags(story.id, tags)
-```
-
-This is an example of how to connect the components, **not an automatic integration already implemented in the backend**.
-
-A few things to keep in mind:
-
-- Load the classifier once and reuse it for multiple Stories, rather than loading the model every time.
-- Only save predictions when the newly created Story has no existing tags. `set_tags()` replaces existing assignments.
-- The classifier should be called from the Story-generation workflow, not directly inside the general `StoryService.create_story()` method.
-
-We will need to coordinate the exact integration with the teammate working on Story generation.
+`classify_grouped_stories()` in `jobs/classify_grouped_stories.py` accepts explicit IDs of already committed Stories and loads the finalized RobBERT V2 model once per batch. It processes only untagged Stories and skips empty predictions or Story inputs that changed during inference. It saves Tag IDs and relevance scores in `story_tags` through the existing services and repositories.
 
 ## 4. Things still to finish
 
-**Genre names:** Our model uses `Social Issues`, but the current database still contains `World`. We need to coordinate the database tag update before using the classifier automatically.
+**Genre names:** The target database must contain the exact tag `Social Issues`. A rename migration exists, and the target database's migration state still needs verification.
 
-**Automatic integration:** The Story-generation workflow does not call the classifier yet. For now, we can test it manually.
+**Automatic integration:** The batch is standalone. `run_news_pipeline.py` does not call it yet.
 
 **Model setup:** Each machine running the classifier needs the downloaded model and the correct local path.
 
