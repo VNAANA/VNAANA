@@ -6,6 +6,18 @@ from Backend.Logic.story_grouping import clean_lead, exclusion_reason, event_con
 from Backend.Logic.story_grouping import terms
 
 
+def test_assessment_distinguishes_rejections():
+    from Backend.Logic.story_grouping import MIN_SCORE, assess_story
+    incoming, candidate = article(1, "Incoming"), article(2, "Candidate")
+    vectors = {1: {"a": 1}, 2: {"a": MIN_SCORE / 2}}
+    groups = {2: (candidate, [candidate])}
+    assert assess_story(incoming, {}, vectors)["reason"] == "no candidate on the same publication day"
+    assert assess_story(incoming, groups, vectors)["reason"] == "below threshold"
+    vectors[2] = {"a": 1}
+    groups[3] = (candidate, [candidate])
+    assert assess_story(incoming, groups, vectors)["reason"] == "too close to the runner-up"
+
+
 def test_decision_reports_representative_and_ambiguity_without_rounding():
     from Backend.Logic.story_grouping import assess_story
     first, second, incoming = [article(i, str(i)) for i in (1, 2, 3)]
