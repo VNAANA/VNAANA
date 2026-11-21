@@ -4,6 +4,7 @@
 import asyncio
 import logging
 
+from Backend.config import get_settings
 from Backend.database import SessionLocal
 from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Dal.repositories.provider_repository import ProviderRepository
@@ -12,6 +13,7 @@ from Backend.Dal.repositories.provider_source_repository import (
 )
 from Backend.Dal.repositories.story_repository import StoryRepository
 from Backend.Dal.repositories.story_grouping import group_articles
+from Backend.jobs.classify_grouped_stories import classify_grouped_stories
 from Backend.Logic.article_service import ArticleService
 from Backend.Logic.article_normalization_service import (
     ArticleNormalizationService,
@@ -111,8 +113,31 @@ def main() -> None:
             cleanup_results["articles"],
         )
 
-        assigned = group_articles(db)
+        grouping_report = {}
+        assigned = group_articles(db, report=grouping_report.update)
         db.commit()
+
+        settings = get_settings()
+        story_ids = [
+            story["id"]
+            for story in grouping_report.get("stories", [])
+        ]
+
+        if settings.genre_classification_pipeline_enabled and story_ids:
+            try:
+                classification_result = classify_grouped_stories(
+                    story_ids,
+                    session_factory=SessionLocal,
+                )
+                logger.info(
+                    "Genre classification finished: processed=%s skipped=%s failed=%s",
+                    len(classification_result["processed"]),
+                    len(classification_result["skipped"]),
+                    len(classification_result["failed"]),
+                )
+            except Exception:
+                logger.exception("Genre classification failed")
+
         logger.info("News pipeline completed successfully: %s articles grouped", assigned)
 
     except Exception:

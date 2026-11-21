@@ -12,8 +12,9 @@ So far, we have:
 - Built `GenreClassificationService` for predictions.
 - Built `GenreClassificationTagAdapter` to match predictions with database Tag IDs.
 - Tested the complete process using three draft Stories in Supabase, including saving their tags and scores.
+- Connected the existing batch to the news pipeline as an optional step after Story Grouping commits.
 
-The standalone batch is ready for explicit Story IDs. Scheduled integration is still pending.
+The standalone batch is ready for explicit Story IDs. Automatic pipeline classification is disabled by default.
 
 ## 1. Set up the model
 
@@ -88,12 +89,20 @@ The main files are:
 
 `classify_grouped_stories()` in `jobs/classify_grouped_stories.py` accepts explicit IDs of already committed Stories and loads the finalized RobBERT V2 model once per batch. It processes only untagged Stories and skips empty predictions or Story inputs that changed during inference. It saves Tag IDs and relevance scores in `story_tags` through the existing services and repositories.
 
+`run_news_pipeline.py` reuses this batch after Story Grouping commits. It passes only the Stories touched by that grouping run. Predictions are saved only when a Story is still untagged and its title, summary and context are unchanged. A failure for one Story does not stop classification of the other Stories or completion of the news pipeline.
+
+The automatic step is disabled by default. It can be enabled in the target runtime with:
+
+```ini
+GENRE_CLASSIFICATION_PIPELINE_ENABLED=true
+```
+
 ## 4. Things still to finish
 
 **Genre names:** The target database must contain the exact tag `Social Issues`. A rename migration exists, and the target database's migration state still needs verification.
 
-**Automatic integration:** The batch is standalone. `run_news_pipeline.py` does not call it yet.
-
 **Model setup:** Each machine running the classifier needs the downloaded model and the correct local path.
 
-The classifier has already been tested with Supabase, so the remaining work is mainly connecting it to the rest of the application.
+**Concurrency testing:** The automatic and manual tag operations use PostgreSQL row locking, but their real two-session PostgreSQL behavior still needs to be tested.
+
+Do not enable scheduled classification yet. First make the finalized RobBERT V2 checkpoint available in the target runtime, verify the target database's `Social Issues` vocabulary and migration state, and complete the real two-session PostgreSQL concurrency test.
