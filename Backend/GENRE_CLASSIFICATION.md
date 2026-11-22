@@ -2,7 +2,7 @@
 
 We use a fine-tuned Dutch RobBERT V2 model to predict genres for news Stories in VNAANA.
 
-The classifier takes a Story's **title, summary and context** and returns up to three genres with scores. It selects genres with scores of at least **0.60**.
+The classifier takes a Story's **title, optional summary and context** and returns up to three genres with scores. It selects genres with scores of at least **0.60**.
 
 ### Current status
 
@@ -12,7 +12,6 @@ So far, we have:
 - Built `GenreClassificationService` for predictions.
 - Built `GenreClassificationTagAdapter` to match predictions with database Tag IDs.
 - Tested the complete process using three draft Stories in Supabase, including saving their tags and scores.
-- Connected the existing batch to the news pipeline as an optional step after Story Grouping commits.
 
 The standalone batch is ready for explicit Story IDs. Automatic pipeline classification is disabled by default.
 
@@ -99,10 +98,6 @@ GENRE_CLASSIFICATION_PIPELINE_ENABLED=true
 
 ## 4. Things still to finish
 
-**Genre names:** The target database must contain the exact tag `Social Issues`. A rename migration exists, and the target database's migration state still needs verification.
+**Azure setup:** The Azure job still needs access to the finalized checkpoint and the correct model path. Deployment and scheduled execution still need validation.
 
-**Model setup:** Each machine running the classifier needs the downloaded model and the correct local path.
-
-**Concurrency testing:** The automatic and manual tag operations use PostgreSQL row locking, but their real two-session PostgreSQL behavior still needs to be tested.
-
-Do not enable scheduled classification yet. First make the finalized RobBERT V2 checkpoint available in the target runtime, verify the target database's `Social Issues` vocabulary and migration state, and complete the real two-session PostgreSQL concurrency test.
+Keep scheduled classification disabled until the Azure checkpoint setup, deployment validation.
