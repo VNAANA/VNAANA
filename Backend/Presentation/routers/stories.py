@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query, status
 
 from Backend.Logic.domain.story import StoryStatus
 from Backend.Presentation.dependencies import AlgorithmServiceDep, StoryServiceDep, UserServiceDep
-from Backend.Presentation.auth import AuthenticatedSubject
+from Backend.Presentation.auth import AuthenticatedSubject, OptionalSubject
 from Backend.Presentation.schemas.feed import FeedRead
 from Backend.Presentation.schemas.stories import (
     StoryArticleLink,
@@ -85,12 +85,23 @@ def create_story(
     )
 
 
-@router.get("/{story_id}", response_model=StoryRead)
+@router.get(
+    "/{story_id}",
+    response_model=StoryRead,
+    responses={
+        503: {"description": "The story needed translating and the translation service failed"},
+    },
+)
 def get_story(
     story_id: uuid.UUID,
     service: StoryServiceDep,
+    users: UserServiceDep,
+    subject: OptionalSubject,
 ):
-    return service.get_story(story_id)
+    """Signed in: the story in the user's profile language, translated on
+    first request and cached after that. Signed out: the original story."""
+    language = users.get_preferred_language(subject)
+    return service.get_story_in_language(story_id, language)
 
 
 @router.patch("/{story_id}", response_model=StoryRead)

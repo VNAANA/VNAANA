@@ -22,6 +22,27 @@ async def get_authenticated_subject(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    return await _verify_token(credentials)
+
+
+async def get_optional_subject(
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(bearer_scheme),
+    ],
+) -> UUID | None:
+    """For endpoints that also work signed out: no token means anonymous.
+
+    A token that is sent but invalid or expired is still a 401, so the
+    frontend notices instead of silently getting the anonymous version.
+    """
+    if credentials is None:
+        return None
+
+    return await _verify_token(credentials)
+
+
+async def _verify_token(credentials: HTTPAuthorizationCredentials) -> UUID:
     settings = get_settings()
 
     try:
@@ -64,4 +85,9 @@ async def get_authenticated_subject(
 AuthenticatedSubject = Annotated[
     UUID,
     Depends(get_authenticated_subject),
+]
+
+OptionalSubject = Annotated[
+    UUID | None,
+    Depends(get_optional_subject),
 ]
