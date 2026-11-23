@@ -8,12 +8,17 @@ import { LoginPage } from './components/LoginPage/LoginPage'
 import { MobileTabBar, MobileTopBar } from './components/Navigation/MobileBars'
 import { Sidebar } from './components/Navigation/Sidebar'
 import { ProfilePage } from './components/ProfilePage/ProfilePage'
+import { RegisterPage } from './components/RegisterPage/RegisterPage'
 import { useHash } from './hooks/useHash'
+import { TopicPreferencesDialog } from './components/TopicPreferences/TopicPreferencesDialog'
+import { ConsentDialog } from './components/ConsentDialog/ConsentDialog'
 import { useAuth } from './hooks/useAuth'
+import { useTopicPreferences } from './hooks/useTopicPreferences'
 import { useFeedArticles } from './hooks/useFeedArticles'
 import { useStrings } from './hooks/useStrings'
 import { getAccount } from './utils/account'
 import { exploreFilterFromHash, isExploreHash } from './utils/explore'
+import { isProfileHash, profileTabFromHash } from './utils/profileTabs'
 import { readStorage, writeStorage } from './utils/storage'
 import styles from './App.module.css'
 
@@ -25,6 +30,7 @@ export default function App() {
   const auth = useAuth()
   const feed = useFeedArticles()
   const { t } = useStrings()
+  const topicState = useTopicPreferences()
   const metadata = auth.session?.user.user_metadata
   const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
     .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -46,8 +52,19 @@ export default function App() {
     setOpenedIds((ids) => (ids.has(articleId) ? ids : new Set(ids).add(articleId)))
   }, [])
 
-  if (hash === '#login') return <LoginPage auth={auth} />
-  if (hash === '#profile') return <ProfilePage auth={auth} />
+  // After login or registration, once the backend profile is loaded:
+  // 1. no consent yet → the required consent pop-up, on every page;
+  // 2. then, until onboarding is completed → the topic pop-up on the feed or Explore.
+  const profileLoaded = auth.session !== null && topicState.userId !== null
+  const consentPrompt = profileLoaded && !topicState.analyticsConsent && (
+    <ConsentDialog />
+  )
+  const topicPrompt =
+    profileLoaded && topicState.analyticsConsent && !topicState.onboardingCompleted && <TopicPreferencesDialog />
+
+  if (hash === '#login') return <><LoginPage auth={auth} />{consentPrompt}</>
+  if (hash === '#sign-up') return <><RegisterPage auth={auth} />{consentPrompt}</>
+  if (isProfileHash(hash)) return <><ProfilePage auth={auth} tab={profileTabFromHash(hash)} />{consentPrompt}</>
 
   const account = getAccount(auth.session)
   if (isExploreHash(hash)) {
@@ -61,6 +78,8 @@ export default function App() {
         <MobileTopBar />
         <ExplorePage filter={exploreFilterFromHash(hash)} />
         <MobileTabBar account={account} checkingSession={auth.checkingSession} current="explore" />
+        {consentPrompt}
+        {topicPrompt}
       </div>
     )
   }
@@ -139,6 +158,8 @@ export default function App() {
       </main>
 
       <MobileTabBar account={account} checkingSession={auth.checkingSession} current="forYou" />
+      {consentPrompt}
+      {topicPrompt}
     </div>
   )
 }

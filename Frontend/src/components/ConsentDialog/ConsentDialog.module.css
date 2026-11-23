@@ -1,0 +1,7 @@
+/* Same pop-up look as the topic pop-up */
+.dialog { composes: dialog from '../TopicPreferences/TopicPreferences.module.css'; }
+.title { composes: title from '../TopicPreferences/TopicPreferences.module.css'; }
+.intro { composes: intro from '../TopicPreferences/TopicPreferences.module.css'; }
+.actions { composes: actions from '../TopicPreferences/TopicPreferences.module.css'; }
+.save { composes: save from '../TopicPreferences/TopicPreferences.module.css'; }
+.error { composes: error from '../TopicPreferences/TopicPreferences.module.css'; }

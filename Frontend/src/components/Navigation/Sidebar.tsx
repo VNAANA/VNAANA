@@ -1,13 +1,15 @@
+import { useState } from 'react'
 import { ChevronRight, LogIn } from 'lucide-react'
-import { TOPICS, TOPIC_ICONS } from '../../data/topics'
 import { useStrings } from '../../hooks/useStrings'
 import type { Account } from '../../utils/account'
 import { AccountAvatar } from '../AccountAvatar/AccountAvatar'
 import { Skeleton } from '../Skeleton/Skeleton'
+import { TopicPreferencesDialog } from '../TopicPreferences/TopicPreferencesDialog'
 import { Logo } from './Logo'
 import { MAIN_PAGES } from './mainPages'
 import type { MainPage } from './mainPages'
 import { SearchField } from './SearchField'
+import { TopicLinks } from './TopicLinks'
 import styles from './Navigation.module.css'
 
 /* Desktop navigation. Below 820px it is replaced by MobileTopBar + MobileTabBar. */
@@ -20,6 +22,7 @@ type Props = {
 
 export function Sidebar({ account, checkingSession, current }: Props) {
   const { t } = useStrings()
+  const [editingTopics, setEditingTopics] = useState(false)
   return (
     <aside className={styles.sidebar}>
       <Logo />
@@ -44,25 +47,20 @@ export function Sidebar({ account, checkingSession, current }: Props) {
           <h2 id="topics-heading" className={styles.sectionTitle}>
             {t.nav.topics}
           </h2>
-          <button type="button" className={styles.editLink} aria-label={t.nav.editTopics}>
-            {t.nav.edit}
-          </button>
+          {/* Customising topics is only for signed-in users. */}
+          {account && (
+            <button
+              type="button"
+              className={styles.editLink}
+              aria-label={t.nav.editTopics}
+              aria-haspopup="dialog"
+              onClick={() => setEditingTopics(true)}
+            >
+              {t.nav.edit}
+            </button>
+          )}
         </div>
-        <ul>
-          {TOPICS.map((topic) => {
-            const Icon = TOPIC_ICONS[topic]
-            return (
-              <li key={topic}>
-                <a href={`#topic-${topic.toLowerCase()}`} className={styles.topicRow}>
-                  <span className={styles.topicIcon} aria-hidden="true">
-                    <Icon size={16} />
-                  </span>
-                  <span className={styles.topicName}>{t.topics[topic]}</span>
-                </a>
-              </li>
-            )
-          })}
-        </ul>
+        <TopicLinks />
       </section>
 
       <div className={styles.account}>
@@ -92,6 +90,10 @@ export function Sidebar({ account, checkingSession, current }: Props) {
           </a>
         )}
       </div>
+
+      {account && editingTopics && (
+        <TopicPreferencesDialog mode="edit" onClose={() => setEditingTopics(false)} />
+      )}
     </aside>
   )
 }

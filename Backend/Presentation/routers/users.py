@@ -14,6 +14,8 @@ from Backend.Presentation.schemas.users import (
     ConsentUpdate,
     EngagementEventCreate,
     EngagementEventRead,
+    OnboardingUpdate,
+    PreferencesUpdate,
     ReactionUpdate,
     StoryReactionRead,
     UserRead,
@@ -88,6 +90,17 @@ def delete_user(
     service: UserServiceDep,
 ):
     service.delete_user(user_id)
+
+
+@router.put("/{user_id}/preferences", response_model=UserRead, dependencies=[Depends(require_user_owner)])
+def set_preferences(user_id: uuid.UUID, body: PreferencesUpdate, service: UserServiceDep):
+    """Create or replace the user's preferences."""
+    return service.update_user(user_id, body.model_dump())
+
+
+@router.put("/{user_id}/onboarding", response_model=UserRead, dependencies=[Depends(require_user_owner)])
+def set_onboarding(user_id: uuid.UUID, body: OnboardingUpdate, service: UserServiceDep):
+    return service.update_user(user_id, body.model_dump())
 
 
 @router.put("/{user_id}/consent", response_model=UserRead, dependencies=[Depends(require_user_owner)])

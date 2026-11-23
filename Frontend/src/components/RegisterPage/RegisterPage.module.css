@@ -1,0 +1,112 @@
+/* Same page frame, card and controls as the login page */
+.page { composes: page from '../LoginPage/LoginPage.module.css'; }
+.top { composes: top from '../LoginPage/LoginPage.module.css'; }
+.back { composes: back from '../LoginPage/LoginPage.module.css'; }
+.main { composes: main from '../LoginPage/LoginPage.module.css'; }
+.title { composes: title from '../LoginPage/LoginPage.module.css'; }
+.intro { composes: intro from '../LoginPage/LoginPage.module.css'; }
+.form { composes: form from '../LoginPage/LoginPage.module.css'; }
+.field { composes: field from '../LoginPage/LoginPage.module.css'; }
+.label { composes: label from '../LoginPage/LoginPage.module.css'; }
+.input { composes: input from '../LoginPage/LoginPage.module.css'; }
+.passwordWrap { composes: passwordWrap from '../LoginPage/LoginPage.module.css'; }
+.reveal { composes: reveal from '../LoginPage/LoginPage.module.css'; }
+.error { composes: error from '../LoginPage/LoginPage.module.css'; }
+.smallLink { composes: smallLink from '../LoginPage/LoginPage.module.css'; }
+.submit { composes: submit from '../LoginPage/LoginPage.module.css'; }
+.divider { composes: divider from '../LoginPage/LoginPage.module.css'; }
+.google { composes: google from '../LoginPage/LoginPage.module.css'; }
+.notice { composes: notice from '../LoginPage/LoginPage.module.css'; }
+.signUp { composes: signUp from '../LoginPage/LoginPage.module.css'; }
+
+/* A little wider than login, so the two name fields fit side by side */
+.card {
+  composes: card from '../LoginPage/LoginPage.module.css';
+  max-width: 520px;
+}
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.select {
+  height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.select:focus-visible {
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+/* ---------- Consent ---------- */
+
+/* The real checkbox covers the drawn box (invisible), so clicks and focus land on it */
+.consent {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--body);
+  cursor: pointer;
+}
+
+.consent input {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: var(--tap);
+  height: var(--tap);
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: #fff;
+}
+
+.consent:has(input:checked) .box {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.consent:has(input:focus-visible) .box {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.consent:has(input[aria-invalid='true']) .box {
+  border-color: var(--error);
+}
+
+/* ---------- Phones ---------- */
+
+@media (max-width: 480px) {
+  .nameRow {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

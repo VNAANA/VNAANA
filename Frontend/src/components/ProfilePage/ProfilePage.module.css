@@ -15,8 +15,43 @@
   composes: main from '../LoginPage/LoginPage.module.css';
 }
 
+/*
+ * The login frame centres the card vertically, which makes it jump when a
+ * tab's panel is taller or shorter. Keep it at the top instead.
+ */
+.page .main {
+  align-items: start;
+}
+
+/*
+ * The mobile tab bar stays pinned to the bottom of the screen while the page scrolls.
+ * The negative margins undo the page's mobile padding (8px 16px 24px) so it runs edge to edge.
+ */
+.tabBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+@media (max-width: 819.98px) {
+  .tabBar {
+    margin: 24px -16px -24px;
+  }
+}
+
+/* Keep the scrollbar's space when only one tab is long enough to scroll, so the card doesn't shift sideways. */
+:global(html):has(.page) {
+  scrollbar-gutter: stable;
+}
+
 .card {
   composes: card from '../LoginPage/LoginPage.module.css';
+}
+
+/* Wider than the login card: the tabs and topic lists need the room on desktop.
+   Two classes so it wins over the composed login card whatever order the CSS loads in. */
+.main .card {
+  max-width: 640px;
 }
 
 .title {
@@ -29,6 +64,68 @@
 
 .notice {
   composes: notice from '../LoginPage/LoginPage.module.css';
+}
+
+/* ---------- Tabs ---------- */
+
+/* One row along the top; scrolls sideways if more tabs are added than fit. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 20px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+
+.tab {
+  flex: none;
+  position: relative;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-ui) var(--radius-ui) 0 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--ink);
+}
+
+/* The active tab's underline sits on the row's bottom border. */
+.tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 8px 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--accent);
+}
+
+.tab:focus-visible {
+  outline-offset: -2px;
+}
+
+.panel {
+  margin-top: 20px;
+}
+
+/* The panel's first block starts right under the tabs, without a divider. */
+.panel > :first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 /* ---------- Who you are ---------- */
@@ -93,6 +190,12 @@
   color: var(--muted);
 }
 
+.topicsError {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--error);
+}
+
 .signOut {
   display: flex;
   align-items: center;
@@ -114,3 +217,99 @@
   opacity: 0.6;
   cursor: wait;
 }
+
+.passwordPanel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ui);
+  background: var(--surface-2);
+}
+
+.passwordToggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: inherit;
+  color: var(--foryou-ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.passwordToggle::-webkit-details-marker { display: none; }
+.passwordToggle:hover { background: var(--foryou-bg); }
+/* Open: the header stays plain, with a line between it and the form */
+.passwordPanel[open] .passwordToggle {
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-ui) var(--radius-ui) 0 0;
+}
+.passwordToggle:focus-visible, .savePassword:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.passwordPanel[open] .chevron { transform: rotate(180deg); }
+.passwordHint {
+  display: block;
+  margin-top: 4px;
+  color: var(--body);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.passwordForm {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+.passwordForm input { width: 100%; min-width: 0; }
+
+/* Every label looks the same, like the login and register forms:
+   the "New password" label sits apart from its input, the others wrap theirs. */
+.passwordForm label,
+.passwordForm .sectionTitle {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+}
+.passwordForm .sectionTitle { margin-bottom: -10px; } /* 16px gap → 6px, as inside the other labels */
+
+.passwordForm input:focus-visible {
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+.passwordForm input[aria-invalid='true'] { border-color: var(--error); }
+
+/* Empty status messages take no room (they stay in the page so screen readers announce them) */
+.passwordForm > p:empty { margin-top: -16px; }
+.actions > div:empty { margin-top: -10px; }
+
+/* Same main button as the login and register forms */
+.savePassword {
+  min-height: 48px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.savePassword:hover { background: #262b34; }
+.savePassword:disabled { opacity: 0.65; cursor: wait; }
+
+.verified {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-ui);
+  background: var(--topic-sports-bg);
+  color: var(--topic-sports-ink);
+  font-weight: 600;
+}
+.verified svg { flex-shrink: 0; }

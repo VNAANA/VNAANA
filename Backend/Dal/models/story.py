@@ -12,6 +12,7 @@ from Backend.Dal.models.base import Base
 if TYPE_CHECKING:
     from Backend.Dal.models.story_article import StoryArticle
     from Backend.Dal.models.story_tag import StoryTag
+    from Backend.Dal.models.story_translation import StoryTranslation
 
 
 class StoryStatus(str, enum.Enum):
@@ -45,5 +46,8 @@ class Story(Base):
         back_populates="story", cascade="all, delete-orphan", passive_deletes=True
     )
     articles: Mapped[list["StoryArticle"]] = relationship(
+        back_populates="story", cascade="all, delete-orphan", passive_deletes=True
+    )
+    translations: Mapped[list["StoryTranslation"]] = relationship(
         back_populates="story", cascade="all, delete-orphan", passive_deletes=True
     )

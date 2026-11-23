@@ -1,13 +1,20 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from Backend.Logic.domain.story import Story, StoryStatus
 from Backend.Logic.domain.story_article_link import StoryArticleLink
+from Backend.Logic.domain.story_articles import StoryArticlesPage
+from Backend.Logic.domain.story_translation import StoryTranslation
+
+GenreTagWrite = Literal["saved", "missing", "changed", "already_tagged"]
 
 
 class StoryRepository(Protocol):
+    def list_articles(self, story_id: uuid.UUID, *, limit: int, offset: int) -> StoryArticlesPage:
+        ...
+
     def get(self, story_id: uuid.UUID) -> Story | None:
         ...
 
@@ -34,6 +41,11 @@ class StoryRepository(Protocol):
         story: Story,
         tags: dict[uuid.UUID, Decimal | None],
     ) -> None:
+        ...
+
+    def add_genre_tags_if_current(
+        self, snapshot: Story, tags: dict[uuid.UUID, Decimal | None],
+    ) -> GenreTagWrite:
         ...
 
     def get_article_link(
@@ -65,4 +77,23 @@ class StoryRepository(Protocol):
 
     def delete_older_than(self, cutoff: datetime) -> int:
         """Delete every story last updated before cutoff. Returns how many."""
+        ...
+
+    def get_translation(
+        self,
+        story_id: uuid.UUID,
+        language: str,
+    ) -> StoryTranslation | None:
+        ...
+
+    def save_translation(
+        self,
+        story_id: uuid.UUID,
+        language: str,
+        *,
+        title: str | None,
+        summary: str | None,
+        context: str | None,
+    ) -> StoryTranslation:
+        """Insert or overwrite the translation for this story and language."""
         ...

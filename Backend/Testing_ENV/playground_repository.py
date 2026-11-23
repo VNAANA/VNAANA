@@ -108,9 +108,7 @@ class World:
         """Start over with a new user who picked these tags on day 0."""
         self.user = User(
             id=uuid.uuid4(),
-            age_band=None,
             language="en",
-            region=None,
             preferences=None,
             analytics_consent=consent,
             consent_updated_at=START,

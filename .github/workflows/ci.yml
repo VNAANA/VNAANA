@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
     test:
-        name: Unit Tests
+        name: Tests
         runs-on: ubuntu-latest
 
         steps:
@@ -37,11 +37,27 @@ jobs:
             - name: Compile Python files
               run: python -m compileall -q Backend
 
-            - name: Run unit tests
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+                  cache-dependency-path: Frontend/package-lock.json
+
+            - name: Install frontend dependencies
+              working-directory: Frontend
+              run: npm ci
+
+            - name: Install the browser for the E2E tests
+              run: python -m playwright install --with-deps chromium
+
+            - name: Start local Supabase for the E2E tests
+              run: npx --yes supabase@3 start --workdir tests/e2e
+
+            - name: Run all tests
               env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-              run: python -m pytest -c Backend/pytest.ini Backend/tests/unit -v
+                  REQUIRE_ALL_TESTS: '1'
+              run: python -m pytest -v
 
             - name: Check architectural boundaries
               run: lint-imports
