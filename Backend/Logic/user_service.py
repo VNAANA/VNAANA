@@ -65,6 +65,14 @@ class UserService:
             raise NotFoundError("User", subject)
         return user
 
+    def get_preferred_language(self, subject: uuid.UUID | None) -> str | None:
+        """The signed-in user's chosen language, or None for anonymous users
+        and users without a profile yet."""
+        if subject is None:
+            return None
+        user = self.users.get_by_identity("supabase", str(subject))
+        return user.language if user is not None else None
+
     def get_or_create_authenticated_user(
         self,
         subject: uuid.UUID,

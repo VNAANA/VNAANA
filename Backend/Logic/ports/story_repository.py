@@ -6,6 +6,7 @@ from typing import Any, Protocol
 from Backend.Logic.domain.story import Story, StoryStatus
 from Backend.Logic.domain.story_article_link import StoryArticleLink
 from Backend.Logic.domain.story_articles import StoryArticlesPage
+from Backend.Logic.domain.story_translation import StoryTranslation
 
 
 class StoryRepository(Protocol):
@@ -69,4 +70,23 @@ class StoryRepository(Protocol):
 
     def delete_older_than(self, cutoff: datetime) -> int:
         """Delete every story last updated before cutoff. Returns how many."""
+        ...
+
+    def get_translation(
+        self,
+        story_id: uuid.UUID,
+        language: str,
+    ) -> StoryTranslation | None:
+        ...
+
+    def save_translation(
+        self,
+        story_id: uuid.UUID,
+        language: str,
+        *,
+        title: str | None,
+        summary: str | None,
+        context: str | None,
+    ) -> StoryTranslation:
+        """Insert or overwrite the translation for this story and language."""
         ...

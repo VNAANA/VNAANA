@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     supabase_url: str | None = None
     supabase_publishable_key: str | None = None
 
+    # Read from GOOGLE_TRANSLATE_API_KEY. Server-side only, never send it to the frontend.
+    google_translate_api_key: str | None = None
+    google_translate_timeout_seconds: float = 15
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
