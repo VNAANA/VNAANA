@@ -31,20 +31,25 @@ export type NovaAnswer = {
 }
 
 // Shown in the answer language; the label is also the question sent to Nova.
-export const NOVA_SUGGESTIONS: Record<NovaLanguage, readonly NovaSuggestion[]> = {
-  en: [
-    { label: 'Explain it simpler', action: 'simplify' },
-    { label: 'What led to this?', action: 'ask' },
-    { label: 'What happens next?', action: 'ask' },
-  ],
-  nl: [
-    { label: 'Leg het eenvoudiger uit', action: 'simplify' },
-    { label: 'Wat leidde hiertoe?', action: 'ask' },
-    { label: 'Wat gebeurt er nu?', action: 'ask' },
-  ],
-}
+export const NOVA_SUGGESTIONS: Record<NovaLanguage, readonly NovaSuggestion[]> =
+  {
+    en: [
+      { label: 'Explain it simpler', action: 'simplify' },
+      { label: 'What led to this?', action: 'ask' },
+      { label: 'What happens next?', action: 'ask' },
+    ],
+    nl: [
+      { label: 'Leg het eenvoudiger uit', action: 'simplify' },
+      { label: 'Wat leidde hiertoe?', action: 'ask' },
+      { label: 'Wat gebeurt er nu?', action: 'ask' },
+    ],
+  }
 
-export async function askNova(article: NovaArticle, question: string, language: NovaLanguage): Promise<NovaAnswer> {
+export async function askNova(
+  article: NovaArticle,
+  question: string,
+  language: NovaLanguage,
+): Promise<NovaAnswer> {
   return requestNova('/ai/ask', {
     article_text: article.groundingText,
     question,
@@ -53,7 +58,10 @@ export async function askNova(article: NovaArticle, question: string, language: 
   })
 }
 
-export async function simplifyNova(article: NovaArticle, language: NovaLanguage): Promise<NovaAnswer> {
+export async function simplifyNova(
+  article: NovaArticle,
+  language: NovaLanguage,
+): Promise<NovaAnswer> {
   return requestNova('/ai/summarize', {
     article_text: article.groundingText,
     language,
@@ -61,7 +69,10 @@ export async function simplifyNova(article: NovaArticle, language: NovaLanguage)
   })
 }
 
-async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<string, unknown>): Promise<NovaAnswer> {
+async function requestNova(
+  path: '/ai/ask' | '/ai/summarize',
+  body: Record<string, unknown>,
+): Promise<NovaAnswer> {
   const url = apiUrl(path)
   let response: Response
   try {
@@ -84,13 +95,18 @@ async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<strin
     throw new NovaError('invalidResponse')
   }
   if (
-    !answer || typeof answer !== 'object' ||
-    !('text' in answer) || typeof answer.text !== 'string' ||
-    !('sources' in answer) || !Array.isArray(answer.sources) ||
+    !answer ||
+    typeof answer !== 'object' ||
+    !('text' in answer) ||
+    typeof answer.text !== 'string' ||
+    !('sources' in answer) ||
+    !Array.isArray(answer.sources) ||
     !answer.sources.every((source: unknown) => typeof source === 'string') ||
-    !('uncertainty' in answer) || typeof answer.uncertainty !== 'string' ||
+    !('uncertainty' in answer) ||
+    typeof answer.uncertainty !== 'string' ||
     !('status' in answer) ||
-    (answer.status !== 'answered' && answer.status !== 'insufficient_information')
+    (answer.status !== 'answered' &&
+      answer.status !== 'insufficient_information')
   ) {
     throw new NovaError('invalidResponse')
   }

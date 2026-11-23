@@ -9,7 +9,12 @@ type Props = {
 }
 
 /* Placeholder in the shape of content that is still loading. Hidden from screen readers. */
-export function Skeleton({ width = '100%', height = 14, circle = false, className = '' }: Props) {
+export function Skeleton({
+  width = '100%',
+  height = 14,
+  circle = false,
+  className = '',
+}: Props) {
   return (
     <span
       className={`${styles.block} ${circle ? styles.circle : ''} ${className}`}

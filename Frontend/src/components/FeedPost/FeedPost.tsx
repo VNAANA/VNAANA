@@ -10,7 +10,12 @@ import { getParts, PostContext } from './PostContext'
 import type { PartKey } from './PostContext'
 import { PostHeader } from './PostHeader'
 import { ReactionBar } from './ReactionBar'
-import { FullArticlePart, ReadMorePart, WhatHappenedPart, WhyPart } from './sections/Parts'
+import {
+  FullArticlePart,
+  ReadMorePart,
+  WhatHappenedPart,
+  WhyPart,
+} from './sections/Parts'
 import { usePostActions } from './usePostActions'
 import styles from './FeedPost.module.css'
 
@@ -75,11 +80,20 @@ export function FeedPost({ article, onOpened }: Props) {
 
   if (hidden) {
     return (
-      <article className={styles.hidden} data-hidden="true" aria-label={t.post.hiddenLabel(article.title)}>
+      <article
+        className={styles.hidden}
+        data-hidden="true"
+        aria-label={t.post.hiddenLabel(article.title)}
+      >
         <p>
           <strong>{t.post.hidden}</strong> · {t.post.hiddenText}
         </p>
-        <button ref={undoRef} type="button" className={styles.undo} onClick={() => setHidden(false)}>
+        <button
+          ref={undoRef}
+          type="button"
+          className={styles.undo}
+          onClick={() => setHidden(false)}
+        >
           {t.post.undo}
         </button>
       </article>
@@ -91,9 +105,23 @@ export function FeedPost({ article, onOpened }: Props) {
 
   return (
     <PostContext.Provider
-      value={{ article, carousel, actions, chat, composerFocusRequest, titleId, partIds, partLabels }}
+      value={{
+        article,
+        carousel,
+        actions,
+        chat,
+        composerFocusRequest,
+        titleId,
+        partIds,
+        partLabels,
+      }}
     >
-      <article ref={postRef} className={styles.post} aria-labelledby={titleId} tabIndex={-1}>
+      <article
+        ref={postRef}
+        className={styles.post}
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
         <PostHeader />
         <PostCarousel
           className={styles.carousel}

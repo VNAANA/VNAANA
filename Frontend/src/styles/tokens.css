@@ -5,70 +5,71 @@
  */
 :root {
   /* Surfaces */
-  --bg: #F4F5F7;            /* page background */
-  --surface: #FFFFFF;       /* cards, sidebar */
-  --surface-2: #F8F9FB;     /* inner panels (Why / Read more) */
+  --bg: #f4f5f7; /* page background */
+  --surface: #ffffff; /* cards, sidebar */
+  --surface-2: #f8f9fb; /* inner panels (Why / Read more) */
 
   /* Text & lines */
-  --ink: #0E1116;           /* main text, dark buttons, briefing card */
-  --body: #374151;          /* summaries */
-  --muted: #4B5563;         /* meta text */
-  --line: #E3E6EB;          /* borders, dividers */
-  --line-strong: #C9CED6;   /* chip / outline button borders */
+  --ink: #0e1116; /* main text, dark buttons, briefing card */
+  --body: #374151; /* summaries */
+  --muted: #4b5563; /* meta text */
+  --line: #e3e6eb; /* borders, dividers */
+  --line-strong: #c9ced6; /* chip / outline button borders */
 
   /* Accent */
-  --accent: #3546F0;        /* Ask Nova, active tab underline, links */
+  --accent: #3546f0; /* Ask Nova, active tab underline, links */
 
   /* Feed reason tags */
-  --foryou-bg: #E8EAFE;
-  --foryou-ink: #2433C4;    /* "For you" tag */
+  --foryou-bg: #e8eafe;
+  --foryou-ink: #2433c4; /* "For you" tag */
 
   /* Topics: soft background / dark text (Explore cards). Every pair passes WCAG AA. */
-  --topic-technology-bg: #DDE3FB;
-  --topic-technology-ink: #2433C4;
-  --topic-sports-bg: #DCEFE6;
-  --topic-sports-ink: #0E6B4E;
-  --topic-politics-bg: #E9E6F7;
-  --topic-politics-ink: #4B3A9E;
-  --topic-entertainment-bg: #FBE1EC;
-  --topic-entertainment-ink: #9D1F55;
-  --topic-science-bg: #E3EEF7;
-  --topic-science-ink: #1F5A85;
-  --topic-world-bg: #FBE3D3;
-  --topic-world-ink: #9A3F06;
-  --topic-business-bg: #F1EDE0;
-  --topic-business-ink: #6B5512;
-  --topic-unknown-bg: #EEF0F3;
+  --topic-technology-bg: #dde3fb;
+  --topic-technology-ink: #2433c4;
+  --topic-sports-bg: #dcefe6;
+  --topic-sports-ink: #0e6b4e;
+  --topic-politics-bg: #e9e6f7;
+  --topic-politics-ink: #4b3a9e;
+  --topic-entertainment-bg: #fbe1ec;
+  --topic-entertainment-ink: #9d1f55;
+  --topic-science-bg: #e3eef7;
+  --topic-science-ink: #1f5a85;
+  --topic-world-bg: #fbe3d3;
+  --topic-world-ink: #9a3f06;
+  --topic-business-bg: #f1ede0;
+  --topic-business-ink: #6b5512;
+  --topic-unknown-bg: #eef0f3;
   --topic-unknown-ink: #374151;
 
   /* Form errors */
-  --error: #B42318;
-  --error-bg: #FDECEA;      /* disliked topic chips */
+  --error: #b42318;
+  --error-bg: #fdecea; /* disliked topic chips */
 
   /* Dark surfaces (briefing card) */
-  --on-dark-muted: #C7CBD4;
-  --seg-off: #3A3F4A;
+  --on-dark-muted: #c7cbd4;
+  --seg-off: #3a3f4a;
 
   /* Shape */
   --radius-card: 22px;
   --radius-ui: 12px;
-  --radius-tile: 20px;      /* Explore cards and tiles */
+  --radius-tile: 20px; /* Explore cards and tiles */
   --radius-pill: 999px;
 
   /* Type */
   --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
 
-  --text-headline: 30px;    /* headline in a post */
-  --text-summary: 17px;     /* summary in a post */
-  --text-meta: 13px;        /* meta text */
+  --text-headline: 30px; /* headline in a post */
+  --text-summary: 17px; /* summary in a post */
+  --text-meta: 13px; /* meta text */
 
   /* Sizing */
-  --tap: 44px;              /* minimum size of anything clickable */
+  --tap: 44px; /* minimum size of anything clickable */
   --sidebar-w: 240px;
   --feed-w: 680px;
 
   /* Elevation & focus */
-  --shadow-card: 0 1px 2px rgba(14, 17, 22, 0.05), 0 4px 16px rgba(14, 17, 22, 0.05);
+  --shadow-card:
+    0 1px 2px rgba(14, 17, 22, 0.05), 0 4px 16px rgba(14, 17, 22, 0.05);
   --focus: var(--accent);
 }

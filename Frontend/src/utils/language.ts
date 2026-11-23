@@ -44,10 +44,12 @@ let saving: Promise<void> = Promise.resolve()
 function persist(): Promise<void> {
   const userId = profileId
   if (!userId) return Promise.resolve()
-  const run = saving.catch(() => {}).then(() => {
-    if (profileId !== userId) return
-    return saveLanguage(userId, current)
-  })
+  const run = saving
+    .catch(() => {})
+    .then(() => {
+      if (profileId !== userId) return
+      return saveLanguage(userId, current)
+    })
   saving = run
   return run
 }
@@ -63,7 +65,11 @@ export function setLanguage(language: Language): Promise<void> {
  * language yet (a new account) gets the one chosen at registration, or the
  * one currently shown.
  */
-export function loadProfileLanguage(userId: string, saved: Language | null, chosenAtSignUp: unknown) {
+export function loadProfileLanguage(
+  userId: string,
+  saved: Language | null,
+  chosenAtSignUp: unknown,
+) {
   profileId = userId
   if (saved) {
     apply(saved)

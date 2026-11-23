@@ -1,23 +1,61 @@
 /* Same page frame, card and controls as the login page */
-.page { composes: page from '../LoginPage/LoginPage.module.css'; }
-.top { composes: top from '../LoginPage/LoginPage.module.css'; }
-.back { composes: back from '../LoginPage/LoginPage.module.css'; }
-.main { composes: main from '../LoginPage/LoginPage.module.css'; }
-.title { composes: title from '../LoginPage/LoginPage.module.css'; }
-.intro { composes: intro from '../LoginPage/LoginPage.module.css'; }
-.form { composes: form from '../LoginPage/LoginPage.module.css'; }
-.field { composes: field from '../LoginPage/LoginPage.module.css'; }
-.label { composes: label from '../LoginPage/LoginPage.module.css'; }
-.input { composes: input from '../LoginPage/LoginPage.module.css'; }
-.passwordWrap { composes: passwordWrap from '../LoginPage/LoginPage.module.css'; }
-.reveal { composes: reveal from '../LoginPage/LoginPage.module.css'; }
-.error { composes: error from '../LoginPage/LoginPage.module.css'; }
-.smallLink { composes: smallLink from '../LoginPage/LoginPage.module.css'; }
-.submit { composes: submit from '../LoginPage/LoginPage.module.css'; }
-.divider { composes: divider from '../LoginPage/LoginPage.module.css'; }
-.google { composes: google from '../LoginPage/LoginPage.module.css'; }
-.notice { composes: notice from '../LoginPage/LoginPage.module.css'; }
-.signUp { composes: signUp from '../LoginPage/LoginPage.module.css'; }
+.page {
+  composes: page from '../LoginPage/LoginPage.module.css';
+}
+.top {
+  composes: top from '../LoginPage/LoginPage.module.css';
+}
+.back {
+  composes: back from '../LoginPage/LoginPage.module.css';
+}
+.main {
+  composes: main from '../LoginPage/LoginPage.module.css';
+}
+.title {
+  composes: title from '../LoginPage/LoginPage.module.css';
+}
+.intro {
+  composes: intro from '../LoginPage/LoginPage.module.css';
+}
+.form {
+  composes: form from '../LoginPage/LoginPage.module.css';
+}
+.field {
+  composes: field from '../LoginPage/LoginPage.module.css';
+}
+.label {
+  composes: label from '../LoginPage/LoginPage.module.css';
+}
+.input {
+  composes: input from '../LoginPage/LoginPage.module.css';
+}
+.passwordWrap {
+  composes: passwordWrap from '../LoginPage/LoginPage.module.css';
+}
+.reveal {
+  composes: reveal from '../LoginPage/LoginPage.module.css';
+}
+.error {
+  composes: error from '../LoginPage/LoginPage.module.css';
+}
+.smallLink {
+  composes: smallLink from '../LoginPage/LoginPage.module.css';
+}
+.submit {
+  composes: submit from '../LoginPage/LoginPage.module.css';
+}
+.divider {
+  composes: divider from '../LoginPage/LoginPage.module.css';
+}
+.google {
+  composes: google from '../LoginPage/LoginPage.module.css';
+}
+.notice {
+  composes: notice from '../LoginPage/LoginPage.module.css';
+}
+.signUp {
+  composes: signUp from '../LoginPage/LoginPage.module.css';
+}
 
 /* A little wider than login, so the two name fields fit side by side */
 .card {

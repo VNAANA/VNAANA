@@ -11,7 +11,10 @@ type Handlers = {
 }
 
 /* Reaction state and handlers for one post. */
-export function usePostActions(article: Article, { onHide, onOpened, onAskNova }: Handlers) {
+export function usePostActions(
+  article: Article,
+  { onHide, onOpened, onAskNova }: Handlers,
+) {
   const [reaction, setReaction] = useState<Reaction>(null)
   const [saved, setSaved] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)

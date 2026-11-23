@@ -20,19 +20,30 @@ export function useNovaChat(article?: NovaArticle) {
   const submit = async (message: string, action: NovaSuggestion['action']) => {
     const text = message.trim()
     if (!text || pending || !available) return
-    setMessages((list) => [...list, { id: nextId.current++, from: 'user', text }])
+    setMessages((list) => [
+      ...list,
+      { id: nextId.current++, from: 'user', text },
+    ])
     setPending(true)
     // The answer language is set on the profile page
     const language = readLanguage()
     try {
-      const answer = action === 'simplify'
-        ? await simplifyNova(article!, language)
-        : await askNova(article!, text, language)
-      setMessages((list) => [...list, { id: nextId.current++, from: 'nova', answer }])
+      const answer =
+        action === 'simplify'
+          ? await simplifyNova(article!, language)
+          : await askNova(article!, text, language)
+      setMessages((list) => [
+        ...list,
+        { id: nextId.current++, from: 'nova', answer },
+      ])
     } catch (error) {
       setMessages((list) => [
         ...list,
-        { id: nextId.current++, from: 'nova', error: error instanceof NovaError ? error.code : 'failed' },
+        {
+          id: nextId.current++,
+          from: 'nova',
+          error: error instanceof NovaError ? error.code : 'failed',
+        },
       ])
     } finally {
       setPending(false)
@@ -40,8 +51,10 @@ export function useNovaChat(article?: NovaArticle) {
   }
 
   const send = (question: string) => submit(question, 'ask')
-  const sendSuggestion = (suggestion: NovaSuggestion) => submit(suggestion.label, suggestion.action)
-  const tooLong = !!article && article.groundingText.length > MAX_NOVA_ARTICLE_CHARS
+  const sendSuggestion = (suggestion: NovaSuggestion) =>
+    submit(suggestion.label, suggestion.action)
+  const tooLong =
+    !!article && article.groundingText.length > MAX_NOVA_ARTICLE_CHARS
   const available = !!article?.groundingText.trim() && !tooLong
   return {
     messages,

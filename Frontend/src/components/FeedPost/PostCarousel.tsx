@@ -43,7 +43,10 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
         {...carousel.keyHandlers}
         {...carousel.swipeHandlers}
       >
-        <div className={styles.track} style={{ transform: `translateX(${carousel.index * -100}%)` }}>
+        <div
+          className={styles.track}
+          style={{ transform: `translateX(${carousel.index * -100}%)` }}
+        >
           {parts.map((part, i) => (
             <div
               key={partIds[i]}
@@ -51,7 +54,11 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
               className={styles.slide}
               role="group"
               aria-roledescription={t.post.carousel.rolePart}
-              aria-label={t.post.carousel.partLabel(i + 1, carousel.count, partLabels[i])}
+              aria-label={t.post.carousel.partLabel(
+                i + 1,
+                carousel.count,
+                partLabels[i],
+              )}
               inert={i !== carousel.index}
             >
               {part}
@@ -64,7 +71,11 @@ export function PostCarousel({ parts, className = '', partPadding }: Props) {
       <CarouselArrows />
 
       <p className="sr-only" aria-live="polite">
-        {t.post.carousel.announce(carousel.index + 1, carousel.count, partLabels[carousel.index])}
+        {t.post.carousel.announce(
+          carousel.index + 1,
+          carousel.count,
+          partLabels[carousel.index],
+        )}
       </p>
     </div>
   )

@@ -25,7 +25,8 @@ const en = {
   },
   /** Messages from useAuth while signing in or out */
   auth: {
-    signInFailed: 'We could not finish signing you in. Please refresh to try again.',
+    signInFailed:
+      'We could not finish signing you in. Please refresh to try again.',
     signOutFailed: 'Could not sign out. Please try again.',
   },
   nav: {
@@ -70,11 +71,15 @@ const en = {
     notices: {
       openingGoogle: 'Opening Google sign-in…',
       googleFailed: 'Could not start Google sign-in. Please try again.',
-      registered: 'Check your inbox for a confirmation link, or log in using your usual method.',
-      loginFailed: 'Could not log in. Check your email and password and try again.',
+      registered:
+        'Check your inbox for a confirmation link, or log in using your usual method.',
+      loginFailed:
+        'Could not log in. Check your email and password and try again.',
       weakPassword: 'Please choose a stronger password and try again.',
-      registrationFailed: 'Could not create your account. If you already registered, try logging in.',
-      connectionFailed: 'Could not reach the sign-in service. Please try again.',
+      registrationFailed:
+        'Could not create your account. If you already registered, try logging in.',
+      connectionFailed:
+        'Could not reach the sign-in service. Please try again.',
     },
   },
   register: {
@@ -101,7 +106,8 @@ const en = {
       passwordShort: 'Use at least 8 characters.',
       confirmPasswordMissing: 'Repeat your password.',
       passwordMismatch: 'The passwords do not match.',
-      consentMissing: 'Tick the box to agree, so Nova can personalise your news.',
+      consentMissing:
+        'Tick the box to agree, so Nova can personalise your news.',
     },
   },
   /** The required consent pop-up after login, for accounts without consent (e.g. made with Google) */
@@ -128,7 +134,8 @@ const en = {
   } as Record<TagName, string>,
   topicPrefs: {
     title: 'What news do you want?',
-    intro: 'Pick topics you like and topics you’d rather see less of. A topic can be in only one list.',
+    intro:
+      'Pick topics you like and topics you’d rather see less of. A topic can be in only one list.',
     liked: 'Liked topics',
     likedHint: 'Shown first in your feed and sidebar.',
     disliked: 'Disliked topics',
@@ -150,17 +157,26 @@ const en = {
     languageSaveFailed: 'Could not save your language. Please try again.',
     accountActions: 'Account actions',
     authMethods: 'Authentication Methods',
-    googleStatus: { checking: 'Checking Google connection…', connected: 'Google connected', disconnected: 'Google not connected', unavailable: 'Could not verify the Google connection.' },
+    googleStatus: {
+      checking: 'Checking Google connection…',
+      connected: 'Google connected',
+      disconnected: 'Google not connected',
+      unavailable: 'Could not verify the Google connection.',
+    },
     retryMethods: 'Check again',
-    passwordHint: 'Set or change your password here to sign in with your email address.',
+    passwordHint:
+      'Set or change your password here to sign in with your email address.',
     managePassword: 'Manage Password',
     connectGoogle: 'Connect Google Account',
     verificationCode: 'Enter the verification code Supabase sent you',
     linkResult: {
       linked: 'Google is connected to this account.',
-      conflict: 'That Google account is already connected to another account. Choose a different Google account.',
-      disabled: 'Connecting Google is disabled for this project. Contact the administrator.',
-      failed: 'Google could not be connected. Sign in again and retry from Profile.',
+      conflict:
+        'That Google account is already connected to another account. Choose a different Google account.',
+      disabled:
+        'Connecting Google is disabled for this project. Contact the administrator.',
+      failed:
+        'Google could not be connected. Sign in again and retry from Profile.',
     },
     newPassword: 'New password',
     currentPassword: 'Current password',
@@ -168,13 +184,15 @@ const en = {
     addPassword: 'Add password login',
     changePassword: 'Change password',
     passwordEnabled: 'Email and password login enabled',
-    passwordUnavailable: 'Could not verify password status. Check again to manage your password.',
+    passwordUnavailable:
+      'Could not verify password status. Check again to manage your password.',
     setPassword: 'Save password',
     passwordResult: {
       saved: 'Password saved successfully.',
       mismatch: 'Your new passwords do not match.',
       incorrect: 'Check your current password and try again.',
-      failed: 'Could not save the password. Check your verification code or sign in again and retry.',
+      failed:
+        'Could not save the password. Check your verification code or sign in again and retry.',
     },
     tabs: {
       label: 'Profile sections',
@@ -206,17 +224,24 @@ const en = {
     loading: 'Loading articles…',
     loadFailed: 'We couldn’t load articles right now.',
     retry: 'Try again',
-    empty: (filter: string) => `Nothing in ${filter} right now — try another topic.`,
+    empty: (filter: string) =>
+      `Nothing in ${filter} right now — try another topic.`,
     emptyAll: 'Nothing to explore right now. Check back soon.',
     showAll: 'Show all',
     explainer: 'Explainer',
   },
   briefing: {
     label: 'Nova · your news anchor',
-    greeting: (firstName: string | undefined, forYou: number, dontMiss: number) =>
+    greeting: (
+      firstName: string | undefined,
+      forYou: number,
+      dontMiss: number,
+    ) =>
       `Morning, ${firstName ?? 'there'}. ${plural(forYou, 'article', 'articles')} picked for you, plus ${dontMiss} you shouldn’t miss.`,
-    opened: (opened: number, total: number) => `${opened} of ${total} articles opened. `,
-    meta: (minutes: number, updatedAt: string) => `About ${minutes} min · updated ${updatedAt}`,
+    opened: (opened: number, total: number) =>
+      `${opened} of ${total} articles opened. `,
+    meta: (minutes: number, updatedAt: string) =>
+      `About ${minutes} min · updated ${updatedAt}`,
     dismiss: 'Dismiss Nova’s briefing',
   },
   post: {
@@ -248,8 +273,10 @@ const en = {
       rolePart: 'part',
       label: (title: string, count: number) =>
         `${title}, in ${count} parts. Use the left and right arrow keys to move.`,
-      partLabel: (n: number, count: number, label: string) => `${n} of ${count}: ${label}`,
-      announce: (n: number, count: number, label: string) => `Part ${n} of ${count}: ${label}`,
+      partLabel: (n: number, count: number, label: string) =>
+        `${n} of ${count}: ${label}`,
+      announce: (n: number, count: number, label: string) =>
+        `Part ${n} of ${count}: ${label}`,
       previous: (label: string) => `Previous: ${label}`,
       next: (label: string) => `Next: ${label}`,
     },
@@ -265,10 +292,13 @@ const en = {
     },
     why: {
       notExplained: 'Nova hasn’t explained this one yet',
-      readNextSlide: 'Until then, you can read the whole article on the next slide.',
-      readOnPublisher: (publisher: string) => `The full text isn’t available here yet. Read it on ${publisher}.`,
+      readNextSlide:
+        'Until then, you can read the whole article on the next slide.',
+      readOnPublisher: (publisher: string) =>
+        `The full text isn’t available here yet. Read it on ${publisher}.`,
       background: 'Background:',
-      aiSummary: (sources: number) => `AI summary from ${plural(sources, 'source', 'sources')}`,
+      aiSummary: (sources: number) =>
+        `AI summary from ${plural(sources, 'source', 'sources')}`,
       notCompared: 'Nova hasn’t compared this article with other sources yet.',
     },
     readMore: {
@@ -282,12 +312,18 @@ const en = {
   nova: {
     askNova: 'Ask Nova',
     conversation: 'Conversation with Nova',
-    previewWithDescription: 'Full article text is unavailable. Nova is using only the headline and available description.',
-    previewHeadlineOnly: 'Full article text is unavailable. Nova is using only the headline.',
-    tooLong: 'Ask Nova is unavailable: this article exceeds the 12,000-character AI limit.',
-    fullArticleOnly: 'Nova answers using only this original article, not other sources or previous messages.',
-    previewOnly: 'Questions are answered only when the available preview supports them.',
-    missingText: 'Ask Nova is unavailable because the original article text is missing.',
+    previewWithDescription:
+      'Full article text is unavailable. Nova is using only the headline and available description.',
+    previewHeadlineOnly:
+      'Full article text is unavailable. Nova is using only the headline.',
+    tooLong:
+      'Ask Nova is unavailable: this article exceeds the 12,000-character AI limit.',
+    fullArticleOnly:
+      'Nova answers using only this original article, not other sources or previous messages.',
+    previewOnly:
+      'Questions are answered only when the available preview supports them.',
+    missingText:
+      'Ask Nova is unavailable because the original article text is missing.',
     youAsked: 'You asked: ',
     novaReplied: 'Nova replied: ',
     notAnswered: 'Not answered from this article',
@@ -299,7 +335,8 @@ const en = {
     send: 'Send question to Nova',
     suggestions: 'Suggested questions',
     errors: {
-      unreachable: 'Cannot reach the AI service. Check that the backend is running.',
+      unreachable:
+        'Cannot reach the AI service. Check that the backend is running.',
       invalidRequest: 'The article or question is invalid or too long.',
       modelUnavailable: 'The AI model is unavailable. Please try again later.',
       failed: 'Nova could not answer right now. Please try again.',
@@ -326,7 +363,8 @@ const nl: Strings = {
     opensInNewTab: '(opent in een nieuw tabblad)',
   },
   auth: {
-    signInFailed: 'We konden het inloggen niet afronden. Vernieuw de pagina om het opnieuw te proberen.',
+    signInFailed:
+      'We konden het inloggen niet afronden. Vernieuw de pagina om het opnieuw te proberen.',
     signOutFailed: 'Uitloggen is niet gelukt. Probeer het opnieuw.',
   },
   nav: {
@@ -370,12 +408,17 @@ const nl: Strings = {
     },
     notices: {
       openingGoogle: 'Inloggen met Google wordt geopend…',
-      googleFailed: 'Inloggen met Google kon niet worden gestart. Probeer het opnieuw.',
-      registered: 'Controleer je inbox voor een bevestigingslink of log in op de gebruikelijke manier.',
-      loginFailed: 'Inloggen is mislukt. Controleer je e-mailadres en wachtwoord en probeer het opnieuw.',
+      googleFailed:
+        'Inloggen met Google kon niet worden gestart. Probeer het opnieuw.',
+      registered:
+        'Controleer je inbox voor een bevestigingslink of log in op de gebruikelijke manier.',
+      loginFailed:
+        'Inloggen is mislukt. Controleer je e-mailadres en wachtwoord en probeer het opnieuw.',
       weakPassword: 'Kies een sterker wachtwoord en probeer het opnieuw.',
-      registrationFailed: 'Je account aanmaken is mislukt. Probeer in te loggen als je al geregistreerd bent.',
-      connectionFailed: 'De inlogservice is niet bereikbaar. Probeer het opnieuw.',
+      registrationFailed:
+        'Je account aanmaken is mislukt. Probeer in te loggen als je al geregistreerd bent.',
+      connectionFailed:
+        'De inlogservice is niet bereikbaar. Probeer het opnieuw.',
     },
   },
   register: {
@@ -388,7 +431,8 @@ const nl: Strings = {
     passwordHint: 'Minstens 8 tekens.',
     confirmPassword: 'Herhaal wachtwoord',
     language: 'Taal',
-    languageHint: 'Geldt voor alle teksten in de app en voor de antwoorden van Nova.',
+    languageHint:
+      'Geldt voor alle teksten in de app en voor de antwoorden van Nova.',
     consent:
       'Ik ga ermee akkoord dat Virtual News Anchor mijn gegevens en voorkeuren voor onderwerpen gebruikt om het nieuws voor mij te personaliseren.',
     submit: 'Account aanmaken',
@@ -402,14 +446,16 @@ const nl: Strings = {
       passwordShort: 'Gebruik minstens 8 tekens.',
       confirmPasswordMissing: 'Herhaal je wachtwoord.',
       passwordMismatch: 'De wachtwoorden komen niet overeen.',
-      consentMissing: 'Vink het vakje aan om akkoord te gaan, zodat Nova je nieuws kan personaliseren.',
+      consentMissing:
+        'Vink het vakje aan om akkoord te gaan, zodat Nova je nieuws kan personaliseren.',
     },
   },
   consentPrompt: {
     title: 'Zo personaliseren we je nieuws',
     text: 'Virtual News Anchor gebruikt je gegevens en voorkeuren voor onderwerpen om het nieuws dat je ziet te personaliseren.',
     understand: 'Ik begrijp het',
-    saveFailed: 'Je toestemming kon niet worden opgeslagen. Probeer het opnieuw.',
+    saveFailed:
+      'Je toestemming kon niet worden opgeslagen. Probeer het opnieuw.',
   },
   tags: {
     Politics: 'Politiek',
@@ -427,7 +473,8 @@ const nl: Strings = {
   },
   topicPrefs: {
     title: 'Welk nieuws wil je zien?',
-    intro: 'Kies onderwerpen die je leuk vindt en onderwerpen waar je minder van wilt zien. Een onderwerp kan maar in één lijst staan.',
+    intro:
+      'Kies onderwerpen die je leuk vindt en onderwerpen waar je minder van wilt zien. Een onderwerp kan maar in één lijst staan.',
     liked: 'Leuke onderwerpen',
     likedHint: 'Komen als eerste in je feed en zijbalk.',
     disliked: 'Minder leuke onderwerpen',
@@ -436,7 +483,8 @@ const nl: Strings = {
     inDisliked: '(staat al bij minder leuke onderwerpen)',
     save: 'Onderwerpen opslaan',
     saving: 'Opslaan…',
-    saveFailed: 'Je onderwerpen konden niet worden opgeslagen. Probeer het opnieuw.',
+    saveFailed:
+      'Je onderwerpen konden niet worden opgeslagen. Probeer het opnieuw.',
     skip: 'Nu overslaan',
     cancel: 'Annuleren',
     profileHint: 'Wijzigingen worden meteen opgeslagen.',
@@ -445,21 +493,33 @@ const nl: Strings = {
   profile: {
     title: 'Profiel',
     language: 'Taal',
-    languageHint: 'Geldt voor alle teksten in de app en voor de antwoorden van Nova.',
-    languageSaveFailed: 'Je taal kon niet worden opgeslagen. Probeer het opnieuw.',
+    languageHint:
+      'Geldt voor alle teksten in de app en voor de antwoorden van Nova.',
+    languageSaveFailed:
+      'Je taal kon niet worden opgeslagen. Probeer het opnieuw.',
     accountActions: 'Accountacties',
     authMethods: 'Inlogmethoden',
-    googleStatus: { checking: 'Google-koppeling controleren…', connected: 'Google gekoppeld', disconnected: 'Google niet gekoppeld', unavailable: 'De Google-koppeling kon niet worden gecontroleerd.' },
+    googleStatus: {
+      checking: 'Google-koppeling controleren…',
+      connected: 'Google gekoppeld',
+      disconnected: 'Google niet gekoppeld',
+      unavailable: 'De Google-koppeling kon niet worden gecontroleerd.',
+    },
     retryMethods: 'Opnieuw controleren',
-    passwordHint: 'Stel hier je wachtwoord in of wijzig het om met je e-mailadres in te loggen.',
+    passwordHint:
+      'Stel hier je wachtwoord in of wijzig het om met je e-mailadres in te loggen.',
     managePassword: 'Wachtwoord beheren',
     connectGoogle: 'Google-account koppelen',
-    verificationCode: 'Voer de verificatiecode in die Supabase je heeft gestuurd',
+    verificationCode:
+      'Voer de verificatiecode in die Supabase je heeft gestuurd',
     linkResult: {
       linked: 'Google is gekoppeld aan dit account.',
-      conflict: 'Dit Google-account is al gekoppeld aan een ander account. Kies een ander Google-account.',
-      disabled: 'Google koppelen is uitgeschakeld voor dit project. Neem contact op met de beheerder.',
-      failed: 'Google koppelen is mislukt. Log opnieuw in en probeer het via Profiel.',
+      conflict:
+        'Dit Google-account is al gekoppeld aan een ander account. Kies een ander Google-account.',
+      disabled:
+        'Google koppelen is uitgeschakeld voor dit project. Neem contact op met de beheerder.',
+      failed:
+        'Google koppelen is mislukt. Log opnieuw in en probeer het via Profiel.',
     },
     newPassword: 'Nieuw wachtwoord',
     currentPassword: 'Huidig wachtwoord',
@@ -467,13 +527,15 @@ const nl: Strings = {
     addPassword: 'Inloggen met wachtwoord instellen',
     changePassword: 'Wachtwoord wijzigen',
     passwordEnabled: 'Inloggen met e-mail en wachtwoord ingeschakeld',
-    passwordUnavailable: 'De wachtwoordstatus kon niet worden gecontroleerd. Probeer het opnieuw.',
+    passwordUnavailable:
+      'De wachtwoordstatus kon niet worden gecontroleerd. Probeer het opnieuw.',
     setPassword: 'Wachtwoord opslaan',
     passwordResult: {
       saved: 'Je wachtwoord is opgeslagen.',
       mismatch: 'Je nieuwe wachtwoorden komen niet overeen.',
       incorrect: 'Controleer je huidige wachtwoord en probeer het opnieuw.',
-      failed: 'Opslaan is mislukt. Controleer je verificatiecode of log opnieuw in.',
+      failed:
+        'Opslaan is mislukt. Controleer je verificatiecode of log opnieuw in.',
     },
     tabs: {
       label: 'Onderdelen van je profiel',
@@ -515,7 +577,8 @@ const nl: Strings = {
     greeting: (firstName, forYou, dontMiss) =>
       `Goedemorgen${firstName ? `, ${firstName}` : ''}. ${plural(forYou, 'verhaal', 'verhalen')} voor je uitgekozen, plus ${dontMiss} die je niet mag missen.`,
     opened: (opened, total) => `${opened} van ${total} verhalen geopend. `,
-    meta: (minutes, updatedAt) => `Ongeveer ${minutes} min · bijgewerkt om ${updatedAt}`,
+    meta: (minutes, updatedAt) =>
+      `Ongeveer ${minutes} min · bijgewerkt om ${updatedAt}`,
     dismiss: 'Briefing van Nova sluiten',
   },
   post: {
@@ -564,11 +627,15 @@ const nl: Strings = {
     },
     why: {
       notExplained: 'Nova heeft dit verhaal nog niet uitgelegd',
-      readNextSlide: 'Tot die tijd kun je het hele artikel op de volgende dia lezen.',
-      readOnPublisher: (publisher) => `De volledige tekst is hier nog niet beschikbaar. Lees het op ${publisher}.`,
+      readNextSlide:
+        'Tot die tijd kun je het hele artikel op de volgende dia lezen.',
+      readOnPublisher: (publisher) =>
+        `De volledige tekst is hier nog niet beschikbaar. Lees het op ${publisher}.`,
       background: 'Achtergrond:',
-      aiSummary: (sources) => `AI-samenvatting uit ${plural(sources, 'bron', 'bronnen')}`,
-      notCompared: 'Nova heeft dit artikel nog niet met andere bronnen vergeleken.',
+      aiSummary: (sources) =>
+        `AI-samenvatting uit ${plural(sources, 'bron', 'bronnen')}`,
+      notCompared:
+        'Nova heeft dit artikel nog niet met andere bronnen vergeleken.',
     },
     readMore: {
       fullStoryOn: (publisher) => `Volledig verhaal op ${publisher}`,
@@ -581,12 +648,18 @@ const nl: Strings = {
   nova: {
     askNova: 'Vraag het Nova',
     conversation: 'Gesprek met Nova',
-    previewWithDescription: 'De volledige artikeltekst is niet beschikbaar. Nova gebruikt alleen de kop en de beschikbare beschrijving.',
-    previewHeadlineOnly: 'De volledige artikeltekst is niet beschikbaar. Nova gebruikt alleen de kop.',
-    tooLong: 'Vraag het Nova is niet beschikbaar: dit artikel is langer dan de AI-limiet van 12.000 tekens.',
-    fullArticleOnly: 'Nova antwoordt alleen op basis van dit originele artikel, niet op basis van andere bronnen of eerdere berichten.',
-    previewOnly: 'Vragen worden alleen beantwoord als de beschikbare preview daar genoeg informatie voor geeft.',
-    missingText: 'Vraag het Nova is niet beschikbaar omdat de originele artikeltekst ontbreekt.',
+    previewWithDescription:
+      'De volledige artikeltekst is niet beschikbaar. Nova gebruikt alleen de kop en de beschikbare beschrijving.',
+    previewHeadlineOnly:
+      'De volledige artikeltekst is niet beschikbaar. Nova gebruikt alleen de kop.',
+    tooLong:
+      'Vraag het Nova is niet beschikbaar: dit artikel is langer dan de AI-limiet van 12.000 tekens.',
+    fullArticleOnly:
+      'Nova antwoordt alleen op basis van dit originele artikel, niet op basis van andere bronnen of eerdere berichten.',
+    previewOnly:
+      'Vragen worden alleen beantwoord als de beschikbare preview daar genoeg informatie voor geeft.',
+    missingText:
+      'Vraag het Nova is niet beschikbaar omdat de originele artikeltekst ontbreekt.',
     youAsked: 'Jij vroeg: ',
     novaReplied: 'Nova antwoordde: ',
     notAnswered: 'Niet beantwoord op basis van dit artikel',
@@ -598,9 +671,11 @@ const nl: Strings = {
     send: 'Vraag naar Nova sturen',
     suggestions: 'Voorgestelde vragen',
     errors: {
-      unreachable: 'De AI-service is niet bereikbaar. Controleer of de backend draait.',
+      unreachable:
+        'De AI-service is niet bereikbaar. Controleer of de backend draait.',
       invalidRequest: 'Het artikel of de vraag is ongeldig of te lang.',
-      modelUnavailable: 'Het AI-model is niet beschikbaar. Probeer het later opnieuw.',
+      modelUnavailable:
+        'Het AI-model is niet beschikbaar. Probeer het later opnieuw.',
       failed: 'Nova kon nu geen antwoord geven. Probeer het opnieuw.',
       invalidResponse: 'De AI-service gaf een ongeldig antwoord.',
     },

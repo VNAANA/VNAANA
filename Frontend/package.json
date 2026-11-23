@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{json,js,ts}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{json,js,ts}\"",
-    "duplication": "jscpd ../Backend src"
+    "duplication": "jscpd ../Backend src --threshold 5"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.3.0",

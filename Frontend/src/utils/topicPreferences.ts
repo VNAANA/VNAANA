@@ -3,7 +3,12 @@
  * loaded from the backend profile by useAuth. Nothing is kept in the browser,
  * so another account on the same browser never sees these topics.
  */
-import { cleanTopics, completeOnboarding, giveAnalyticsConsent, saveTopics } from './profileApi'
+import {
+  cleanTopics,
+  completeOnboarding,
+  giveAnalyticsConsent,
+  saveTopics,
+} from './profileApi'
 import type { Profile, TopicLists } from './profileApi'
 import { removeStorage } from './storage'
 
@@ -81,10 +86,12 @@ export function setTopicPreferences(next: TopicLists): Promise<void> {
   const userId = state.userId
   if (!userId) return Promise.reject(new Error('Not signed in'))
   update({ ...state, preferences: cleanTopics(next) })
-  const run = saving.catch(() => {}).then(() => {
-    if (state.userId !== userId) return
-    return saveTopics(userId, state.preferences)
-  })
+  const run = saving
+    .catch(() => {})
+    .then(() => {
+      if (state.userId !== userId) return
+      return saveTopics(userId, state.preferences)
+    })
   saving = run
   return run
 }

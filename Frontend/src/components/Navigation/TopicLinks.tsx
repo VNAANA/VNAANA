@@ -21,14 +21,22 @@ export function TopicLinks({ onNavigate }: { onNavigate?: () => void }) {
         const isLiked = liked.includes(tag)
         return (
           <li key={tag}>
-            <a href={`#topic-${tag.toLowerCase()}`} className={styles.topicRow} onClick={onNavigate}>
+            <a
+              href={`#topic-${tag.toLowerCase()}`}
+              className={styles.topicRow}
+              onClick={onNavigate}
+            >
               <span className={styles.topicIcon} aria-hidden="true">
                 <Icon size={16} />
               </span>
               <span className={styles.topicName}>{t.tags[tag]}</span>
               {isLiked && (
                 <>
-                  <ThumbsUp size={14} className={styles.likedMark} aria-hidden="true" />
+                  <ThumbsUp
+                    size={14}
+                    className={styles.likedMark}
+                    aria-hidden="true"
+                  />
                   <span className="sr-only">{t.topicPrefs.likedMark}</span>
                 </>
               )}

@@ -25,7 +25,11 @@ function PublisherName() {
     <span className={styles.publisher}>
       {article.publisher.name}
       {article.publisher.verified && (
-        <span className={styles.verified} role="img" aria-label={t.post.verifiedPublisher}>
+        <span
+          className={styles.verified}
+          role="img"
+          aria-label={t.post.verifiedPublisher}
+        >
           <BadgeCheck size={16} aria-hidden="true" />
         </span>
       )}
@@ -131,7 +135,12 @@ function MoreMenu() {
         <Ellipsis size={20} aria-hidden="true" />
       </button>
       {open && (
-        <div id={menuId} role="menu" aria-label={t.post.postOptions} className={styles.menu}>
+        <div
+          id={menuId}
+          role="menu"
+          aria-label={t.post.postOptions}
+          className={styles.menu}
+        >
           <button
             ref={firstItemRef}
             type="button"
@@ -144,8 +153,12 @@ function MoreMenu() {
           >
             <EyeOff size={18} aria-hidden="true" />
             <span>
-              <span className={styles.menuItemTitle}>{t.post.notInterested}</span>
-              <span className={styles.menuItemHint}>{t.post.notInterestedHint}</span>
+              <span className={styles.menuItemTitle}>
+                {t.post.notInterested}
+              </span>
+              <span className={styles.menuItemHint}>
+                {t.post.notInterestedHint}
+              </span>
             </span>
           </button>
         </div>

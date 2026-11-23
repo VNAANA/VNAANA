@@ -12,7 +12,11 @@ type Props = {
 export function ExploreFilters({ active, onSelect }: Props) {
   const { t } = useStrings()
   return (
-    <div className={styles.row} role="group" aria-label={t.explore.filtersLabel}>
+    <div
+      className={styles.row}
+      role="group"
+      aria-label={t.explore.filtersLabel}
+    >
       {EXPLORE_FILTERS.map((filter) => (
         <button
           key={filter}

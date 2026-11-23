@@ -3,7 +3,13 @@ import type { Account } from '../../utils/account'
 import styles from './AccountAvatar.module.css'
 
 /* The user's profile picture, or their initials when there is none (or it fails to load). */
-export function AccountAvatar({ account, size = 38 }: { account: Account; size?: number }) {
+export function AccountAvatar({
+  account,
+  size = 38,
+}: {
+  account: Account
+  size?: number
+}) {
   const [failed, setFailed] = useState(false)
   const showImage = account.avatarUrl && !failed
 

@@ -32,8 +32,14 @@ export default function App() {
   const { t } = useStrings()
   const topicState = useTopicPreferences()
   const metadata = auth.session?.user.user_metadata
-  const displayName = [metadata?.given_name, metadata?.full_name, metadata?.name]
-    .find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+  const displayName = [
+    metadata?.given_name,
+    metadata?.full_name,
+    metadata?.name,
+  ].find(
+    (value): value is string =>
+      typeof value === 'string' && value.trim().length > 0,
+  )
   const firstName = displayName?.trim()
   const [openedIds, setOpenedIds] = useState<Set<string>>(() => new Set())
   const [briefingDismissed, setBriefingDismissed] = useState(
@@ -49,7 +55,9 @@ export default function App() {
   }
 
   const markOpened = useCallback((articleId: string) => {
-    setOpenedIds((ids) => (ids.has(articleId) ? ids : new Set(ids).add(articleId)))
+    setOpenedIds((ids) =>
+      ids.has(articleId) ? ids : new Set(ids).add(articleId),
+    )
   }, [])
 
   // After login or registration, once the backend profile is loaded:
@@ -59,12 +67,31 @@ export default function App() {
   const consentPrompt = profileLoaded && !topicState.analyticsConsent && (
     <ConsentDialog />
   )
-  const topicPrompt =
-    profileLoaded && topicState.analyticsConsent && !topicState.onboardingCompleted && <TopicPreferencesDialog />
+  const topicPrompt = profileLoaded &&
+    topicState.analyticsConsent &&
+    !topicState.onboardingCompleted && <TopicPreferencesDialog />
 
-  if (hash === '#login') return <><LoginPage auth={auth} />{consentPrompt}</>
-  if (hash === '#sign-up') return <><RegisterPage auth={auth} />{consentPrompt}</>
-  if (isProfileHash(hash)) return <><ProfilePage auth={auth} tab={profileTabFromHash(hash)} />{consentPrompt}</>
+  if (hash === '#login')
+    return (
+      <>
+        <LoginPage auth={auth} />
+        {consentPrompt}
+      </>
+    )
+  if (hash === '#sign-up')
+    return (
+      <>
+        <RegisterPage auth={auth} />
+        {consentPrompt}
+      </>
+    )
+  if (isProfileHash(hash))
+    return (
+      <>
+        <ProfilePage auth={auth} tab={profileTabFromHash(hash)} />
+        {consentPrompt}
+      </>
+    )
 
   const account = getAccount(auth.session)
   if (isExploreHash(hash)) {
@@ -74,10 +101,18 @@ export default function App() {
         <a href="#explore" className={styles.skipLink} onClick={skipToMain}>
           {t.explore.skipToContent}
         </a>
-        <Sidebar account={account} checkingSession={auth.checkingSession} current="explore" />
+        <Sidebar
+          account={account}
+          checkingSession={auth.checkingSession}
+          current="explore"
+        />
         <MobileTopBar />
         <ExplorePage filter={exploreFilterFromHash(hash)} />
-        <MobileTabBar account={account} checkingSession={auth.checkingSession} current="explore" />
+        <MobileTabBar
+          account={account}
+          checkingSession={auth.checkingSession}
+          current="explore"
+        />
         {consentPrompt}
         {topicPrompt}
       </div>
@@ -85,11 +120,17 @@ export default function App() {
   }
 
   const articles = feed.articles
-  const forYouCount = articles.filter((article) => article.feedReason === 'forYou').length
+  const forYouCount = articles.filter(
+    (article) => article.feedReason === 'forYou',
+  ).length
   // Articles without scraped content have no read time; count those as a one-minute skim.
-  const readMinutes = articles.reduce((sum, article) => sum + (article.readMore.readMinutes ?? 1), 0)
+  const readMinutes = articles.reduce(
+    (sum, article) => sum + (article.readMore.readMinutes ?? 1),
+    0,
+  )
   const newest = articles.reduce<Date | undefined>(
-    (latest, article) => (!latest || article.publishedAt > latest ? article.publishedAt : latest),
+    (latest, article) =>
+      !latest || article.publishedAt > latest ? article.publishedAt : latest,
     undefined,
   )
 
@@ -98,15 +139,27 @@ export default function App() {
       <a href="#feed" className={styles.skipLink}>
         {t.feed.skipToFeed}
       </a>
-      <Sidebar account={account} checkingSession={auth.checkingSession} current="forYou" />
+      <Sidebar
+        account={account}
+        checkingSession={auth.checkingSession}
+        current="forYou"
+      />
       <MobileTopBar />
 
       {/*
         The feed scrolls on its own and snaps to one post at a time:
         every post sits in a full-height "slide".
       */}
-      <main ref={feedRef} id="feed" className={styles.feed} tabIndex={-1} aria-label={t.feed.label}>
-        {auth.backendStatus && <p role="status">{t.auth[auth.backendStatus]}</p>}
+      <main
+        ref={feedRef}
+        id="feed"
+        className={styles.feed}
+        tabIndex={-1}
+        aria-label={t.feed.label}
+      >
+        {auth.backendStatus && (
+          <p role="status">{t.auth[auth.backendStatus]}</p>
+        )}
         {!briefingDismissed && feed.status === 'ready' && (
           <div className={styles.intro}>
             <div className={styles.column}>
@@ -136,7 +189,11 @@ export default function App() {
         {feed.status === 'error' && (
           <div className={styles.feedMessage} role="alert">
             <p>{t.feed.loadFailed}</p>
-            <button type="button" className={styles.retry} onClick={feed.reload}>
+            <button
+              type="button"
+              className={styles.retry}
+              onClick={feed.reload}
+            >
               {t.feed.retry}
             </button>
           </div>
@@ -157,7 +214,11 @@ export default function App() {
         )}
       </main>
 
-      <MobileTabBar account={account} checkingSession={auth.checkingSession} current="forYou" />
+      <MobileTabBar
+        account={account}
+        checkingSession={auth.checkingSession}
+        current="forYou"
+      />
       {consentPrompt}
       {topicPrompt}
     </div>
@@ -171,7 +232,10 @@ function skipToMain(event: MouseEvent<HTMLAnchorElement>) {
 
 /* "08:10" for today, "4 Nov 08:10" for older articles. */
 function updatedLabel(date: Date, locale: string) {
-  const time = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  const time = date.toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
   if (date.toDateString() === new Date().toDateString()) return time
   return `${date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} ${time}`
 }

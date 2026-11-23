@@ -19,8 +19,11 @@ export function registerWithPassword(form: Registration) {
     options: {
       emailRedirectTo: window.location.origin + '/',
       data: {
-        given_name: given, family_name: family, full_name: given + ' ' + family,
-        language: form.language, personalization_consent: form.consent,
+        given_name: given,
+        family_name: family,
+        full_name: given + ' ' + family,
+        language: form.language,
+        personalization_consent: form.consent,
       },
     },
   })
@@ -31,29 +34,50 @@ export function loginWithPassword(email: string, password: string) {
 }
 
 /** Google identities are visible in the verified user. Password credentials are private. */
-export async function readGoogleStatus(expectedId: string): Promise<'connected' | 'disconnected' | 'unavailable'> {
+export async function readGoogleStatus(
+  expectedId: string,
+): Promise<'connected' | 'disconnected' | 'unavailable'> {
   try {
     const { data, error } = await supabase.auth.getUser()
-    if (error || data.user?.id !== expectedId || !Array.isArray(data.user.identities)) {
+    if (
+      error ||
+      data.user?.id !== expectedId ||
+      !Array.isArray(data.user.identities)
+    ) {
       return 'unavailable'
     }
-    return data.user.identities.some(identity => identity.provider === 'google') ? 'connected' : 'disconnected'
+    return data.user.identities.some(
+      (identity) => identity.provider === 'google',
+    )
+      ? 'connected'
+      : 'disconnected'
   } catch {
     return 'unavailable'
   }
 }
 
-export async function readPasswordStatus(token: string, signal: AbortSignal): Promise<boolean> {
+export async function readPasswordStatus(
+  token: string,
+  signal: AbortSignal,
+): Promise<boolean> {
   const response = await fetch(apiUrl('/auth/me/password-status'), {
-    headers: { Authorization: 'Bearer ' + token }, cache: 'no-store', signal,
+    headers: { Authorization: 'Bearer ' + token },
+    cache: 'no-store',
+    signal,
   })
   if (!response.ok) throw new Error('Password status unavailable')
   const status = await response.json()
-  if (typeof status.enabled !== 'boolean') throw new Error('Invalid password status')
+  if (typeof status.enabled !== 'boolean')
+    throw new Error('Invalid password status')
   return status.enabled
 }
 
-export async function setAccountPassword(expectedId: string, password: string, nonce?: string, currentPassword?: string) {
+export async function setAccountPassword(
+  expectedId: string,
+  password: string,
+  nonce?: string,
+  currentPassword?: string,
+) {
   const { data, error } = await supabase.auth.getUser()
   if (error || data.user?.id !== expectedId) throw new Error('Session changed')
   return supabase.auth.updateUser({

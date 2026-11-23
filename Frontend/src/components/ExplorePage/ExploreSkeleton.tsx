@@ -6,7 +6,11 @@ import styles from './ExploreSkeleton.module.css'
 const TILE_HEIGHTS = [260, 180, 220, 300, 200, 240, 170, 280, 210]
 
 /* Placeholder grid while the first articles load. Hidden from screen readers. */
-export function ExploreSkeleton({ count = TILE_HEIGHTS.length }: { count?: number }) {
+export function ExploreSkeleton({
+  count = TILE_HEIGHTS.length,
+}: {
+  count?: number
+}) {
   return (
     <div className={gridStyles.grid} aria-hidden="true">
       {TILE_HEIGHTS.slice(0, count).map((height, index) => (
