@@ -1,9 +1,24 @@
 # AI API (Sprint 2)
 
-The AI API uses only text supplied in the request. It does not query the article
-database, fetch a URL, or store questions and article text. Ollama runs locally at
-`OLLAMA_BASE_URL` (default `http://127.0.0.1:11434`); `OLLAMA_MODEL` defaults to
-`llama3.2`. The model must already be installed. No model download is automatic.
+The AI API uses only text supplied in the request. The VNAANA backend does not
+query the article database, fetch a source URL, or store questions and article text.
+
+Set these options in the backend environment or in `Backend/.env`.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AI_PROVIDER` | `ollama` | Select `ollama` or `fontys` for both Article AI endpoints. |
+| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Local Ollama address. |
+| `OLLAMA_MODEL` | `llama3.2` | An already installed Ollama model. |
+| `OLLAMA_TIMEOUT_SECONDS` | `90` | Ollama request timeout. |
+| `FONTYS_API_KEY` | Unset | Required for Fontys. Keep it in a backend secret or local environment. |
+| `FONTYS_MODEL` | `fontys-gpt-5.6-sol` | Fontys model alias. |
+| `FONTYS_ENDPOINT` | `https://api.portkey.ai/v1/chat/completions` | Full HTTPS gateway endpoint. |
+| `FONTYS_TIMEOUT_SECONDS` | `90` | Fontys request timeout. |
+
+With `AI_PROVIDER=fontys`, the backend sends Article text and questions to the
+configured gateway. It requests JSON with a 4,096-token completion limit and
+sends the key in the `x-portkey-api-key` header.
 
 For summary and Q&A, `language` selects the **answer language** (`en` or `nl`),
 not the article's original language. Always send the original article text, even

@@ -38,6 +38,7 @@ from Backend.Dal.repositories.user_repository import (
 from Backend.Logic.algorithm_service import AlgorithmService
 from Backend.Logic.ai_service import AIService
 from Backend.Logic.article_service import ArticleService
+from Backend.Logic.fontys_client import FontysClient
 from Backend.Logic.google_translate_client import GoogleTranslateClient
 from Backend.Logic.ollama_client import OllamaClient
 from Backend.Logic.story_service import StoryService
@@ -58,6 +59,15 @@ DbSession = Annotated[
 
 def get_ai_service() -> AIService:
     settings = get_settings()
+    if settings.ai_provider == "fontys":
+        fontys = FontysClient(
+            api_key=settings.fontys_api_key,
+            model=settings.fontys_model,
+            endpoint=settings.fontys_endpoint,
+            timeout_seconds=settings.fontys_timeout_seconds,
+        )
+        return AIService(fontys.generate)
+
     client = OllamaClient(
         base_url=settings.ollama_base_url,
         model=settings.ollama_model,
