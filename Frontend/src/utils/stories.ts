@@ -4,7 +4,7 @@
  * description, publisher and link come from its lead article (the primary one).
  * The story summary isn't shown yet.
  */
-import type { Article, FeedReason } from '../types'
+import type { Article, FeedReason, NewsScope } from '../types'
 import { apiUrl } from './api'
 import { supabase } from './supabase'
 
@@ -118,7 +118,8 @@ export function toArticle(story: ApiStory, feedReason: FeedReason = 'forYou'): A
     },
     author: lead?.author ?? undefined,
     publishedAt: storyDate(story),
-    tags: story.tags.slice(0, MAX_TAGS).map((link) => link.tag.name),
+    tags: storyTagNames(story),
+    scope: storyScope(story),
     feedReason,
     title: story.title,
     ...(imageUrl ? { image: { src: imageUrl, alt: story.title } } : {}),
@@ -134,6 +135,31 @@ export function toArticle(story: ApiStory, feedReason: FeedReason = 'forYou'): A
 }
 
 /* When a story first went out; stories that were never published use their last update. */
+// Tags that say where the news is from. They become an icon instead of a pill.
+const SCOPE_TAGS = new Map<string, NewsScope>([
+  ['domestic', 'domestic'],
+  ['international', 'international'],
+])
+
+const scopeOf = (name: string) => SCOPE_TAGS.get(name.trim().toLowerCase())
+
+/* The story's most relevant tag names (the backend sends them most relevant first), without Domestic / International. */
+export function storyTagNames(story: ApiStory): string[] {
+  return story.tags
+    .filter((link) => !scopeOf(link.tag.name))
+    .slice(0, MAX_TAGS)
+    .map((link) => link.tag.name)
+}
+
+/* Domestic or international, from the most relevant of those two tags. */
+export function storyScope(story: ApiStory): NewsScope | undefined {
+  for (const link of story.tags) {
+    const scope = scopeOf(link.tag.name)
+    if (scope) return scope
+  }
+  return undefined
+}
+
 export function storyDate(story: ApiStory) {
   return new Date(story.first_published_at ?? story.last_updated_at)
 }

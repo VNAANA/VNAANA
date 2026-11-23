@@ -2,7 +2,8 @@ import { MapPin } from 'lucide-react'
 import { useStrings } from '../../hooks/useStrings'
 import type { ExploreItem } from '../../utils/explore'
 import { topicColorStyle } from '../../utils/topicColors'
-import { CardLink, CardMeta } from './ExploreCardParts'
+import { ScopeIcon } from '../ScopeIcon/ScopeIcon'
+import { CardLink, CardMeta, CardTags } from './ExploreCardParts'
 import styles from './ExploreImageCard.module.css'
 
 type Props = {
@@ -26,6 +27,7 @@ export function ExploreImageCard({ item, imageHeight, onImageError }: Props) {
         loading="lazy"
         onError={onImageError}
       />
+      <ScopeIcon scope={item.scope} className={styles.scope} />
       <div className={styles.body}>
         {(item.topic || item.location) && (
           <p className={styles.tags}>
@@ -46,6 +48,7 @@ export function ExploreImageCard({ item, imageHeight, onImageError }: Props) {
         <h2 className={styles.title}>
           <CardLink item={item} />
         </h2>
+        <CardTags item={item} />
         <CardMeta item={item} />
       </div>
     </article>

@@ -9,6 +9,9 @@ export type Topic =
 
 export type FeedReason = 'forYou' | 'dontMiss'
 
+/* Dutch or foreign news, from the story's "Domestic" / "International" tag. Shown as an icon, not a tag pill. */
+export type NewsScope = 'domestic' | 'international'
+
 /* What Ask Nova needs for a post. The backend reads the story's linked articles itself. */
 export type NovaStory = {
   storyId: string
@@ -31,6 +34,7 @@ export type Article = {
   topic?: Topic
   /** Tag names from the story, most relevant first. Shown as pills above the post. */
   tags?: string[]
+  scope?: NewsScope
   location?: string // "Eindhoven"
   feedReason: FeedReason
   image?: { src: string; alt: string }

@@ -14,3 +14,8 @@ export const TOPIC_ICONS: Record<Topic, LucideIcon> = {
 }
 
 export const TOPICS = Object.keys(TOPIC_ICONS) as Topic[]
+
+/* The topic a story tag is named after ("science" → Science), so it can use that topic's icon and translation. */
+export function topicForTag(name: string): Topic | undefined {
+  return TOPICS.find((known) => known.toLowerCase() === name.toLowerCase())
+}

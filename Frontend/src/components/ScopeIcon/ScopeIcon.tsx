@@ -1,0 +1,21 @@
+import { Globe, House } from 'lucide-react'
+import { useStrings } from '../../hooks/useStrings'
+import type { NewsScope } from '../../types'
+import styles from './ScopeIcon.module.css'
+
+/*
+ * Domestic or international news as a small round icon (home or globe)
+ * instead of a tag pill. The caller places it in a corner. Screen readers
+ * read "Domestic news" / "International news"; hovering shows the same.
+ */
+export function ScopeIcon({ scope, className }: { scope?: NewsScope; className?: string }) {
+  const { t } = useStrings()
+  if (!scope) return null
+  const Icon = scope === 'domestic' ? House : Globe
+  const label = t.post.scope[scope]
+  return (
+    <span className={className ? `${styles.icon} ${className}` : styles.icon} role="img" aria-label={label} title={label}>
+      <Icon size={16} aria-hidden="true" />
+    </span>
+  )
+}

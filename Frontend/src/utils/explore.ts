@@ -3,9 +3,9 @@
  * kept in the URL hash, and backend stories turned into ExploreItems.
  * Components only use ExploreItem, never the raw API shape.
  */
-import type { Topic } from '../types'
+import type { NewsScope, Topic } from '../types'
 import { apiUrl } from './api'
-import { storyDate } from './stories'
+import { storyDate, storyScope, storyTagNames } from './stories'
 import type { ApiStory } from './stories'
 
 /*
@@ -18,6 +18,9 @@ export type ExploreItem = {
   imageUrl?: string // with an image the card shows it; without, it becomes a text tile
   imageAlt?: string
   topic?: Topic // no topic → neutral colours
+  /** The story's tags, most relevant first (at most 3). */
+  tags: string[]
+  scope?: NewsScope // shown as a home or globe icon in the card's corner
   location?: string
   publisher: string
   publishedAt: Date
@@ -70,6 +73,8 @@ export function toExploreItem(story: ApiStory): ExploreItem {
     id: story.id,
     title: story.title,
     imageUrl: story.img_url?.trim() || undefined,
+    tags: storyTagNames(story),
+    scope: storyScope(story),
     publisher: lead?.provider.name ?? 'VNAANA',
     publishedAt: storyDate(story),
     // There's no story page in the app yet, so the card opens the lead article.

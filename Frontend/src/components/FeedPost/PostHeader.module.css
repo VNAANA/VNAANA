@@ -26,6 +26,9 @@
 
 .headerMenu {
   grid-area: menu;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 @container feed (max-width: 560px) {

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent } from 'react'
 import { BadgeCheck, Ellipsis, EyeOff, MapPin, Tag } from 'lucide-react'
-import { TOPIC_ICONS, TOPICS } from '../../data/topics'
+import { TOPIC_ICONS, topicForTag } from '../../data/topics'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
+import { ScopeIcon } from '../ScopeIcon/ScopeIcon'
 import { usePost } from './PostContext'
 import styles from './PostHeader.module.css'
 
@@ -72,7 +73,7 @@ function TagPills() {
   return (
     <ul className={styles.tagList} aria-label={t.post.tags}>
       {article.tags.map((name) => {
-        const topic = TOPICS.find((known) => known.toLowerCase() === name.toLowerCase())
+        const topic = topicForTag(name)
         const Icon = topic ? TOPIC_ICONS[topic] : Tag
         return (
           <li key={name} className={styles.pill}>
@@ -175,8 +176,12 @@ function MoreMenu() {
   )
 }
 
-/* The top bar: byline, then the label pills (topic, tags, location), then the ⋯ menu. */
+/*
+ * The top bar: byline, then the label pills (topic, tags, location), then the
+ * domestic / international icon and the ⋯ menu in the top-right corner.
+ */
 export function PostHeader() {
+  const { article } = usePost()
   return (
     <header className={styles.header}>
       <div className={styles.headerByline}>
@@ -188,6 +193,7 @@ export function PostHeader() {
         <LocationPill />
       </div>
       <div className={styles.headerMenu}>
+        <ScopeIcon scope={article.scope} />
         <MoreMenu />
       </div>
     </header>
