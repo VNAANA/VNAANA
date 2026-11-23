@@ -1,4 +1,4 @@
-""" /users endpoints.
+"""/users endpoints.
 
 All endpoints are plain `def` on purpose: the SQLAlchemy session is
 synchronous, and FastAPI runs plain def endpoints in a threadpool so a DB call
@@ -35,10 +35,7 @@ def require_user_owner(
     """Allow access only when the profile belongs to the verified identity."""
     user = service.get_user(user_id)
 
-    if (
-        user.auth_provider != "supabase"
-        or user.auth_subject != str(subject)
-    ):
+    if user.auth_provider != "supabase" or user.auth_subject != str(subject):
         raise HTTPException(
             status_code=403,
             detail="You cannot access another user's profile.",
@@ -56,6 +53,7 @@ def bootstrap_user(
 ):
     return service.get_or_create_authenticated_user(subject)
 
+
 @router.get(
     "/{user_id}",
     response_model=UserRead,
@@ -68,7 +66,9 @@ def get_user(
     return service.get_user(user_id)
 
 
-@router.patch("/{user_id}", response_model=UserRead, dependencies=[Depends(require_user_owner)])
+@router.patch(
+    "/{user_id}", response_model=UserRead, dependencies=[Depends(require_user_owner)]
+)
 def update_user(
     user_id: uuid.UUID,
     body: UserUpdate,
@@ -92,18 +92,32 @@ def delete_user(
     service.delete_user(user_id)
 
 
-@router.put("/{user_id}/preferences", response_model=UserRead, dependencies=[Depends(require_user_owner)])
-def set_preferences(user_id: uuid.UUID, body: PreferencesUpdate, service: UserServiceDep):
+@router.put(
+    "/{user_id}/preferences",
+    response_model=UserRead,
+    dependencies=[Depends(require_user_owner)],
+)
+def set_preferences(
+    user_id: uuid.UUID, body: PreferencesUpdate, service: UserServiceDep
+):
     """Create or replace the user's preferences."""
     return service.update_user(user_id, body.model_dump())
 
 
-@router.put("/{user_id}/onboarding", response_model=UserRead, dependencies=[Depends(require_user_owner)])
+@router.put(
+    "/{user_id}/onboarding",
+    response_model=UserRead,
+    dependencies=[Depends(require_user_owner)],
+)
 def set_onboarding(user_id: uuid.UUID, body: OnboardingUpdate, service: UserServiceDep):
     return service.update_user(user_id, body.model_dump())
 
 
-@router.put("/{user_id}/consent", response_model=UserRead, dependencies=[Depends(require_user_owner)])
+@router.put(
+    "/{user_id}/consent",
+    response_model=UserRead,
+    dependencies=[Depends(require_user_owner)],
+)
 def set_consent(
     user_id: uuid.UUID,
     body: ConsentUpdate,

@@ -25,14 +25,20 @@ class StoryStatus(str, enum.Enum):
 class Story(Base):
     __tablename__ = "stories"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text)
     img_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     context: Mapped[str | None] = mapped_column(Text)
     status: Mapped[StoryStatus] = mapped_column(
         # Persist the enum values as PostgreSQL story_status labels.
-        Enum(StoryStatus, name="story_status", values_callable=lambda e: [m.value for m in e]),
+        Enum(
+            StoryStatus,
+            name="story_status",
+            values_callable=lambda e: [m.value for m in e],
+        ),
         nullable=False,
         default=StoryStatus.draft,
         server_default="draft",

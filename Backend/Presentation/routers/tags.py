@@ -1,4 +1,4 @@
-""" /tags endpoints.
+"""/tags endpoints.
 
 Public: tag names and IDs are not personal data. The frontend needs the IDs
 to call PUT /users/{user_id}/tags with the topics a user picked by name.

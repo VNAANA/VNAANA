@@ -72,7 +72,9 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
 
         return list(self.db.scalars(stmt))
 
-    def list_events_since(self, user_id: uuid.UUID, since: datetime) -> list[EngagementEvent]:
+    def list_events_since(
+        self, user_id: uuid.UUID, since: datetime
+    ) -> list[EngagementEvent]:
         # Uses the (user_id, occurred_at) index from Hanh's migration.
         stmt = select(EngagementEventModel).where(
             EngagementEventModel.user_id == user_id,
@@ -80,9 +82,14 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
         )
 
         # Same mapping as the events endpoint, so there is only one to maintain.
-        return [EngagementEventRepository._to_domain(event) for event in self.db.scalars(stmt)]
+        return [
+            EngagementEventRepository._to_domain(event)
+            for event in self.db.scalars(stmt)
+        ]
 
-    def list_reactions_since(self, user_id: uuid.UUID, since: datetime) -> list[StoryReaction]:
+    def list_reactions_since(
+        self, user_id: uuid.UUID, since: datetime
+    ) -> list[StoryReaction]:
         stmt = select(StoryReactionModel).where(
             StoryReactionModel.user_id == user_id,
             StoryReactionModel.updated_at >= since,
@@ -103,10 +110,14 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
 
     # ---- hourly job: saving the result -----------------------------------------
 
-    def replace_tag_scores(self, user_id: uuid.UUID, scores: TagScores, computed_at: datetime) -> None:
+    def replace_tag_scores(
+        self, user_id: uuid.UUID, scores: TagScores, computed_at: datetime
+    ) -> None:
         rows = {
             row.tag_id: row
-            for row in self.db.scalars(select(UserTagModel).where(UserTagModel.user_id == user_id))
+            for row in self.db.scalars(
+                select(UserTagModel).where(UserTagModel.user_id == user_id)
+            )
         }
 
         for tag_id, row in rows.items():
@@ -146,7 +157,10 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
         self._clear_scores(UserTagModel.user_id.in_(no_consent))
         self.db.execute(
             update(UserModel)
-            .where(UserModel.analytics_consent.is_(False), UserModel.affinity_updated_at.is_not(None))
+            .where(
+                UserModel.analytics_consent.is_(False),
+                UserModel.affinity_updated_at.is_not(None),
+            )
             .values(affinity_updated_at=None)
         )
         self.db.flush()
@@ -154,7 +168,9 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
     def _clear_scores(self, which_users) -> None:
         """Drop score-only rows; keep declared interests but wipe their score."""
         self.db.execute(
-            delete(UserTagModel).where(which_users, UserTagModel.is_declared.is_(False)),
+            delete(UserTagModel).where(
+                which_users, UserTagModel.is_declared.is_(False)
+            ),
             execution_options={"synchronize_session": "fetch"},
         )
         self.db.execute(
@@ -199,7 +215,9 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
     # ---- consent withdrawn (design doc D3) ---------------------------------------
 
     def delete_algorithm_data(self, user_id: uuid.UUID) -> None:
-        self.db.execute(delete(StoryReactionModel).where(StoryReactionModel.user_id == user_id))
+        self.db.execute(
+            delete(StoryReactionModel).where(StoryReactionModel.user_id == user_id)
+        )
         self._clear_scores(UserTagModel.user_id == user_id)
 
         user = self.db.get(UserModel, user_id)

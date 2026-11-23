@@ -49,7 +49,10 @@ class Signal:
 
 # ---- step 1: convert -----------------------------------------------------------
 
-def signals_from_events(events: list[EngagementEvent], story_tags: StoryTags) -> list[Signal]:
+
+def signals_from_events(
+    events: list[EngagementEvent], story_tags: StoryTags
+) -> list[Signal]:
     signals = []
 
     for event in events:
@@ -65,7 +68,9 @@ def signals_from_events(events: list[EngagementEvent], story_tags: StoryTags) ->
     return signals
 
 
-def signals_from_reactions(reactions: list[StoryReaction], story_tags: StoryTags) -> list[Signal]:
+def signals_from_reactions(
+    reactions: list[StoryReaction], story_tags: StoryTags
+) -> list[Signal]:
     signals = []
 
     for reaction in reactions:
@@ -75,7 +80,9 @@ def signals_from_reactions(reactions: list[StoryReaction], story_tags: StoryTags
             continue
 
         signals.append(
-            Signal(tuple(tag_ids), REACTION_WEIGHTS[reaction.reaction], reaction.updated_at)
+            Signal(
+                tuple(tag_ids), REACTION_WEIGHTS[reaction.reaction], reaction.updated_at
+            )
         )
 
     return signals
@@ -89,6 +96,7 @@ def signals_from_declared_tags(declared_tags: list[DeclaredTag]) -> list[Signal]
 
 
 # ---- step 2: add up --------------------------------------------------------------
+
 
 def tag_scores(signals: list[Signal], now: datetime) -> TagScores:
     """Every signal gives its full weight to every tag it touches (design doc D6)."""
@@ -104,6 +112,7 @@ def tag_scores(signals: list[Signal], now: datetime) -> TagScores:
 
 
 # ---- both steps for one user -------------------------------------------------------
+
 
 def score_user(
     events: list[EngagementEvent],

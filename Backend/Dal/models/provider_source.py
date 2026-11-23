@@ -20,15 +20,23 @@ class ProviderSource(Base):
         Index("ix_provider_sources_is_active", "is_active"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     provider_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("providers.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("providers.id", ondelete="CASCADE"),
+        nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     source_type: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
-    poll_interval_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    poll_interval_minutes: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=60
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    configuration: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    configuration: Mapped[dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
 
     provider: Mapped["Provider"] = relationship(back_populates="sources")

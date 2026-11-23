@@ -23,7 +23,9 @@ class ArticleCreate(BaseModel):
     author: str | None = None
     language: str | None = Field(default=None, max_length=5)
     published_at: datetime | None = None
-    last_updated_at: datetime | None = Field(default=None, description="Last modification reported by the publisher")
+    last_updated_at: datetime | None = Field(
+        default=None, description="Last modification reported by the publisher"
+    )
 
 
 class ArticleSummary(ORMModel):
@@ -45,7 +47,7 @@ class ArticleRead(ORMModel):
     title: str
     description: str | None
     content: str | None
-    is_scraped: bool    
+    is_scraped: bool
     author: str | None
     language: str | None
     published_at: datetime | None

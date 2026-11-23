@@ -14,8 +14,8 @@ from Backend.Logic.Algorithm.shared_types import StoryTags, TagScores
 from Backend.Logic.domain.feed import RankedStory
 from Backend.Logic.domain.story import Story
 
-BROAD_TAG_COUNT = 3     # three tags ...
-BROAD_MIN_SCORE = 10    # ... at 10 or more
+BROAD_TAG_COUNT = 3  # three tags ...
+BROAD_MIN_SCORE = 10  # ... at 10 or more
 FOCUSED_MIN_SCORE = 15  # or one tag at 15 or more
 
 
@@ -53,6 +53,7 @@ def final_score(score: float, last_updated_at: datetime, now: datetime) -> float
 
 
 # ---- the feed ----------------------------------------------------------------------
+
 
 def rank_stories(
     stories: list[Story],

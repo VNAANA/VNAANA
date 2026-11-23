@@ -1,4 +1,3 @@
-
 from Backend.Logic.article_normalization_service import ArticleNormalizationService
 from Backend.Logic.article_service import ArticleService
 from Backend.Logic.domain.provider_source import ProviderSource
@@ -9,7 +8,6 @@ from Backend.Logic.sources.news_source import NewsSource
 
 
 class NewsGatheringService:
-
     def __init__(
         self,
         provider_source_service: ProviderSourceService,
@@ -39,9 +37,7 @@ class NewsGatheringService:
         handler = self.source_handlers.get(source.source_type)
 
         if handler is None:
-            raise ValueError(
-                f"Unsupported source type: {source.source_type}"
-            )
+            raise ValueError(f"Unsupported source type: {source.source_type}")
 
         print(f"Fetching source: {source.name}")
         print(f"URL: {source.url}")
@@ -57,14 +53,10 @@ class NewsGatheringService:
                     provider_id=source.provider_id,
                 )
 
-                article, created = self.article_service.ingest_article(
-                    article_data
-                )
+                article, created = self.article_service.ingest_article(article_data)
 
                 action = "created" if created else "updated"
                 print(f"{action}: {article.title}")
 
             except (ValueError, TypeError) as exc:
-                print(
-                    f"Skipping invalid article from {source.name}: {exc}"
-                )
+                print(f"Skipping invalid article from {source.name}: {exc}")

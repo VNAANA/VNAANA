@@ -1,4 +1,3 @@
-
 """Assign unlinked Dutch coverage to stories in the caller's transaction."""
 
 from datetime import date, datetime, time, timedelta, timezone
@@ -22,8 +21,7 @@ DUTCH_CODES = ("nl", "nl-nl", "nl-be", "nld", "dut")
 
 def _validate_arguments(limit, publication_day):
     if publication_day is not None and (
-        not isinstance(publication_day, date)
-        or isinstance(publication_day, datetime)
+        not isinstance(publication_day, date) or isinstance(publication_day, datetime)
     ):
         raise ValueError("publication_day must be a date")
 
@@ -76,10 +74,7 @@ def _build_article_query(limit, publication_day):
             GROUPING_TIMEZONE,
         ).astimezone(timezone.utc)
 
-        period = (
-            (Article.published_at >= start)
-            & (Article.published_at < end)
-        )
+        period = (Article.published_at >= start) & (Article.published_at < end)
 
     query = (
         select(Article)
@@ -146,14 +141,12 @@ def _load_existing_groups(
             continue
 
         if any(
-            (member.language or "nl").lower() not in DUTCH_CODES
-            for member in members
+            (member.language or "nl").lower() not in DUTCH_CODES for member in members
         ):
             continue
 
         if publication_day is not None and any(
-            article_day(member) != publication_day
-            for member in members
+            article_day(member) != publication_day for member in members
         ):
             continue
 
@@ -188,9 +181,7 @@ def _assign_pending_articles(
         decisions[article.id] = decision["reason"]
 
         story_id = (
-            decision["scores"][0][1]
-            if decision["reason"] == "accepted"
-            else None
+            decision["scores"][0][1] if decision["reason"] == "accepted" else None
         )
 
         if story_id is None:
@@ -285,16 +276,12 @@ def _build_story_report(
             "id": str(key),
             "created": key in created,
             "primary_article_id": str(groups[key][0].id),
-            "article_ids": [
-                str(article.id) for article in groups[key][1]
-            ],
+            "article_ids": [str(article.id) for article in groups[key][1]],
             "title": story_by_id[key].title,
             "context": story_by_id[key].context,
             "img_url": story_by_id[key].img_url,
             "status": story_by_id[key].status.value,
-            "first_published_at": (
-                story_by_id[key].first_published_at.isoformat()
-            ),
+            "first_published_at": (story_by_id[key].first_published_at.isoformat()),
         }
         for key in sorted(touched, key=str)
     ]
@@ -336,14 +323,12 @@ def group_articles(
 
     vectors = vectors_for(documents.values())
 
-    touched, assigned, decisions, excluded, created = (
-        _assign_pending_articles(
-            db,
-            pending,
-            groups,
-            story_by_id,
-            vectors,
-        )
+    touched, assigned, decisions, excluded, created = _assign_pending_articles(
+        db,
+        pending,
+        groups,
+        story_by_id,
+        vectors,
     )
 
     _update_touched_stories(

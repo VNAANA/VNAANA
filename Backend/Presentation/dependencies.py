@@ -71,7 +71,10 @@ def get_ai_service() -> AIService:
         model=settings.ollama_model,
         timeout_seconds=settings.ollama_timeout_seconds,
     )
-    return AIService(client.generate, generate_story=partial(client.generate, require_full_context=True))
+    return AIService(
+        client.generate,
+        generate_story=partial(client.generate, require_full_context=True),
+    )
 
 
 AIServiceDep = Annotated[AIService, Depends(get_ai_service)]
@@ -80,6 +83,7 @@ AIServiceDep = Annotated[AIService, Depends(get_ai_service)]
 # ---------------------------------------------------------------------------
 # Article
 # ---------------------------------------------------------------------------
+
 
 def get_article_service(
     db: DbSession,
@@ -99,6 +103,7 @@ ArticleServiceDep = Annotated[
 # ---------------------------------------------------------------------------
 # Story
 # ---------------------------------------------------------------------------
+
 
 def get_translator() -> GoogleTranslateClient:
     settings = get_settings()
@@ -130,6 +135,7 @@ StoryServiceDep = Annotated[
 # Tag
 # ---------------------------------------------------------------------------
 
+
 def get_tag_service(
     db: DbSession,
 ) -> TagService:
@@ -145,6 +151,7 @@ TagServiceDep = Annotated[
 # ---------------------------------------------------------------------------
 # User
 # ---------------------------------------------------------------------------
+
 
 def get_user_service(
     db: DbSession,
@@ -168,6 +175,7 @@ UserServiceDep = Annotated[
 # ---------------------------------------------------------------------------
 # Algorithm ("For you")
 # ---------------------------------------------------------------------------
+
 
 def get_algorithm_service(
     db: DbSession,

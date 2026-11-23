@@ -1,4 +1,3 @@
-
 import uuid
 from collections.abc import Callable, Iterable
 from typing import Any
@@ -54,9 +53,7 @@ def _load_classifier_for_candidates(
     try:
         return load_classifier()
     except Exception:
-        result["failed"].update(
-            dict.fromkeys(candidates.values(), "model load failed")
-        )
+        result["failed"].update(dict.fromkeys(candidates.values(), "model load failed"))
         return None
 
 
@@ -105,9 +102,7 @@ def _save_genre_tags(
     try:
         with session_factory() as db, db.begin():
             tags = TagRepository(db)
-            resolved = GenreClassificationTagAdapter(tags).to_story_tags(
-                predictions
-            )
+            resolved = GenreClassificationTagAdapter(tags).to_story_tags(predictions)
             stories = StoryService(
                 StoryRepository(db),
                 ArticleRepository(db),
@@ -136,14 +131,10 @@ def _process_story(
         return
 
     if snapshot is None or snapshot.tags:
-        result["skipped"][key] = (
-            "missing" if snapshot is None else "already_tagged"
-        )
+        result["skipped"][key] = "missing" if snapshot is None else "already_tagged"
         return
 
-    inference_success, predictions = _get_predictions(
-        snapshot, classifier, key, result
-    )
+    inference_success, predictions = _get_predictions(snapshot, classifier, key, result)
     if not inference_success:
         return
 
@@ -151,9 +142,7 @@ def _process_story(
         result["skipped"][key] = "no predictions"
         return
 
-    _save_genre_tags(
-        snapshot, predictions, key, session_factory, result
-    )
+    _save_genre_tags(snapshot, predictions, key, session_factory, result)
 
 
 def classify_grouped_stories(
@@ -172,15 +161,11 @@ def classify_grouped_stories(
     if not candidates:
         return result
 
-    classifier = _load_classifier_for_candidates(
-        candidates, load_classifier, result
-    )
+    classifier = _load_classifier_for_candidates(candidates, load_classifier, result)
     if classifier is None:
         return result
 
     for story_id, key in candidates.items():
-        _process_story(
-            story_id, key, classifier, session_factory, result
-        )
+        _process_story(story_id, key, classifier, session_factory, result)
 
     return result

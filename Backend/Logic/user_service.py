@@ -94,9 +94,9 @@ class UserService:
         )
 
     def set_consent(
-            self,
-            user_id: uuid.UUID,
-            consent: bool,
+        self,
+        user_id: uuid.UUID,
+        consent: bool,
     ) -> User:
         user = self.get_user(user_id)
 
@@ -141,16 +141,9 @@ class UserService:
     ) -> list[uuid.UUID]:
         user = self.get_user(user_id)
 
-        found = {
-            tag.id
-            for tag in self.tags.get_many(tag_ids)
-        }
+        found = {tag.id for tag in self.tags.get_many(tag_ids)}
 
-        missing = [
-            tag_id
-            for tag_id in tag_ids
-            if tag_id not in found
-        ]
+        missing = [tag_id for tag_id in tag_ids if tag_id not in found]
 
         if missing:
             raise NotFoundError(
@@ -175,9 +168,7 @@ class UserService:
         user = self.get_user(user_id)
 
         if not user.analytics_consent:
-            raise ConsentRequiredError(
-                "User has not given analytics consent"
-            )
+            raise ConsentRequiredError("User has not given analytics consent")
 
         story_id = data.get("story_id")
 
@@ -234,9 +225,7 @@ class UserService:
 
         # Same rule as events: no consent, nothing is stored (design doc D3).
         if not user.analytics_consent:
-            raise ConsentRequiredError(
-                "User has not given analytics consent"
-            )
+            raise ConsentRequiredError("User has not given analytics consent")
 
         if self.stories.get(story_id) is None:
             raise NotFoundError(

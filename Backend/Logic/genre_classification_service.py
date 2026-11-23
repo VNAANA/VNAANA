@@ -8,8 +8,17 @@ MAX_TAGS = 3
 MAX_INPUT_LENGTH = 256
 
 VNAANA_GENRES = (
-    "Politics", "Technology", "Sports", "Climate", "Economy", "Health",
-    "Entertainment", "Culture", "Science", "Domestic", "International",
+    "Politics",
+    "Technology",
+    "Sports",
+    "Climate",
+    "Economy",
+    "Health",
+    "Entertainment",
+    "Culture",
+    "Science",
+    "Domestic",
+    "International",
     "Social Issues",
 )
 
@@ -26,13 +35,17 @@ def _get_labels(model, labels_path: Path | None) -> list[str]:
             labels = json.loads(labels_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise RuntimeError(f"Could not read labels from {labels_path}") from exc
-        if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
+        if not isinstance(labels, list) or not all(
+            isinstance(label, str) for label in labels
+        ):
             raise RuntimeError("Labels must be a JSON list of genre names")
     else:
         mapping = model.config.id2label or {}
         labels = [mapping.get(index) for index in range(model.config.num_labels)]
         if any(label is None for label in labels):
-            raise RuntimeError("Checkpoint config.id2label is incomplete; provide a labels file")
+            raise RuntimeError(
+                "Checkpoint config.id2label is incomplete; provide a labels file"
+            )
         if all(label == f"LABEL_{index}" for index, label in enumerate(labels)):
             raise RuntimeError(
                 "Checkpoint contains generic LABEL_n names; provide the trained "
@@ -45,7 +58,9 @@ def _get_labels(model, labels_path: Path | None) -> list[str]:
 
 
 class GenreClassificationService:
-    def __init__(self, *, model, tokenizer, labels: Sequence[str], torch_module, device):
+    def __init__(
+        self, *, model, tokenizer, labels: Sequence[str], torch_module, device
+    ):
         self.model = model
         self.tokenizer = tokenizer
         self.labels = tuple(labels)
@@ -85,17 +100,18 @@ class GenreClassificationService:
         model.to(device)
         model.eval()
         return cls(
-            model=model, tokenizer=tokenizer, labels=labels,
-            torch_module=torch, device=device,
+            model=model,
+            tokenizer=tokenizer,
+            labels=labels,
+            torch_module=torch,
+            device=device,
         )
 
     def classify(
         self, *, title: str, summary: str | None, context: str | None
     ) -> list[GenrePrediction]:
         text = "\n\n".join(
-            part.strip()
-            for part in (title, summary, context)
-            if part and part.strip()
+            part.strip() for part in (title, summary, context) if part and part.strip()
         )
         if not text:
             raise ValueError("At least one non-blank Story text field is required")
@@ -123,5 +139,7 @@ class GenreClassificationService:
             key=lambda prediction: prediction.score,
             reverse=True,
         )
-        selected = [prediction for prediction in ranked if prediction.score >= THRESHOLD]
+        selected = [
+            prediction for prediction in ranked if prediction.score >= THRESHOLD
+        ]
         return selected[:MAX_TAGS]

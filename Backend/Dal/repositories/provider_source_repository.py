@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -10,7 +9,6 @@ from Backend.Logic.ports.provider_source_repository import (
 
 
 class ProviderSourceRepository(ProviderSourceRepositoryPort):
-
     def __init__(self, db: Session):
         self.db = db
 

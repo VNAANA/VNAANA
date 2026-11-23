@@ -71,12 +71,7 @@ def list_random_articles(
     response_model=ArticleRead,
     status_code=status.HTTP_201_CREATED,
     responses={
-        200: {
-            "description": (
-                "Article already existed; "
-                "last_seen_at was refreshed"
-            )
-        }
+        200: {"description": ("Article already existed; last_seen_at was refreshed")}
     },
 )
 def ingest_article(

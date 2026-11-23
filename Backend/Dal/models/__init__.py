@@ -1,4 +1,5 @@
 """All ORM models. Importing this package registers every table on Base.metadata."""
+
 from Backend.Dal.models.article import Article
 from Backend.Dal.models.base import Base
 from Backend.Dal.models.engagement_event import EngagementEvent

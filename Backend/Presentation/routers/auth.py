@@ -10,13 +10,20 @@ from Backend.Presentation.dependencies import DbSession
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+
 class AuthIdentityRead(BaseModel):
     auth_provider: str
     auth_subject: UUID
 
+
 @router.get("/me", response_model=AuthIdentityRead)
-async def get_my_identity(subject: AuthenticatedSubject,) -> AuthIdentityRead:
-    return AuthIdentityRead(auth_provider="supabase", auth_subject=subject,)
+async def get_my_identity(
+    subject: AuthenticatedSubject,
+) -> AuthIdentityRead:
+    return AuthIdentityRead(
+        auth_provider="supabase",
+        auth_subject=subject,
+    )
 
 
 class PasswordStatus(BaseModel):
@@ -24,7 +31,9 @@ class PasswordStatus(BaseModel):
 
 
 @router.get("/me/password-status", response_model=PasswordStatus)
-def get_password_status(subject: AuthenticatedSubject, db: DbSession, response: Response) -> PasswordStatus:
+def get_password_status(
+    subject: AuthenticatedSubject, db: DbSession, response: Response
+) -> PasswordStatus:
     response.headers["Cache-Control"] = "no-store"
     try:
         enabled = has_password(db, subject)
@@ -33,4 +42,3 @@ def get_password_status(subject: AuthenticatedSubject, db: DbSession, response: 
     if enabled is None:
         raise HTTPException(401, "Sign-in required.")
     return PasswordStatus(enabled=enabled)
-

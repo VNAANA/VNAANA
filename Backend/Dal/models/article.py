@@ -12,10 +12,13 @@ if TYPE_CHECKING:
     from Backend.Dal.models.provider import Provider
     from Backend.Dal.models.story_article import StoryArticle
 
+
 class Article(Base):
     __tablename__ = "articles"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     provider_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("providers.id"), nullable=False
     )

@@ -21,12 +21,18 @@ class LoginRoute(APIRoute):
             try:
                 response = await handler(request)
             except RequestValidationError:
-                response = JSONResponse(status_code=422, content={
-                    "detail": "Provide a valid email and a non-empty password."
-                })
+                response = JSONResponse(
+                    status_code=422,
+                    content={
+                        "detail": "Provide a valid email and a non-empty password."
+                    },
+                )
             except HTTPException as exc:
-                response = JSONResponse(status_code=exc.status_code,
-                                        content={"detail": exc.detail}, headers=exc.headers)
+                response = JSONResponse(
+                    status_code=exc.status_code,
+                    content={"detail": exc.detail},
+                    headers=exc.headers,
+                )
             response.headers["Cache-Control"] = "no-store"
             response.headers["Pragma"] = "no-cache"
             return response
@@ -37,12 +43,16 @@ class LoginRoute(APIRoute):
 router = APIRouter(prefix="/auth", tags=["Authentication"], route_class=LoginRoute)
 
 
-@router.post("/login", response_model=AccessTokenRead, responses={
-    401: {"description": "Sign-in failed"},
-    429: {"description": "Too many sign-in attempts"},
-    502: {"description": "Unexpected authentication response"},
-    503: {"description": "Authentication unavailable"},
-})
+@router.post(
+    "/login",
+    response_model=AccessTokenRead,
+    responses={
+        401: {"description": "Sign-in failed"},
+        429: {"description": "Too many sign-in attempts"},
+        502: {"description": "Unexpected authentication response"},
+        503: {"description": "Authentication unavailable"},
+    },
+)
 async def login(body: PasswordLogin) -> AccessTokenRead:
     """Sign in with a configured password. Copy access_token into Swagger Authorize.
 
@@ -57,7 +67,10 @@ async def login(body: PasswordLogin) -> AccessTokenRead:
                 f"{settings.supabase_url.rstrip('/')}/auth/v1/token",
                 params={"grant_type": "password"},
                 headers={"apikey": settings.supabase_publishable_key},
-                json={"email": body.email, "password": body.password.get_secret_value()},
+                json={
+                    "email": body.email,
+                    "password": body.password.get_secret_value(),
+                },
             )
     except httpx.RequestError:
         raise HTTPException(503, "Authentication service is unavailable.") from None
@@ -65,11 +78,15 @@ async def login(body: PasswordLogin) -> AccessTokenRead:
     if result.status_code == 429:
         raise HTTPException(429, "Too many sign-in attempts. Please try again later.")
     if result.status_code in (400, 401, 403, 422):
-        raise HTTPException(401, "Sign-in failed. Check your credentials and email confirmation.")
+        raise HTTPException(
+            401, "Sign-in failed. Check your credentials and email confirmation."
+        )
     if result.status_code != 200:
         raise HTTPException(503, "Authentication service could not complete sign-in.")
     try:
         # Ignore user metadata and refresh_token; expose only the documented fields.
         return AccessTokenRead.model_validate(result.json())
     except (ValueError, ValidationError):
-        raise HTTPException(502, "Authentication service returned an unexpected response.") from None
+        raise HTTPException(
+            502, "Authentication service returned an unexpected response."
+        ) from None

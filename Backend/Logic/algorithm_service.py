@@ -28,7 +28,6 @@ class AlgorithmService:
         self.algorithm = algorithm
         self.users = users
 
-
     def run_scoring(self, now: datetime | None = None) -> int:
         """Recompute and store the tag scores of every consented user.
 
@@ -61,7 +60,6 @@ class AlgorithmService:
         story_tags = self.algorithm.get_story_tags(list(story_ids))
 
         return score_user(events, reactions, declared_tags, story_tags, now)
-
 
     def get_feed(
         self,
@@ -98,9 +96,11 @@ class AlgorithmService:
         if not is_unlocked(tag_scores, has_declared_tags=has_declared_tags):
             return Feed(FeedStatus.locked)
 
-        stories = self.algorithm.list_candidate_stories(now - timedelta(days=LIFETIME_DAYS))
+        stories = self.algorithm.list_candidate_stories(
+            now - timedelta(days=LIFETIME_DAYS)
+        )
         story_tags = self.algorithm.get_story_tags([story.id for story in stories])
 
         ranked = rank_stories(stories, story_tags, tag_scores, now)
 
-        return Feed(FeedStatus.available, ranked[offset:offset + limit])
+        return Feed(FeedStatus.available, ranked[offset : offset + limit])

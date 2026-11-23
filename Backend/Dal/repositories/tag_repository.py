@@ -33,16 +33,12 @@ class TagRepository(TagRepositoryPort):
         if not tag_ids:
             return []
 
-        tags = self.db.scalars(
-            select(TagModel).where(TagModel.id.in_(tag_ids))
-        )
+        tags = self.db.scalars(select(TagModel).where(TagModel.id.in_(tag_ids)))
 
         return [self._to_domain(tag) for tag in tags]
 
     def get_by_name(self, name: str) -> Tag | None:
-        tag = self.db.scalars(
-            select(TagModel).where(TagModel.name == name)
-        ).first()
+        tag = self.db.scalars(select(TagModel).where(TagModel.name == name)).first()
 
         if tag is None:
             return None
@@ -50,9 +46,7 @@ class TagRepository(TagRepositoryPort):
         return self._to_domain(tag)
 
     def list_all(self) -> list[Tag]:
-        tags = self.db.scalars(
-            select(TagModel).order_by(TagModel.name)
-        )
+        tags = self.db.scalars(select(TagModel).order_by(TagModel.name))
 
         return [self._to_domain(tag) for tag in tags]
 

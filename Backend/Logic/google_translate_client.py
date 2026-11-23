@@ -34,19 +34,25 @@ class GoogleTranslateClient:
             raise TranslationUnavailableError("Translation is not configured")
 
         try:
-            response = self._post({
-                # v2 accepts a list, so all fields of a story go in one request.
-                "q": texts,
-                "source": source,
-                "target": target,
-                "format": "text",
-            })
+            response = self._post(
+                {
+                    # v2 accepts a list, so all fields of a story go in one request.
+                    "q": texts,
+                    "source": source,
+                    "target": target,
+                    "format": "text",
+                }
+            )
         except httpx.HTTPError as exc:
-            raise TranslationUnavailableError("Translation service is unavailable") from exc
+            raise TranslationUnavailableError(
+                "Translation service is unavailable"
+            ) from exc
 
         # 403 is also what Google returns when the daily character quota is used up.
         if response.status_code in (403, 429):
-            raise TranslationUnavailableError("Translation quota exceeded, try again later")
+            raise TranslationUnavailableError(
+                "Translation quota exceeded, try again later"
+            )
 
         if response.status_code != 200:
             raise TranslationUnavailableError(
@@ -57,10 +63,16 @@ class GoogleTranslateClient:
             translations = response.json()["data"]["translations"]
             translated = [item["translatedText"] for item in translations]
         except (ValueError, KeyError, TypeError) as exc:
-            raise TranslationUnavailableError("Translation service returned an invalid response") from exc
+            raise TranslationUnavailableError(
+                "Translation service returned an invalid response"
+            ) from exc
 
-        if len(translated) != len(texts) or not all(isinstance(text, str) for text in translated):
-            raise TranslationUnavailableError("Translation service returned an invalid response")
+        if len(translated) != len(texts) or not all(
+            isinstance(text, str) for text in translated
+        ):
+            raise TranslationUnavailableError(
+                "Translation service returned an invalid response"
+            )
 
         # Google can return entities like &#39; even for plain text. The result
         # is still plain text after this; it must never be rendered as HTML.
@@ -71,7 +83,10 @@ class GoogleTranslateClient:
 
         if self.http_client is not None:
             return self.http_client.post(
-                TRANSLATE_URL, json=payload, headers=headers, timeout=self.timeout_seconds
+                TRANSLATE_URL,
+                json=payload,
+                headers=headers,
+                timeout=self.timeout_seconds,
             )
 
         with httpx.Client(timeout=self.timeout_seconds) as client:

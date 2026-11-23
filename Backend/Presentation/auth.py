@@ -7,7 +7,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from Backend.config import get_settings
 
-bearer_scheme=HTTPBearer(auto_error=False)
+bearer_scheme = HTTPBearer(auto_error=False)
+
 
 async def get_authenticated_subject(
     credentials: Annotated[
