@@ -15,10 +15,13 @@ class RSSSource(NewsSource):
     def __init__(self, max_age_days: int = 30):
         self.max_age_days = max_age_days
 
+    
     @staticmethod
-    def _extract_image_url(entry, feed_url: str) -> str | None:
+    def _resolve_image_url(url: str, feed_url: str) -> str:
+        return urljoin(feed_url, unescape(url.strip()))
 
-        # 1. Media RSS content
+    @staticmethod
+    def _extract_media_content(entry, feed_url: str) -> str | None:
         for media in entry.get("media_content", []) or []:
             url = media.get("url")
             media_type = media.get("type", "").lower()
@@ -28,16 +31,24 @@ class RSSSource(NewsSource):
                 media_type.startswith("image/")
                 or medium == "image"
             ):
-                return urljoin(feed_url, unescape(url.strip()))
+                return RSSSource._resolve_image_url(url, feed_url)
 
-        # 2. Media RSS thumbnails
+        return None
+
+    @staticmethod
+    def _extract_media_thumbnail(entry, feed_url: str) -> str | None:
         for media in entry.get("media_thumbnail", []) or []:
             url = media.get("url")
 
             if url:
-                return urljoin(feed_url, unescape(url.strip()))
+                return RSSSource._resolve_image_url(url, feed_url)
 
-        # 3. RSS enclosures
+        return None
+
+    @staticmethod
+    def _extract_enclosure_image(entry, feed_url: str) -> str | None:
+        image_extensions = (".jpg", ".jpeg", ".png", ".webp", ".gif")
+
         for enclosure in entry.get("enclosures", []) or []:
             url = enclosure.get("href") or enclosure.get("url")
             media_type = enclosure.get("type", "").lower()
@@ -47,31 +58,32 @@ class RSSSource(NewsSource):
 
             is_image = (
                 media_type.startswith("image/")
-                or urlparse(url).path.lower().endswith(
-                    (".jpg", ".jpeg", ".png", ".webp", ".gif")
-                )
+                or urlparse(url).path.lower().endswith(image_extensions)
             )
 
             if is_image:
-                return urljoin(feed_url, unescape(url.strip()))
+                return RSSSource._resolve_image_url(url, feed_url)
 
-        # 4. Custom image fields
+        return None
+
+    @staticmethod
+    def _extract_custom_image(entry, feed_url: str) -> str | None:
         for field in ("image", "image_url"):
             image = entry.get(field)
 
             if isinstance(image, str) and image.strip():
-                return urljoin(
-                    feed_url,
-                    unescape(image.strip())
-                )
+                return RSSSource._resolve_image_url(image, feed_url)
 
             if isinstance(image, dict):
                 url = image.get("href") or image.get("url")
 
                 if url:
-                    return urljoin(feed_url, unescape(url.strip()))
+                    return RSSSource._resolve_image_url(url, feed_url)
 
-        # 5. HTML content, summary and description
+        return None
+
+    @staticmethod
+    def _extract_html_image(entry, feed_url: str) -> str | None:
         for field in ("content", "summary", "description"):
             value = entry.get(field)
 
@@ -95,6 +107,26 @@ class RSSSource(NewsSource):
                 return image_url
 
         return None
+
+    @staticmethod
+    def _extract_image_url(entry, feed_url: str) -> str | None:
+        """Extract an image URL using supported RSS image formats."""
+        extractors = (
+            RSSSource._extract_media_content,
+            RSSSource._extract_media_thumbnail,
+            RSSSource._extract_enclosure_image,
+            RSSSource._extract_custom_image,
+            RSSSource._extract_html_image,
+        )
+
+        for extractor in extractors:
+            image_url = extractor(entry, feed_url)
+
+            if image_url:
+                return image_url
+
+        return None
+
 
     @staticmethod
     def _extract_image_from_html(
