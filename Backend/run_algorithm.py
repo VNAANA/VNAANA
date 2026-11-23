@@ -9,9 +9,9 @@ Like run_news_gathering.py this is a composition root: the one place outside
 the API that plugs DAL implementations into the Logic layer.
 """
 
-from Backend.database import SessionLocal
 from Backend.Dal.repositories.algorithm_repository import AlgorithmRepository
 from Backend.Dal.repositories.user_repository import UserRepository
+from Backend.database import SessionLocal
 from Backend.Logic.algorithm_service import AlgorithmService
 
 

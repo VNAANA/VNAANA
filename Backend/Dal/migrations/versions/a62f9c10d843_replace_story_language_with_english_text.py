@@ -3,8 +3,8 @@
 Dropping columns discards their values; downgrade restores schema, not data.
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "a62f9c10d843"
 down_revision = "e49b2a8c710f"

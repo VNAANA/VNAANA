@@ -1,11 +1,11 @@
-from uuid import UUID
 from typing import List
+from uuid import UUID
+
+from Backend.Dal.mock_data.provider_sources import MOCK_PROVIDER_SOURCES
 from Backend.Logic.domain.provider_source import ProviderSource
 from Backend.Logic.ports.provider_source_repository import (
     ProviderSourceRepository,
 )
-
-from Backend.Dal.mock_data.provider_sources import MOCK_PROVIDER_SOURCES
 
 
 class MockProviderSourceRepository(ProviderSourceRepository):

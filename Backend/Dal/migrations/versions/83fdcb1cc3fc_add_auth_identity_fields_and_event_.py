@@ -16,9 +16,8 @@ Authentication identities are supplied on user creation, not fabricated here.
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '83fdcb1cc3fc'

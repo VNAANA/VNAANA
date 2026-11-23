@@ -6,8 +6,15 @@ from sqlalchemy import func, or_, select, text
 from sqlalchemy.orm import selectinload
 
 from Backend.Dal.models import Article, Story, StoryArticle, StoryStatus
-from Backend.Logic.story_grouping import (assess_story, cosine, representative, vectors_for,
-                                        ranked_representatives, GROUPING_TIMEZONE, article_day)
+from Backend.Logic.story_grouping import (
+    GROUPING_TIMEZONE,
+    article_day,
+    assess_story,
+    cosine,
+    ranked_representatives,
+    representative,
+    vectors_for,
+)
 
 DUTCH_CODES = ("nl", "nl-nl", "nl-be", "nld", "dut")
 

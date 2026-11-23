@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from Backend.Logic.domain.story import StoryStatus
-from Backend.Presentation.schemas.articles import ArticleSummary, ArticleRead
+from Backend.Presentation.schemas.articles import ArticleRead, ArticleSummary
 from Backend.Presentation.schemas.common import ORMModel, TagRead
 
 

@@ -1,7 +1,7 @@
+from Backend.Logic.domain.provider_source import ProviderSource
 from Backend.Logic.ports.provider_source_repository import (
     ProviderSourceRepository,
 )
-from Backend.Logic.domain.provider_source import ProviderSource
 
 
 class ProviderSourceService:

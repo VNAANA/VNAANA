@@ -1,150 +1,185 @@
 name: CI
 
 on:
-    push:
-        branches: [dev, main]
-    pull_request:
-        branches: [dev, main]
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
 
 permissions:
-    contents: read
+  contents: read
 
 concurrency:
-    group: ci-${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    test:
-        name: Tests
-        runs-on: ubuntu-latest
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: '3.12'
-                  cache: pip
-                  cache-dependency-path: requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
 
-            - name: Install dependencies
-              run: |
-                  python -m pip install --upgrade pip
-                  python -m pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest-cov
 
-            - name: Compile Python files
-              run: python -m compileall -q Backend
+      - name: Compile Python files
+        run: python -m compileall -q Backend
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: '22'
-                  cache: npm
-                  cache-dependency-path: Frontend/package-lock.json
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
 
-            - name: Install frontend dependencies
-              working-directory: Frontend
-              run: npm ci
+      - name: Install frontend dependencies
+        working-directory: Frontend
+        run: npm ci
 
-            - name: Install the browser for the E2E tests
-              run: python -m playwright install --with-deps chromium
+      - name: Install the browser for the E2E tests
+        run: python -m playwright install --with-deps chromium
 
-            - name: Start local Supabase for the E2E tests
-              run: npx --yes supabase@3 start --workdir tests/e2e
+      - name: Start local Supabase for the E2E tests
+        run: npx --yes supabase@3 start --workdir tests/e2e
 
-            - name: Run all tests
-              env:
-                  REQUIRE_ALL_TESTS: '1'
-              run: python -m pytest -v
+      - name: Run all tests and enforce Backend coverage
+        env:
+          REQUIRE_ALL_TESTS: '1'
+        run: |
+          python -m pytest -v \
+            --cov=Backend \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=60
 
-            - name: Check architectural boundaries
-              run: lint-imports
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
 
-    publish:
-        name: Build and Publish Docker Image
-        runs-on: ubuntu-latest
-        needs: test
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-        permissions:
-            contents: read
-            packages: write
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
+      - name: Install Python quality tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff import-linter
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
 
-            - name: Set lowercase image name
-              id: image
-              run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Install frontend dependencies
+        working-directory: Frontend
+        run: npm ci
 
-            - name: Log in to GitHub Container Registry
-              uses: docker/login-action@v3
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run code quality checks
+        run: make quality
 
-            - name: Extract Docker metadata
-              id: meta
-              uses: docker/metadata-action@v5
-              with:
-                  images: ${{ steps.image.outputs.name }}
-                  tags: |
-                      type=raw,value=latest
-                      type=sha,format=long
+  publish:
+    name: Build and Publish Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, code-quality]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-            - name: Build and push Docker image
-              uses: docker/build-push-action@v6
-              with:
-                  context: .
-                  push: true
-                  tags: ${{ steps.meta.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
+    permissions:
+      contents: read
+      packages: write
 
-    deploy:
-        name: Deploy to Azure
-        runs-on: ubuntu-latest
-        needs: publish
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-        permissions:
-            contents: read
-            id-token: write
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-        steps:
-            - name: Log in to Azure
-              uses: azure/login@v2
-              with:
-                  client-id: ${{ vars.AZURE_CLIENT_ID }}
-                  tenant-id: ${{ vars.AZURE_TENANT_ID }}
-                  subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Set lowercase image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-            - name: Deploy image to Azure Container Apps and Job
-              uses: azure/CLI@v1
-              with:
-                  inlineScript: |
-                      set -e
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-                      IMAGE="ghcr.io/vnaana/vnaana:sha-${GITHUB_SHA}"
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
 
-                      echo "Deploying image: $IMAGE"
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-                      echo "Updating API Container App..."
-                      az containerapp update \
-                        --name vna-api \
-                        --resource-group rb-vna-dev \
-                        --image "$IMAGE"
+  deploy:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-                      echo "Updating scheduled news pipeline Job..."
-                      az containerapp job update \
-                        --name news-pipeline-job \
-                        --resource-group rb-vna-dev \
-                        --image "$IMAGE"
+    permissions:
+      contents: read
+      id-token: write
 
-                      echo "Both Azure resources updated successfully."
+    steps:
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy image to Azure Container Apps and Job
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            set -e
+
+            IMAGE="ghcr.io/vnaana/vnaana:sha-${GITHUB_SHA}"
+
+            echo "Deploying image: $IMAGE"
+
+            echo "Updating API Container App..."
+            az containerapp update \
+              --name vna-api \
+              --resource-group rb-vna-dev \
+              --image "$IMAGE"
+
+            echo "Updating scheduled news pipeline Job..."
+            az containerapp job update \
+              --name news-pipeline-job \
+              --resource-group rb-vna-dev \
+              --image "$IMAGE"
+
+            echo "Both Azure resources updated successfully."

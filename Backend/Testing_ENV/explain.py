@@ -21,10 +21,19 @@ from Backend.Logic.Algorithm.ranking import (
     final_score,
     story_score,
 )
-from Backend.Logic.Algorithm.scoring import DECLARED_TAG_BONUS, EVENT_WEIGHTS, REACTION_WEIGHTS
+from Backend.Logic.Algorithm.scoring import (
+    DECLARED_TAG_BONUS,
+    EVENT_WEIGHTS,
+    REACTION_WEIGHTS,
+)
 from Backend.Logic.Algorithm.shared_types import TagScores
 from Backend.Logic.domain.story_reaction import Reaction
-from Backend.Testing_ENV.playground_repository import EVENT_TYPES, START, ActionKind, World
+from Backend.Testing_ENV.playground_repository import (
+    EVENT_TYPES,
+    START,
+    ActionKind,
+    World,
+)
 
 LIKE = REACTION_WEIGHTS[Reaction.like]
 DISLIKE = REACTION_WEIGHTS[Reaction.dislike]

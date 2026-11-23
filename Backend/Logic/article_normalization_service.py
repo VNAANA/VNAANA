@@ -3,8 +3,8 @@ import re
 import uuid
 from datetime import datetime, timezone
 from html import unescape
-
 from urllib.parse import urlparse
+
 from Backend.Logic.domain.article import RawArticle
 
 

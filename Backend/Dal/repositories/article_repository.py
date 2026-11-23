@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 
 from Backend.Dal.models import (
     Article as ArticleModel,
+)
+from Backend.Dal.models import (
     StoryArticle as StoryArticleModel,
 )
 from Backend.Logic.domain.article import Article, ArticleProvider

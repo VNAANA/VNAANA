@@ -1,5 +1,5 @@
 
-from uuid import UUID, uuid5, NAMESPACE_URL
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from Backend.Logic.domain.provider_source import ProviderSource
 

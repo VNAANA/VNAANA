@@ -1,7 +1,7 @@
 """Add an optional language code to stories."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "e49b2a8c710f"
 down_revision = "d82e6a193b47"

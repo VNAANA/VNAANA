@@ -1,5 +1,5 @@
-from Backend.database import SessionLocal
 from Backend.Dal.repositories.article_repository import ArticleRepository
+from Backend.database import SessionLocal
 from Backend.Logic.article_scraping_service import ArticleScrapingService
 
 

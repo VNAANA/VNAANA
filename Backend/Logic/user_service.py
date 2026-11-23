@@ -6,6 +6,7 @@ from Backend.Logic.domain.engagement_event import EngagementEvent
 from Backend.Logic.domain.story_reaction import Reaction, StoryReaction
 from Backend.Logic.domain.user import User
 from Backend.Logic.exceptions import ConsentRequiredError, NotFoundError
+from Backend.Logic.ports.algorithm_repository import AlgorithmRepository
 from Backend.Logic.ports.article_repository import ArticleRepository
 from Backend.Logic.ports.engagement_event_repository import (
     EngagementEventRepository,
@@ -13,8 +14,6 @@ from Backend.Logic.ports.engagement_event_repository import (
 from Backend.Logic.ports.story_repository import StoryRepository
 from Backend.Logic.ports.tag_repository import TagRepository
 from Backend.Logic.ports.user_repository import UserRepository
-from Backend.Logic.ports.algorithm_repository import AlgorithmRepository
-
 
 
 class UserService:

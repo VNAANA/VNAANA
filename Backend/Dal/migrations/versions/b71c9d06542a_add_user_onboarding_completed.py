@@ -1,8 +1,7 @@
 """Track whether the user completed personalization."""
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "b71c9d06542a"
 down_revision = "7b19a3fc820d"

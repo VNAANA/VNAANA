@@ -2,7 +2,7 @@ import math
 import uuid
 from collections.abc import Sequence
 
-from Backend.Logic.genre_classification_service import GenrePrediction, VNAANA_GENRES
+from Backend.Logic.genre_classification_service import VNAANA_GENRES, GenrePrediction
 from Backend.Logic.ports.tag_repository import TagRepository
 
 

@@ -6,7 +6,7 @@ from datetime import date
 from pathlib import Path
 
 from Backend.Dal.repositories.story_grouping import group_articles
-from Backend.Logic.story_grouping import MIN_SCORE, MIN_MARGIN, REPRESENTATIVE_LIMIT
+from Backend.Logic.story_grouping import MIN_MARGIN, MIN_SCORE, REPRESENTATIVE_LIMIT
 
 
 def run(db, publication_day, *, apply=False):

@@ -4,10 +4,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from Backend.Dal.models import EngagementEvent as EngagementEventModel, EventWeight
+from Backend.Dal.models import EngagementEvent as EngagementEventModel
+from Backend.Dal.models import EventWeight
 from Backend.Dal.models.base import utcnow
-from Backend.Logic.exceptions import NotFoundError
 from Backend.Logic.domain.engagement_event import EngagementEvent
+from Backend.Logic.exceptions import NotFoundError
 from Backend.Logic.ports.engagement_event_repository import (
     EngagementEventRepository as EngagementEventRepositoryPort,
 )

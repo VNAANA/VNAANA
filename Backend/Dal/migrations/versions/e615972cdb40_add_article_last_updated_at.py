@@ -1,8 +1,7 @@
 """Record the last article revision time supplied by the publisher."""
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision = "e615972cdb40"
 down_revision = "78ac4d901b3e"

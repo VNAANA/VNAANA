@@ -9,8 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from Backend.Dal.models.base import Base
 
 if TYPE_CHECKING: 
-    from Backend.Dal.models.user import User
     from Backend.Dal.models.story import Story
+    from Backend.Dal.models.user import User
 
 class StoryReaction(Base):
     __tablename__ = "story_reactions"

@@ -6,13 +6,12 @@ Create Date: 2026-11-02
 
 """
 
-from typing import Sequence, Union
 import uuid
+from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects.postgresql import insert
-
 
 revision: str = "c91e4a72b608"
 down_revision: Union[str, Sequence[str], None] = "fdf3a95033c6"

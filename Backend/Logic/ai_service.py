@@ -7,7 +7,6 @@ import json
 import re
 from collections.abc import Callable
 
-
 MAX_ARTICLE_CHARS = 12_000
 MAX_QUESTION_CHARS = 500
 HTML_ENTITY = re.compile(r"&(?:quot|apos|amp|lt|gt|#\d+|#x[0-9a-f]+);", re.IGNORECASE)

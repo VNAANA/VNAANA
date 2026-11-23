@@ -6,7 +6,6 @@ from Backend.Logic.ai_service import AIInputError, AIModelError
 from Backend.Presentation.dependencies import AIServiceDep
 from Backend.Presentation.schemas.ai import AIResponse, AskRequest, SummarizeRequest
 
-
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 

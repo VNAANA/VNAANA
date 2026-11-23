@@ -1,9 +1,7 @@
-from Backend.database import SessionLocal
 from Backend.Dal.mock_data.provider_sources import MOCK_PROVIDER_SOURCES
 from Backend.Dal.repositories.provider_repository import ProviderRepository
-from Backend.Logic.article_normalization_service import (
-    ArticleNormalizationService,
-)
+from Backend.database import SessionLocal
+
 
 def main() -> None:
     print("1. Starting provider seed script")

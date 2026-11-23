@@ -11,8 +11,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from Backend.database import get_db
-
+from Backend.config import get_settings
 from Backend.Dal.repositories.algorithm_repository import (
     AlgorithmRepository as DalAlgorithmRepository,
 )
@@ -34,17 +33,15 @@ from Backend.Dal.repositories.tag_repository import (
 from Backend.Dal.repositories.user_repository import (
     UserRepository as DalUserRepository,
 )
-
-from Backend.Logic.algorithm_service import AlgorithmService
+from Backend.database import get_db
 from Backend.Logic.ai_service import AIService
+from Backend.Logic.algorithm_service import AlgorithmService
 from Backend.Logic.article_service import ArticleService
 from Backend.Logic.google_translate_client import GoogleTranslateClient
 from Backend.Logic.ollama_client import OllamaClient
 from Backend.Logic.story_service import StoryService
 from Backend.Logic.tag_service import TagService
 from Backend.Logic.user_service import UserService
-from Backend.config import get_settings
-
 
 # ---------------------------------------------------------------------------
 # Database

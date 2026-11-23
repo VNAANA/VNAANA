@@ -1,18 +1,18 @@
 """All ORM models. Importing this package registers every table on Base.metadata."""
-from Backend.Dal.models.base import Base
-from Backend.Dal.models.user import User
-from Backend.Dal.models.tag import Tag
-from Backend.Dal.models.user_tag import UserTag
-from Backend.Dal.models.story import Story, StoryStatus
-from Backend.Dal.models.story_translation import StoryTranslation
-from Backend.Dal.models.story_tag import StoryTag
-from Backend.Dal.models.provider import Provider
-from Backend.Dal.models.provider_source import ProviderSource
 from Backend.Dal.models.article import Article
-from Backend.Dal.models.story_article import StoryArticle
+from Backend.Dal.models.base import Base
 from Backend.Dal.models.engagement_event import EngagementEvent
 from Backend.Dal.models.event_weight import EventWeight
+from Backend.Dal.models.provider import Provider
+from Backend.Dal.models.provider_source import ProviderSource
+from Backend.Dal.models.story import Story, StoryStatus
+from Backend.Dal.models.story_article import StoryArticle
 from Backend.Dal.models.story_reaction import StoryReaction
+from Backend.Dal.models.story_tag import StoryTag
+from Backend.Dal.models.story_translation import StoryTranslation
+from Backend.Dal.models.tag import Tag
+from Backend.Dal.models.user import User
+from Backend.Dal.models.user_tag import UserTag
 
 __all__ = [
     "Base",

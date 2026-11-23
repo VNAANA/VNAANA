@@ -1,12 +1,12 @@
 import asyncio
 
-from Backend.database import SessionLocal
 from Backend.Dal.mock_data.provider_sources import MOCK_PROVIDER_SOURCES
 from Backend.Dal.repositories.article_repository import ArticleRepository
-from Backend.Dal.repositories.provider_repository import ProviderRepository
 from Backend.Dal.repositories.mock_provider_source_repository import (
     MockProviderSourceRepository,
 )
+from Backend.Dal.repositories.provider_repository import ProviderRepository
+from Backend.database import SessionLocal
 from Backend.Logic.article_normalization_service import (
     ArticleNormalizationService,
 )

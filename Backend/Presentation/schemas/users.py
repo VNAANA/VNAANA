@@ -7,7 +7,6 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 from Backend.Logic.domain.story_reaction import Reaction
 from Backend.Presentation.schemas.common import ORMModel, TagRead
 
-
 TopicName = Literal[
     "Politics", "Technology", "Sports", "Climate", "Economy", "Health",
     "Entertainment", "World", "Culture", "Science", "Domestic", "International",

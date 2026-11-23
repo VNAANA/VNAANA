@@ -2,10 +2,13 @@ import uuid
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from Backend.Dal.models import (
     User as UserModel,
+)
+from Backend.Dal.models import (
     UserTag,
 )
 from Backend.Dal.models.base import utcnow
@@ -13,7 +16,7 @@ from Backend.Logic.domain.user import User
 from Backend.Logic.ports.user_repository import (
     UserRepository as UserRepositoryPort,
 )
-from sqlalchemy.dialects.postgresql import insert
+
 
 class UserRepository(UserRepositoryPort):
     def __init__(self, db: Session):
