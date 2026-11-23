@@ -18,19 +18,11 @@ class MockProviderSourceRepository(ProviderSourceRepository):
         self._sources = list(sources or MOCK_PROVIDER_SOURCES)
 
     async def get_active_sources(self) -> list[ProviderSource]:
-        return [
-            source
-            for source in self._sources
-            if source.is_active
-        ]
+        return [source for source in self._sources if source.is_active]
 
     def get(self, source_id: UUID) -> ProviderSource | None:
         return next(
-            (
-                source
-                for source in self._sources
-                if source.id == source_id
-            ),
+            (source for source in self._sources if source.id == source_id),
             None,
         )
 
@@ -45,17 +37,11 @@ class MockProviderSourceRepository(ProviderSourceRepository):
 
         if provider_id is not None:
             sources = [
-                source
-                for source in sources
-                if source.provider_id == provider_id
+                source for source in sources if source.provider_id == provider_id
             ]
 
         if active_only:
-            sources = [
-                source
-                for source in sources
-                if source.is_active
-            ]
+            sources = [source for source in sources if source.is_active]
 
         return list(sources)
 

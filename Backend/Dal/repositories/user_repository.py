@@ -45,10 +45,12 @@ class UserRepository(UserRepositoryPort):
         return self._to_domain(user)
 
     def get_by_identity(self, auth_provider: str, auth_subject: str) -> User | None:
-        user = self.db.scalar(select(UserModel).where(
-            UserModel.auth_provider == auth_provider,
-            UserModel.auth_subject == auth_subject,
-        ))
+        user = self.db.scalar(
+            select(UserModel).where(
+                UserModel.auth_provider == auth_provider,
+                UserModel.auth_subject == auth_subject,
+            )
+        )
         return self._to_domain(user) if user is not None else None
 
     def add(self, **fields: Any) -> User:
@@ -99,7 +101,9 @@ class UserRepository(UserRepositoryPort):
         # Edit declared interests while preserving stored affinity data.
         current = {
             row.tag_id: row
-            for row in self.db.scalars(select(UserTag).where(UserTag.user_id == user.id))
+            for row in self.db.scalars(
+                select(UserTag).where(UserTag.user_id == user.id)
+            )
         }
         for tag_id, row in current.items():
             declared = tag_id in wanted

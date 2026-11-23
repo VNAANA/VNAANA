@@ -1,4 +1,3 @@
-
 """Entry point for the scheduled news-gathering pipeline."""
 
 import asyncio
@@ -44,9 +43,7 @@ def main() -> None:
         provider_source_repository = ProviderSourceRepository(db)
 
         # Create services.
-        provider_source_service = ProviderSourceService(
-            provider_source_repository
-        )
+        provider_source_service = ProviderSourceService(provider_source_repository)
 
         article_service = ArticleService(
             article_repository,
@@ -79,9 +76,7 @@ def main() -> None:
 
         scraping_service = ArticleScrapingService(article_repository)
 
-        scraping_results = scraping_service.scrape_pending_articles(
-            limit=1000
-        )
+        scraping_results = scraping_service.scrape_pending_articles(limit=1000)
 
         db.commit()
 
@@ -117,10 +112,7 @@ def main() -> None:
         db.commit()
 
         settings = get_settings()
-        story_ids = [
-            story["id"]
-            for story in grouping_report.get("stories", [])
-        ]
+        story_ids = [story["id"] for story in grouping_report.get("stories", [])]
 
         if settings.genre_classification_pipeline_enabled and story_ids:
             try:
@@ -137,7 +129,9 @@ def main() -> None:
             except Exception:
                 logger.exception("Genre classification failed")
 
-        logger.info("News pipeline completed successfully: %s articles grouped", assigned)
+        logger.info(
+            "News pipeline completed successfully: %s articles grouped", assigned
+        )
 
     except Exception:
         db.rollback()

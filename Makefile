@@ -9,15 +9,15 @@ quality-python:
 	python -m ruff format --check Backend
 
 quality-frontend:
-	npm --prefix Frontend run lint
-	npm --prefix Frontend run typecheck
-	npm --prefix Frontend run format:check
+	pnpm --dir Frontend run lint
+	pnpm --dir Frontend run typecheck
+	pnpm --dir Frontend run format:check
 
 quality-architecture:
 	lint-imports
 
 quality-duplication:
-	npm --prefix Frontend run duplication
+	pnpm --dir Frontend run duplication
 
 # Formatting commands are opt-in local fixes; CI only runs check commands.
 format: format-python format-frontend
@@ -27,4 +27,4 @@ format-python:
 	python -m ruff format Backend
 
 format-frontend:
-	npm --prefix Frontend run format
+	pnpm --dir Frontend run format

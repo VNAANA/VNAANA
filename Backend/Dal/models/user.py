@@ -15,18 +15,26 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        UniqueConstraint("auth_provider", "auth_subject", name="uq_users_auth_identity"),
+        UniqueConstraint(
+            "auth_provider", "auth_subject", name="uq_users_auth_identity"
+        ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     language: Mapped[str | None] = mapped_column(String(5))
     preferences: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     auth_provider: Mapped[str] = mapped_column(String, nullable=False)
     auth_subject: Mapped[str] = mapped_column(String, nullable=False)
     # Privacy by default: no consent until the user explicitly gives it.
-    analytics_consent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    analytics_consent: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     consent_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    affinity_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    affinity_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
     onboarding_completed: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=false()
     )

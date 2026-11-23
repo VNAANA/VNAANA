@@ -1,4 +1,5 @@
 """Turns logic-layer errors into HTTP responses."""
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 

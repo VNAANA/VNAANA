@@ -50,8 +50,12 @@ class StoryAskRequest(BaseModel):
 
     @field_validator("history")
     @classmethod
-    def completed_exchanges(cls, value: list[StoryHistoryMessage]) -> list[StoryHistoryMessage]:
-        if [message.role for message in value] != ["user", "assistant"] * (len(value) // 2):
+    def completed_exchanges(
+        cls, value: list[StoryHistoryMessage]
+    ) -> list[StoryHistoryMessage]:
+        if [message.role for message in value] != ["user", "assistant"] * (
+            len(value) // 2
+        ):
             raise ValueError("history must contain completed user/assistant exchanges")
         return value
 

@@ -1,4 +1,3 @@
-
 import re
 import uuid
 from datetime import datetime, timezone
@@ -33,25 +32,16 @@ class ArticleNormalizationService:
             "provider_id": provider_id,
             "canonical_url": url,
             "title": title,
-            "description": self._clean_text(
-                raw_article.description
-            ) or None,
-            "author": self._clean_text(
-                raw_article.author
-            ) or None,
-            "language": (
-                self._clean_text(raw_article.language)
-                or fallback_language
-            ),
+            "description": self._clean_text(raw_article.description) or None,
+            "author": self._clean_text(raw_article.author) or None,
+            "language": (self._clean_text(raw_article.language) or fallback_language),
             "published_at": self._normalize_date(
                 getattr(raw_article, "published_at", None)
             ),
             "first_seen_at": now,
             "last_updated_at": self._normalize_date(raw_article.last_updated_at),
             "last_seen_at": now,
-            "img_url": self._normalize_image_url(
-                raw_article.img_url
-            ),
+            "img_url": self._normalize_image_url(raw_article.img_url),
         }
 
     @staticmethod
@@ -92,9 +82,7 @@ class ArticleNormalizationService:
             parsed = value
         elif isinstance(value, str):
             try:
-                parsed = datetime.fromisoformat(
-                    value.replace("Z", "+00:00")
-                )
+                parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
                 return None
         else:

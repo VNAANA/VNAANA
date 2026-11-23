@@ -9,9 +9,7 @@ def main():
     try:
         article_repository = ArticleRepository(db)
 
-        scraping_service = ArticleScrapingService(
-            article_repository
-        )
+        scraping_service = ArticleScrapingService(article_repository)
 
         results = scraping_service.scrape_pending_articles(limit=100)
 

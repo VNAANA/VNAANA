@@ -5,17 +5,27 @@ import re
 from collections import Counter
 from zoneinfo import ZoneInfo
 
-STOPWORDS = set("de het een en van in op te met voor aan bij om tot uit naar is zijn was wordt worden door als dat die dit over ook of er na".split())
+STOPWORDS = set(
+    "de het een en van in op te met voor aan bij om tot uit naar is zijn was wordt worden door als dat die dit over ook of er na".split()
+)
 GROUPING_TIMEZONE = ZoneInfo("Europe/Amsterdam")
 MIN_SCORE = 0.45
 MIN_MARGIN = 0.04
 REPRESENTATIVE_LIMIT = 3
 
 BOILERPLATE = (
-    "sluiten", "al abonnee?", "inloggen", "ga direct naar inhoud", "sluit menu",
-    "feitelijke berichtgeving", "waargenomen en geverifieerd",
-    "kritische en onafhankelijke beoordeling", "een terugkerende rubriek",
-    "sorry, het lukt niet", "probeer de pagina", "of probeer het later",
+    "sluiten",
+    "al abonnee?",
+    "inloggen",
+    "ga direct naar inhoud",
+    "sluit menu",
+    "feitelijke berichtgeving",
+    "waargenomen en geverifieerd",
+    "kritische en onafhankelijke beoordeling",
+    "een terugkerende rubriek",
+    "sorry, het lukt niet",
+    "probeer de pagina",
+    "of probeer het later",
 )
 
 
@@ -26,8 +36,12 @@ def clean_lead(article):
     for line in lines:
         line = line.strip()
         folded = line.casefold()
-        if (len(line) < 60 or folded == article.title.strip().casefold()
-                or folded.startswith(BOILERPLATE) or folded.startswith("©")):
+        if (
+            len(line) < 60
+            or folded == article.title.strip().casefold()
+            or folded.startswith(BOILERPLATE)
+            or folded.startswith("©")
+        ):
             continue
         usable.append(line)
     return " ".join(usable)[:800]
@@ -55,11 +69,15 @@ def exclusion_reason(article):
 def event_conflict(left, right):
     """Conservative checks for known recurring templates, not arbitrary numbers."""
     titles = [article.title.casefold() for article in (left, right)]
-    towns = [re.search(r"burgemeestersvacature\s+([\w’' -]+)", title) for title in titles]
+    towns = [
+        re.search(r"burgemeestersvacature\s+([\w’' -]+)", title) for title in titles
+    ]
     if all(towns) and towns[0].group(1).strip() != towns[1].group(1).strip():
         return True
     if all("persconferentie na ministerraad" in title for title in titles):
-        dates = [re.search(r"\b(\d{1,2}\s+[a-z]+\s+20\d{2})\b", title) for title in titles]
+        dates = [
+            re.search(r"\b(\d{1,2}\s+[a-z]+\s+20\d{2})\b", title) for title in titles
+        ]
         return all(dates) and dates[0].group(1) != dates[1].group(1)
     return False
 
@@ -69,8 +87,11 @@ def terms(article):
         return Counter()
     lead = clean_lead(article)
     text = " ".join((article.title, article.title, article.description or "", lead))
-    return Counter(word for word in re.findall(r"[^\W_]+", text.casefold())
-                   if word not in STOPWORDS)
+    return Counter(
+        word
+        for word in re.findall(r"[^\W_]+", text.casefold())
+        if word not in STOPWORDS
+    )
 
 
 def article_time(article):
@@ -92,8 +113,10 @@ def vectors_for(articles):
         frequencies.update(counts.keys())
     vectors = {}
     for key, counts in documents.items():
-        weights = {term: count * (1 + math.log((1 + len(documents)) / (1 + frequencies[term])))
-                   for term, count in counts.items()}
+        weights = {
+            term: count * (1 + math.log((1 + len(documents)) / (1 + frequencies[term])))
+            for term, count in counts.items()
+        }
         norm = math.sqrt(sum(weight * weight for weight in weights.values()))
         vectors[key] = {term: weight / norm for term, weight in weights.items()}
     return vectors
@@ -101,7 +124,6 @@ def vectors_for(articles):
 
 def cosine(left, right):
     return min(1.0, sum(weight * right.get(term, 0) for term, weight in left.items()))
-
 
 
 def _assess_group_candidate(
@@ -124,8 +146,7 @@ def _assess_group_candidate(
         return "conflict", None
 
     ordered = [primary] + [
-        m for m in ranked_representatives(members, vectors)
-        if m.id != primary.id
+        m for m in ranked_representatives(members, vectors) if m.id != primary.id
     ]
 
     candidates = []
@@ -225,9 +246,21 @@ def assess_story(
     }
 
 
-
-def choose_story(article, groups, vectors, *, representative_limit=REPRESENTATIVE_LIMIT, threshold=MIN_SCORE):
-    assessment = assess_story(article, groups, vectors, representative_limit=representative_limit, threshold=threshold)
+def choose_story(
+    article,
+    groups,
+    vectors,
+    *,
+    representative_limit=REPRESENTATIVE_LIMIT,
+    threshold=MIN_SCORE,
+):
+    assessment = assess_story(
+        article,
+        groups,
+        vectors,
+        representative_limit=representative_limit,
+        threshold=threshold,
+    )
     if assessment["reason"] == "accepted":
         return assessment["scores"][0][1]
     return None
@@ -246,9 +279,15 @@ def ranked_representatives(members, vectors):
             seen.add(signature)
 
     def rank(member):
-        centrality = sum(weight * total[term] for term, weight in vectors[member.id].items())
-        return (-round(centrality, 10), not bool((member.content or "").strip()),
-                article_time(member), member.id)
+        centrality = sum(
+            weight * total[term] for term, weight in vectors[member.id].items()
+        )
+        return (
+            -round(centrality, 10),
+            not bool((member.content or "").strip()),
+            article_time(member),
+            member.id,
+        )
 
     return sorted(members, key=rank)
 

@@ -16,7 +16,6 @@ class RawArticle:
     img_url: str | None = None
 
 
-
 @dataclass
 class ArticleProvider:
     id: uuid.UUID

@@ -23,7 +23,9 @@ def as_utc(moment: datetime) -> datetime:
     return moment
 
 
-def decay(happened_at: datetime, now: datetime, lifetime_days: float = LIFETIME_DAYS) -> float:
+def decay(
+    happened_at: datetime, now: datetime, lifetime_days: float = LIFETIME_DAYS
+) -> float:
     """1.0 right now, 0.0 once lifetime_days have passed, a straight line in between."""
     age_days = (as_utc(now) - as_utc(happened_at)).total_seconds() / SECONDS_PER_DAY
 

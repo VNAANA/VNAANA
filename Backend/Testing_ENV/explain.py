@@ -104,7 +104,7 @@ HELP: dict[str, tuple[str, str]] = {
         "Consent",
         "Personalisation only works if you allow us to track what you do.\n\n"
         "With consent: likes, shares and reads are stored and used to build "
-        "your \"For you\" feed.\n\n"
+        'your "For you" feed.\n\n'
         "Without consent: nothing you do is stored, the algorithm never runs "
         "for you, and you see the same general feed as everyone else. The "
         "interests you pick are kept, but the algorithm doesn't use them.\n\n"
@@ -116,13 +116,13 @@ HELP: dict[str, tuple[str, str]] = {
         f"Every interest you pick gives that tag {points(DECLARED_TAG_BONUS)} "
         "to start with.\n\n"
         "This gives the algorithm something to work with before you have done "
-        "anything, so your \"For you\" feed is unlocked straight away.\n\n"
+        'anything, so your "For you" feed is unlocked straight away.\n\n'
         f"Like every other signal, the bonus fades: to 0 after {LIFETIME_DAYS} "
         "days. From then on your feed is based on what you actually do, not on "
         "what you said at the start.",
     ),
     "feed_status": (
-        "When is \"For you\" unlocked?",
+        'When is "For you" unlocked?',
         "The feed is only personalised once the algorithm knows enough about "
         "you. That is the case when one of these is true:\n\n"
         "   • you picked at least one interest during onboarding\n"
@@ -184,6 +184,7 @@ HELP: dict[str, tuple[str, str]] = {
 
 # ---- live: unlock status ------------------------------------------------------------
 
+
 def unlock_summary(tag_scores: TagScores, *, has_declared_tags: bool) -> str:
     broad = sum(1 for score in tag_scores.values() if score >= BROAD_MIN_SCORE)
     best = max(tag_scores.values(), default=0.0)
@@ -196,6 +197,7 @@ def unlock_summary(tag_scores: TagScores, *, has_declared_tags: bool) -> str:
 
 
 # ---- live: which actions built a tag score -------------------------------------------
+
 
 @dataclass(frozen=True)
 class Contribution:
@@ -232,7 +234,7 @@ class TagBreakdown:
         ]
         lines.append(f"\nTotal: {number(self.total)}")
         lines.append(
-            f"\nThe \"still counting\" part is the fading: an action counts fully on "
+            f'\nThe "still counting" part is the fading: an action counts fully on '
             f"the day itself and loses a bit every day until it reaches 0 after "
             f"{LIFETIME_DAYS} days."
         )
@@ -247,7 +249,9 @@ def tag_breakdown(world: World, tag_id: uuid.UUID) -> TagBreakdown:
 
     def add(description: str, weight: float, at: datetime) -> None:
         if at >= since:
-            contributions.append(Contribution(description, day_of(at), weight, decay(at, now)))
+            contributions.append(
+                Contribution(description, day_of(at), weight, decay(at, now))
+            )
 
     for action in world.visible_actions():
         if action.kind == ActionKind.declare and action.tag_id == tag_id:
@@ -256,20 +260,25 @@ def tag_breakdown(world: World, tag_id: uuid.UUID) -> TagBreakdown:
         elif action.kind in EVENT_TYPES and tag_id in world.story_tags[action.story_id]:
             title = world.articles[action.story_id].title
             verb = "Shared" if action.kind == ActionKind.share else "Read to the end"
-            add(f"{verb} \"{title}\"", EVENT_WEIGHTS[EVENT_TYPES[action.kind]], action.at)
+            add(f'{verb} "{title}"', EVENT_WEIGHTS[EVENT_TYPES[action.kind]], action.at)
 
     for story in world.stories:
         reaction = world.reaction_on(story.id)
 
         if reaction is not None and tag_id in world.story_tags[story.id]:
             verb = "Liked" if reaction.reaction == Reaction.like else "Disliked"
-            add(f"{verb} \"{story.title}\"", REACTION_WEIGHTS[reaction.reaction], reaction.updated_at)
+            add(
+                f'{verb} "{story.title}"',
+                REACTION_WEIGHTS[reaction.reaction],
+                reaction.updated_at,
+            )
 
     contributions.sort(key=lambda contribution: contribution.day)
     return TagBreakdown(world.tag_names[tag_id], contributions)
 
 
 # ---- live: why an article has its score ----------------------------------------------
+
 
 @dataclass(frozen=True)
 class ArticleBreakdown:
@@ -281,14 +290,22 @@ class ArticleBreakdown:
     final: float
 
     def as_text(self) -> str:
-        tags = "\n".join(f"   {name}: {number(score)}" for name, score in self.tag_scores)
+        tags = "\n".join(
+            f"   {name}: {number(score)}" for name, score in self.tag_scores
+        )
         lines = [f"1. Your scores for this article's tags:\n{tags}"]
 
         if len(self.tag_scores) == 1:
-            lines.append(f"2. Only one tag, so the article score is that tag's score: {number(self.average)}")
+            lines.append(
+                f"2. Only one tag, so the article score is that tag's score: {number(self.average)}"
+            )
         else:
-            sum_text = " + ".join(f"({number(s)})" if s < 0 else number(s) for _, s in self.tag_scores)
-            lines.append(f"2. Average: ({sum_text}) / {len(self.tag_scores)} = {number(self.average)}")
+            sum_text = " + ".join(
+                f"({number(s)})" if s < 0 else number(s) for _, s in self.tag_scores
+            )
+            lines.append(
+                f"2. Average: ({sum_text}) / {len(self.tag_scores)} = {number(self.average)}"
+            )
 
         if self.average > 0:
             lines.append(
@@ -302,18 +319,24 @@ class ArticleBreakdown:
                 "article you don't like shouldn't climb just because it is older."
             )
 
-        lines.append(f"Final score: {number(self.final)}\n\n(Numbers are rounded to two decimals.)")
+        lines.append(
+            f"Final score: {number(self.final)}\n\n(Numbers are rounded to two decimals.)"
+        )
         return "\n\n".join(lines)
 
 
-def article_breakdown(world: World, story_id: uuid.UUID, tag_scores: TagScores) -> ArticleBreakdown:
+def article_breakdown(
+    world: World, story_id: uuid.UUID, tag_scores: TagScores
+) -> ArticleBreakdown:
     story = next(story for story in world.stories if story.id == story_id)
     tag_ids = world.story_tags[story_id]
     average = story_score(tag_ids, tag_scores)
 
     return ArticleBreakdown(
         title=story.title,
-        tag_scores=[(world.tag_names[tag_id], tag_scores.get(tag_id, 0.0)) for tag_id in tag_ids],
+        tag_scores=[
+            (world.tag_names[tag_id], tag_scores.get(tag_id, 0.0)) for tag_id in tag_ids
+        ],
         average=average,
         age_days=age_in_days(story.last_updated_at, world.now),
         freshness=decay(story.last_updated_at, world.now),

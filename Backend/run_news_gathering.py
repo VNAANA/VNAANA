@@ -1,4 +1,3 @@
-
 import asyncio
 from typing import Any
 
@@ -22,9 +21,7 @@ def _select_rss_sources() -> list[Any]:
     return [
         source
         for source in MOCK_PROVIDER_SOURCES
-        if source.is_active
-        and source.url
-        and source.source_type == "rss"
+        if source.is_active and source.url and source.source_type == "rss"
     ]
 
 
@@ -72,10 +69,7 @@ async def _process_source(
         provider = provider_repository.get(source.provider_id)
 
         if provider is None:
-            message = (
-                "Provider does not exist in the database: "
-                f"{source.provider_id}"
-            )
+            message = f"Provider does not exist in the database: {source.provider_id}"
             print(f"SKIPPED: {message}")
             skipped.append((source.name, message))
             return

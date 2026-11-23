@@ -1,4 +1,3 @@
-
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from Backend.Logic.domain.provider_source import ProviderSource
@@ -73,76 +72,103 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
         configuration={"category": "general"},
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwsbinnenland",
-        "Binnenland", 15,
+        "Binnenland",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwsbuitenland",
-        "Buitenland", 15,
+        "Buitenland",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwspolitiek",
-        "Politiek", 15,
+        "Politiek",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwseconomie",
-        "Economie", 15,
+        "Economie",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwstech",
-        "Tech", 20,
+        "Tech",
+        20,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwscultuurenmedia",
-        "Cultuur en media", 30,
+        "Cultuur en media",
+        30,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwsopmerkelijk",
-        "Opmerkelijk", 30,
+        "Opmerkelijk",
+        30,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosnieuwskoningshuis",
-        "Koningshuis", 30,
+        "Koningshuis",
+        30,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nossportalgemeen",
-        "Sport", 10,
+        "Sport",
+        10,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosvoetbal",
-        "Voetbal", 10,
+        "Voetbal",
+        10,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/noswielrennen",
-        "Wielrennen", 15,
+        "Wielrennen",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosschaatsen",
-        "Schaatsen", 15,
+        "Schaatsen",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nostennis",
-        "Tennis", 15,
+        "Tennis",
+        15,
     ),
     _rss(
-        "NOS", "nos.nl",
+        "NOS",
+        "nos.nl",
         "https://feeds.nos.nl/nosformule1",
-        "Formule 1", 15,
+        "Formule 1",
+        15,
     ),
-
     # ---------------------------------------------------------
     # NU.nl
     # ---------------------------------------------------------
@@ -153,7 +179,6 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
         url="https://www.nu.nl/rss",
         poll_interval_minutes=10,
     ),
-
     # ---------------------------------------------------------
     # RTL Nieuws
     # Feed URL not mapped: leave inactive until verified.
@@ -171,7 +196,6 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
             "website_url": "https://www.rtl.nl",
         },
     ),
-
     # ---------------------------------------------------------
     # DPG Media
     # ---------------------------------------------------------
@@ -185,9 +209,11 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
         configuration={"category": "general"},
     ),
     _rss(
-        "AD", "ad.nl",
+        "AD",
+        "ad.nl",
         "https://www.ad.nl/sport/rss.xml",
-        "Sport", 20,
+        "Sport",
+        20,
     ),
     _source(
         name="De Volkskrant",
@@ -252,7 +278,6 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
         url="https://www.pzc.nl/home/rss.xml",
         poll_interval_minutes=20,
     ),
-
     # ---------------------------------------------------------
     # Mediahuis / financial
     # ---------------------------------------------------------
@@ -303,7 +328,6 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
         url="https://dvhn.nl/api/feed/rss",
         poll_interval_minutes=20,
     ),
-
     # ---------------------------------------------------------
     # Technology / digital
     # ---------------------------------------------------------
@@ -335,7 +359,6 @@ MOCK_PROVIDER_SOURCES: list[ProviderSource] = [
         url="https://www.androidplanet.nl/feed/",
         poll_interval_minutes=30,
     ),
-
     # ---------------------------------------------------------
     # Government
     # ---------------------------------------------------------

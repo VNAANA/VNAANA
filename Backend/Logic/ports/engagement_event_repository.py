@@ -5,8 +5,7 @@ from Backend.Logic.domain.engagement_event import EngagementEvent
 
 
 class EngagementEventRepository(Protocol):
-    def add(self, **fields: Any) -> EngagementEvent:
-        ...
+    def add(self, **fields: Any) -> EngagementEvent: ...
 
     def list_for_user(
         self,
@@ -14,5 +13,4 @@ class EngagementEventRepository(Protocol):
         *,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[EngagementEvent]:
-        ...
+    ) -> list[EngagementEvent]: ...

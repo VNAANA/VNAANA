@@ -118,7 +118,9 @@ def _safe_target(url: URL) -> str:
     host = url.host or ""
     database = (url.database or "").lstrip("/")
     if not host or not database:
-        raise RuntimeError("The database URL must include an explicit host and database name")
+        raise RuntimeError(
+            "The database URL must include an explicit host and database name"
+        )
     return f"{host}/{database}"
 
 
@@ -129,7 +131,9 @@ def _verified_database_url(confirm_target: str, confirm_production: bool) -> URL
     expected_database = os.getenv("GENRE_CLASSIFICATION_EXPECTED_DB_NAME")
 
     if not raw_url:
-        raise RuntimeError("GENRE_CLASSIFICATION_DATABASE_URL is required; no fallback is allowed")
+        raise RuntimeError(
+            "GENRE_CLASSIFICATION_DATABASE_URL is required; no fallback is allowed"
+        )
     if environment not in ALLOWED_ENVIRONMENTS:
         raise RuntimeError(
             "GENRE_CLASSIFICATION_DATABASE_ENV must be 'test', 'development', "
@@ -148,18 +152,29 @@ def _verified_database_url(confirm_target: str, confirm_production: bool) -> URL
     url = make_url(raw_url)
     if not url.drivername.startswith("postgresql"):
         raise RuntimeError("Genre Classification fixtures require PostgreSQL")
-    if url.host != expected_host or (url.database or "").lstrip("/") != expected_database:
-        raise RuntimeError("The database URL does not match the separately confirmed target")
+    if (
+        url.host != expected_host
+        or (url.database or "").lstrip("/") != expected_database
+    ):
+        raise RuntimeError(
+            "The database URL does not match the separately confirmed target"
+        )
 
     target = _safe_target(url)
     if confirm_target != target:
-        raise RuntimeError(f"Pass --confirm-target {target!r} to acknowledge the exact target")
+        raise RuntimeError(
+            f"Pass --confirm-target {target!r} to acknowledge the exact target"
+        )
     return url
 
 
 def _same_fixture(existing, fixture: StoryFixture) -> bool:
     fields = fixture.story_fields()
-    return all(getattr(existing, name) == value for name, value in fields.items() if name != "id")
+    return all(
+        getattr(existing, name) == value
+        for name, value in fields.items()
+        if name != "id"
+    )
 
 
 def _apply(session: Session) -> tuple[int, int]:
@@ -188,7 +203,9 @@ def _apply(session: Session) -> tuple[int, int]:
 
 def _cleanup(session: Session) -> int:
     fixture_ids = [fixture.id for fixture in FIXTURES]
-    rows = list(session.scalars(select(StoryModel).where(StoryModel.id.in_(fixture_ids))))
+    rows = list(
+        session.scalars(select(StoryModel).where(StoryModel.id.in_(fixture_ids)))
+    )
     for row in rows:
         if not row.title.startswith(f"{TITLE_PREFIX} "):
             raise RuntimeError(f"Refusing to delete non-fixture Story {row.id}")
@@ -200,14 +217,18 @@ def _print_fixtures() -> None:
     print("Dry run only; no database was opened.\n")
     for fixture in FIXTURES:
         print(f"{fixture.id}  {fixture.story_fields()['title']}")
-        print(f"  Source: {fixture.source_published_on.isoformat()}  {fixture.source_url}")
+        print(
+            f"  Source: {fixture.source_published_on.isoformat()}  {fixture.source_url}"
+        )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--apply", action="store_true", help="create missing fixtures")
-    action.add_argument("--cleanup", action="store_true", help="delete only these fixtures")
+    action.add_argument(
+        "--cleanup", action="store_true", help="delete only these fixtures"
+    )
     parser.add_argument(
         "--confirm-target",
         default="",

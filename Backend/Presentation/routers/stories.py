@@ -1,4 +1,4 @@
-""" /stories endpoints. Plain `def` on purpose, see routers/users.py. """
+"""/stories endpoints. Plain `def` on purpose, see routers/users.py."""
 
 import uuid
 
@@ -32,7 +32,7 @@ def get_story_articles(
     service: StoryServiceDep,
     limit: int = Query(20, ge=0, le=100),
     offset: int = Query(0, ge=0),
-):    
+):
     return service.list_articles(story_id, limit=limit, offset=offset)
 
 
@@ -93,7 +93,9 @@ def create_story(
     "/{story_id}",
     response_model=StoryRead,
     responses={
-        503: {"description": "The story needed translating and the translation service failed"},
+        503: {
+            "description": "The story needed translating and the translation service failed"
+        },
     },
 )
 def get_story(
@@ -126,10 +128,7 @@ def set_story_tags(
     body: StoryTagsUpdate,
     service: StoryServiceDep,
 ):
-    tag_data = {
-        tag.tag_id: tag.relevance_score
-        for tag in body.tags
-    }
+    tag_data = {tag.tag_id: tag.relevance_score for tag in body.tags}
 
     return service.set_tags(
         story_id,

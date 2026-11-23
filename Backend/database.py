@@ -1,4 +1,3 @@
-
 """Engine and session setup."""
 
 from collections.abc import Iterator

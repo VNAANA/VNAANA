@@ -5,10 +5,10 @@ from Backend.Logic.domain.story import Story
 
 
 class FeedStatus(str, enum.Enum):
-    available = "available"          # personalised stories below
+    available = "available"  # personalised stories below
     not_logged_in = "not_logged_in"  # anonymous: no user record, no algorithm
-    no_consent = "no_consent"        # logged in, analytics consent is off (D3)
-    locked = "locked"                # consent on, not enough signal yet (D10)
+    no_consent = "no_consent"  # logged in, analytics consent is off (D3)
+    locked = "locked"  # consent on, not enough signal yet (D10)
 
 
 @dataclass(frozen=True)

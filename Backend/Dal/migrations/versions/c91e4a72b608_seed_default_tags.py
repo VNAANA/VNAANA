@@ -43,10 +43,15 @@ def upgrade() -> None:
     )
     # Supply IDs explicitly: the model's Python default is not a server default.
     rows = [
-        {"id": uuid.uuid5(uuid.NAMESPACE_URL, f"vnaana:default-tag:{name}"), "name": name}
+        {
+            "id": uuid.uuid5(uuid.NAMESPACE_URL, f"vnaana:default-tag:{name}"),
+            "name": name,
+        }
         for name in TAG_NAMES
     ]
-    op.execute(insert(tags).values(rows).on_conflict_do_nothing(index_elements=["name"]))
+    op.execute(
+        insert(tags).values(rows).on_conflict_do_nothing(index_elements=["name"])
+    )
 
 
 def downgrade() -> None:

@@ -7,4 +7,4 @@ types module when a file in this folder is run directly.
 import uuid
 
 StoryTags = dict[uuid.UUID, list[uuid.UUID]]  # story_id → that story's tag ids
-TagScores = dict[uuid.UUID, float]            # tag_id → the user's score
+TagScores = dict[uuid.UUID, float]  # tag_id → the user's score

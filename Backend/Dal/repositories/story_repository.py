@@ -74,31 +74,47 @@ class StoryRepository(StoryRepositoryPort):
         # % and _ are wildcards in LIKE; without this a search for "100%"
         # would match "100" followed by anything. The backslash goes first,
         # otherwise the backslashes added below would get escaped again.
-        return (
-            term
-            .replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
-        )
+        return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
     # ---- stories ----
 
     def get(self, story_id: uuid.UUID) -> StoryDetails | None:
-        story = self.db.scalar(select(StoryModel).where(StoryModel.id == story_id).execution_options(populate_existing=True).options(
-            selectinload(StoryModel.tags),
-            selectinload(StoryModel.articles).selectinload(StoryArticleModel.article),
-        ))
+        story = self.db.scalar(
+            select(StoryModel)
+            .where(StoryModel.id == story_id)
+            .execution_options(populate_existing=True)
+            .options(
+                selectinload(StoryModel.tags),
+                selectinload(StoryModel.articles).selectinload(
+                    StoryArticleModel.article
+                ),
+            )
+        )
 
         if story is None:
             return None
 
         result = StoryDetails(**asdict(self._to_domain(story)))
-        result.tags = [StoryTagDetails(Tag(link.tag.id, link.tag.name), link.relevance_score)
-                       for link in sorted(story.tags, key=lambda link: str(link.tag_id))]
-        result.articles = [StoryArticleDetails(ArticleRepository._to_domain(link.article),
-                           link.similarity_score, link.is_primary, link.added_at)
-                           for link in sorted(story.articles,
-                               key=lambda link: (not link.is_primary, link.added_at, str(link.article_id)))]
+        result.tags = [
+            StoryTagDetails(Tag(link.tag.id, link.tag.name), link.relevance_score)
+            for link in sorted(story.tags, key=lambda link: str(link.tag_id))
+        ]
+        result.articles = [
+            StoryArticleDetails(
+                ArticleRepository._to_domain(link.article),
+                link.similarity_score,
+                link.is_primary,
+                link.added_at,
+            )
+            for link in sorted(
+                story.articles,
+                key=lambda link: (
+                    not link.is_primary,
+                    link.added_at,
+                    str(link.article_id),
+                ),
+            )
+        ]
         result.articles_count = len(result.articles)
         return result
 
@@ -111,20 +127,20 @@ class StoryRepository(StoryRepositoryPort):
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
-        count = (select(func.count()).select_from(StoryArticleModel)
-                 .where(StoryArticleModel.story_id == StoryModel.id)
-                 .correlate(StoryModel).scalar_subquery())
+        count = (
+            select(func.count())
+            .select_from(StoryArticleModel)
+            .where(StoryArticleModel.story_id == StoryModel.id)
+            .correlate(StoryModel)
+            .scalar_subquery()
+        )
         stmt = select(StoryModel, count.label("articles_count"))
 
         if status is not None:
             stmt = stmt.where(StoryModel.status == status)
 
         if tag_id is not None:
-            stmt = (
-                stmt
-                .join(StoryTagModel)
-                .where(StoryTagModel.tag_id == tag_id)
-            )
+            stmt = stmt.join(StoryTagModel).where(StoryTagModel.tag_id == tag_id)
 
         for term in search_terms or []:
             pattern = f"%{self._escape_like(term)}%"
@@ -136,8 +152,7 @@ class StoryRepository(StoryRepositoryPort):
             )
 
         stmt = (
-            stmt
-            .order_by(StoryModel.last_updated_at.desc(), StoryModel.id)
+            stmt.order_by(StoryModel.last_updated_at.desc(), StoryModel.id)
             .limit(limit)
             .offset(offset)
         )
@@ -173,27 +188,39 @@ class StoryRepository(StoryRepositoryPort):
     # ---- story_tags ----
 
     def _lock_story_for_tags(
-        self, story_id: uuid.UUID,
+        self,
+        story_id: uuid.UUID,
     ) -> Row[tuple[uuid.UUID, str, str | None, str | None]] | None:
         return self.db.execute(
-            select(StoryModel.id, StoryModel.title, StoryModel.summary, StoryModel.context)
+            select(
+                StoryModel.id, StoryModel.title, StoryModel.summary, StoryModel.context
+            )
             .where(StoryModel.id == story_id)
             .with_for_update()
         ).one_or_none()
 
     def add_genre_tags_if_current(
-        self, snapshot: Story, tags: dict[uuid.UUID, Decimal | None],
+        self,
+        snapshot: Story,
+        tags: dict[uuid.UUID, Decimal | None],
     ) -> GenreTagWrite:
         story = self._lock_story_for_tags(snapshot.id)
         if story is None:
             return "missing"
         if (story.title, story.summary, story.context) != (
-            snapshot.title, snapshot.summary, snapshot.context
+            snapshot.title,
+            snapshot.summary,
+            snapshot.context,
         ):
             return "changed"
-        if self.db.scalar(
-            select(StoryTagModel.tag_id).where(StoryTagModel.story_id == story.id).limit(1)
-        ) is not None:
+        if (
+            self.db.scalar(
+                select(StoryTagModel.tag_id)
+                .where(StoryTagModel.story_id == story.id)
+                .limit(1)
+            )
+            is not None
+        ):
             return "already_tagged"
 
         self.db.add_all(
@@ -210,15 +237,10 @@ class StoryRepository(StoryRepositoryPort):
     ) -> None:
         # Serialize manual replacement with automatic insertion on PostgreSQL.
         self._lock_story_for_tags(story.id)
-        stmt = select(StoryTagModel).where(
-            StoryTagModel.story_id == story.id
-        )
+        stmt = select(StoryTagModel).where(StoryTagModel.story_id == story.id)
 
         current_links = list(self.db.scalars(stmt))
-        current = {
-            link.tag_id: link
-            for link in current_links
-        }
+        current = {link.tag_id: link for link in current_links}
 
         for tag_id, link in current.items():
             if tag_id not in tags:
@@ -240,21 +262,40 @@ class StoryRepository(StoryRepositoryPort):
 
     # ---- story_articles ----
 
-    def list_articles(self, story_id: uuid.UUID, *, limit: int, offset: int) -> StoryArticlesPage:
+    def list_articles(
+        self, story_id: uuid.UUID, *, limit: int, offset: int
+    ) -> StoryArticlesPage:
         predicate = StoryArticleModel.story_id == story_id
-        count = self.db.scalar(select(func.count()).select_from(StoryArticleModel).where(predicate))
+        count = self.db.scalar(
+            select(func.count()).select_from(StoryArticleModel).where(predicate)
+        )
         links = self.db.scalars(
-            select(StoryArticleModel).where(predicate)
+            select(StoryArticleModel)
+            .where(predicate)
             .options(selectinload(StoryArticleModel.article))
-            .order_by(StoryArticleModel.is_primary.desc(), StoryArticleModel.added_at,
-                      StoryArticleModel.article_id)
-            .limit(limit).offset(offset)
+            .order_by(
+                StoryArticleModel.is_primary.desc(),
+                StoryArticleModel.added_at,
+                StoryArticleModel.article_id,
+            )
+            .limit(limit)
+            .offset(offset)
         ).all()
-        return StoryArticlesPage(story_id, count, limit, offset, [
-            StoryArticleDetails(ArticleRepository._to_domain(link.article), link.similarity_score,
-                                link.is_primary, link.added_at)
-            for link in links
-        ])
+        return StoryArticlesPage(
+            story_id,
+            count,
+            limit,
+            offset,
+            [
+                StoryArticleDetails(
+                    ArticleRepository._to_domain(link.article),
+                    link.similarity_score,
+                    link.is_primary,
+                    link.added_at,
+                )
+                for link in links
+            ],
+        )
 
     def get_article_link(
         self,
@@ -380,7 +421,10 @@ class StoryRepository(StoryRepositoryPort):
             updated_at=func.now(),
         )
         stmt = stmt.on_conflict_do_update(
-            index_elements=[StoryTranslationModel.story_id, StoryTranslationModel.language],
+            index_elements=[
+                StoryTranslationModel.story_id,
+                StoryTranslationModel.language,
+            ],
             set_={**fields, "updated_at": func.now()},
         ).returning(StoryTranslationModel)
 

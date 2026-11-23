@@ -35,9 +35,7 @@ class CleanupService:
 
         # An old article that is still linked to a remaining (fresh) story is
         # kept, so a story never loses its sources while it is still shown.
-        articles_deleted = self.article_repository.delete_unlinked_older_than(
-            cutoff
-        )
+        articles_deleted = self.article_repository.delete_unlinked_older_than(cutoff)
 
         return {
             "stories": stories_deleted,

@@ -10,11 +10,19 @@ from Backend.Logic.story_grouping import MIN_MARGIN, MIN_SCORE, REPRESENTATIVE_L
 
 
 def run(db, publication_day, *, apply=False):
-    result = {"mode": "apply" if apply else "preview", "publication_day": publication_day.isoformat(),
-              "timezone": "Europe/Amsterdam", "threshold": MIN_SCORE, "minimum_margin": MIN_MARGIN,
-              "representative_limit": REPRESENTATIVE_LIMIT, "committed": False}
+    result = {
+        "mode": "apply" if apply else "preview",
+        "publication_day": publication_day.isoformat(),
+        "timezone": "Europe/Amsterdam",
+        "threshold": MIN_SCORE,
+        "minimum_margin": MIN_MARGIN,
+        "representative_limit": REPRESENTATIVE_LIMIT,
+        "committed": False,
+    }
     try:
-        group_articles(db, publication_day=publication_day, limit=None, report=result.update)
+        group_articles(
+            db, publication_day=publication_day, limit=None, report=result.update
+        )
         if apply:
             db.commit()
             result["committed"] = True
@@ -41,9 +49,12 @@ if __name__ == "__main__":
     # Reserve output before touching the database; never overwrite an earlier review.
     with Path(args.output).open("x", encoding="utf-8") as stream:
         from Backend.database import SessionLocal
+
         with SessionLocal() as db:
             result = run(db, args.date, apply=args.apply)
-        print(f"Assigned {result['assigned_articles']} articles; committed={result['committed']}")
+        print(
+            f"Assigned {result['assigned_articles']} articles; committed={result['committed']}"
+        )
         # If report writing fails after commit, the database transaction remains committed.
         json.dump(result, stream, ensure_ascii=False, indent=2)
         stream.write("\n")

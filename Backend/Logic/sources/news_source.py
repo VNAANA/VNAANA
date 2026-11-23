@@ -5,7 +5,6 @@ from Backend.Logic.domain.provider_source import ProviderSource
 
 
 class NewsSource(ABC):
-
     @abstractmethod
     async def fetch(
         self,

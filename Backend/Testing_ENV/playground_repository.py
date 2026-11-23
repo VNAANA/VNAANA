@@ -34,7 +34,7 @@ LAST_DAY = 50
 
 
 class ActionKind(str, enum.Enum):
-    declare = "declare"                # a tag picked during onboarding
+    declare = "declare"  # a tag picked during onboarding
     like = "like"
     dislike = "dislike"
     clear_reaction = "clear_reaction"  # unlike / undislike
@@ -66,7 +66,9 @@ class NoConsentError(Exception):
 class World:
     def __init__(self) -> None:
         self.tag_ids: dict[str, uuid.UUID] = {name: uuid.uuid4() for name in TAGS}
-        self.tag_names: dict[uuid.UUID, str] = {tag_id: name for name, tag_id in self.tag_ids.items()}
+        self.tag_names: dict[uuid.UUID, str] = {
+            tag_id: name for name, tag_id in self.tag_ids.items()
+        }
 
         self.stories: list[Story] = []
         self.story_tags: StoryTags = {}
@@ -185,7 +187,9 @@ class PlaygroundAlgorithmRepository:
         user = self.world.user
         return [user.id] if user is not None and user.analytics_consent else []
 
-    def list_events_since(self, user_id: uuid.UUID, since: datetime) -> list[EngagementEvent]:
+    def list_events_since(
+        self, user_id: uuid.UUID, since: datetime
+    ) -> list[EngagementEvent]:
         if not self._is_user(user_id):
             return []
 
@@ -206,12 +210,18 @@ class PlaygroundAlgorithmRepository:
             if action.kind in EVENT_TYPES and action.at >= since
         ]
 
-    def list_reactions_since(self, user_id: uuid.UUID, since: datetime) -> list[StoryReaction]:
+    def list_reactions_since(
+        self, user_id: uuid.UUID, since: datetime
+    ) -> list[StoryReaction]:
         if not self._is_user(user_id):
             return []
 
         reactions = (self.world.reaction_on(story.id) for story in self.world.stories)
-        return [reaction for reaction in reactions if reaction is not None and reaction.updated_at >= since]
+        return [
+            reaction
+            for reaction in reactions
+            if reaction is not None and reaction.updated_at >= since
+        ]
 
     def list_declared_tags(self, user_id: uuid.UUID) -> list[DeclaredTag]:
         if not self._is_user(user_id):
@@ -225,7 +235,9 @@ class PlaygroundAlgorithmRepository:
 
     # ---- the hourly job: saving the result -------------------------------------------
 
-    def replace_tag_scores(self, user_id: uuid.UUID, scores: TagScores, computed_at: datetime) -> None:
+    def replace_tag_scores(
+        self, user_id: uuid.UUID, scores: TagScores, computed_at: datetime
+    ) -> None:
         if self._is_user(user_id):
             self.world.stored_scores = dict(scores)
 
@@ -251,7 +263,9 @@ class PlaygroundAlgorithmRepository:
         if not self._is_user(user_id):
             return
 
-        self.world.actions = [action for action in self.world.actions if action.kind not in REACTION_KINDS]
+        self.world.actions = [
+            action for action in self.world.actions if action.kind not in REACTION_KINDS
+        ]
         self.world.stored_scores = {}
 
     # ---- the feed ----------------------------------------------------------------------
@@ -260,7 +274,11 @@ class PlaygroundAlgorithmRepository:
         return dict(self.world.stored_scores) if self._is_user(user_id) else {}
 
     def list_candidate_stories(self, since: datetime) -> list[Story]:
-        return [story for story in self.world.published_stories() if story.last_updated_at >= since]
+        return [
+            story
+            for story in self.world.published_stories()
+            if story.last_updated_at >= since
+        ]
 
     def get_story_tags(self, story_ids: list[uuid.UUID]) -> StoryTags:
         return {

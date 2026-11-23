@@ -11,11 +11,9 @@ from Backend.Logic.sources.news_source import NewsSource
 
 
 class RSSSource(NewsSource):
-
     def __init__(self, max_age_days: int = 30):
         self.max_age_days = max_age_days
 
-    
     @staticmethod
     def _resolve_image_url(url: str, feed_url: str) -> str:
         return urljoin(feed_url, unescape(url.strip()))
@@ -27,10 +25,7 @@ class RSSSource(NewsSource):
             media_type = media.get("type", "").lower()
             medium = media.get("medium", "").lower()
 
-            if url and (
-                media_type.startswith("image/")
-                or medium == "image"
-            ):
+            if url and (media_type.startswith("image/") or medium == "image"):
                 return RSSSource._resolve_image_url(url, feed_url)
 
         return None
@@ -56,10 +51,9 @@ class RSSSource(NewsSource):
             if not url:
                 continue
 
-            is_image = (
-                media_type.startswith("image/")
-                or urlparse(url).path.lower().endswith(image_extensions)
-            )
+            is_image = media_type.startswith("image/") or urlparse(
+                url
+            ).path.lower().endswith(image_extensions)
 
             if is_image:
                 return RSSSource._resolve_image_url(url, feed_url)
@@ -89,9 +83,7 @@ class RSSSource(NewsSource):
 
             if isinstance(value, list):
                 html = " ".join(
-                    item.get("value", "")
-                    for item in value
-                    if isinstance(item, dict)
+                    item.get("value", "") for item in value if isinstance(item, dict)
                 )
             elif isinstance(value, dict):
                 html = value.get("value", "")
@@ -126,7 +118,6 @@ class RSSSource(NewsSource):
                 return image_url
 
         return None
-
 
     @staticmethod
     def _extract_image_from_html(
@@ -164,7 +155,6 @@ class RSSSource(NewsSource):
 
         return None
 
-
     @staticmethod
     def _extract_image_from_html(html: str, feed_url: str) -> str | None:
         if not html:
@@ -196,9 +186,7 @@ class RSSSource(NewsSource):
                 f"{getattr(feed, 'bozo_exception', 'unknown error')}"
             )
 
-        cutoff_date = datetime.now(timezone.utc) - timedelta(
-            days=self.max_age_days
-        )
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.max_age_days)
 
         articles: list[RawArticle] = []
         skipped_old = 0
@@ -225,25 +213,17 @@ class RSSSource(NewsSource):
                     calendar.timegm(updated),
                     tz=timezone.utc,
                 )
-                if updated else None
+                if updated
+                else None
             )
 
             articles.append(
                 RawArticle(
                     title=entry.get("title", ""),
                     url=entry.get("link", ""),
-                    description=(
-                        entry.get("summary")
-                        or entry.get("description")
-                    ),
-                    author=(
-                        entry.get("author")
-                        or entry.get("dc_creator")
-                    ),
-                    language=(
-                        entry.get("language")
-                        or feed.feed.get("language")
-                    ),
+                    description=(entry.get("summary") or entry.get("description")),
+                    author=(entry.get("author") or entry.get("dc_creator")),
+                    language=(entry.get("language") or feed.feed.get("language")),
                     published_at=published_at,
                     last_updated_at=last_updated_at,
                     provider_id=source.provider_id,

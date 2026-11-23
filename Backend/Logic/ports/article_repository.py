@@ -9,20 +9,17 @@ ArticleList = List[Article]
 
 
 class ArticleRepository(ABC):
-
     @abstractmethod
     def get(
         self,
         article_id: uuid.UUID,
-    ) -> Article | None:
-        ...
+    ) -> Article | None: ...
 
     @abstractmethod
     def get_by_canonical_url(
         self,
         canonical_url: str,
-    ) -> Article | None:
-        ...
+    ) -> Article | None: ...
 
     @abstractmethod
     def list(
@@ -32,46 +29,40 @@ class ArticleRepository(ABC):
         language: str | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> list[Article]:
-        ...
+    ) -> list[Article]: ...
 
     @abstractmethod
     def list_random(
         self,
         *,
         limit: int = 5,
-    ) -> ArticleList:
-        ...
+    ) -> ArticleList: ...
 
     @abstractmethod
     def list_unscraped(
         self,
         *,
         limit: int = 100,
-    ) -> ArticleList:
-        ...
+    ) -> ArticleList: ...
 
     @abstractmethod
     def add(
         self,
         **fields: Any,
-    ) -> Article:
-        ...
+    ) -> Article: ...
 
     @abstractmethod
     def ingest(
         self,
         **fields: Any,
-    ) -> tuple[Article, bool]:
-        ...
+    ) -> tuple[Article, bool]: ...
 
     @abstractmethod
     def update(
         self,
         article: Article,
         **fields: Any,
-    ) -> Article:
-        ...
+    ) -> Article: ...
 
     @abstractmethod
     def delete_unlinked_older_than(

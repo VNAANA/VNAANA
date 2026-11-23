@@ -17,7 +17,9 @@ class EngagementEvent(Base):
         Index("ix_engagement_events_session_occurred", "session_id", "occurred_at"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     # Nullable in the diagram, so anonymous (not logged in) events are possible.
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
@@ -34,7 +36,9 @@ class EngagementEvent(Base):
         ForeignKey("event_weights.event_type", name="fk_engagement_events_event_type"),
         nullable=False,
     )
-    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ingested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

@@ -5,7 +5,6 @@ from Backend.Logic.ports.provider_source_repository import (
 
 
 class ProviderSourceService:
-
     def __init__(
         self,
         repository: ProviderSourceRepository,

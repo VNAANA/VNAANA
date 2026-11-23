@@ -28,9 +28,15 @@ class FontysClient:
         except httpx.InvalidURL:
             raise AIModelError("Fontys is not configured correctly") from None
         if (
-            not key or not self.model or url.scheme != "https" or not url.host
-            or url.userinfo or url.query or url.fragment
-            or not math.isfinite(self.timeout_seconds) or self.timeout_seconds <= 0
+            not key
+            or not self.model
+            or url.scheme != "https"
+            or not url.host
+            or url.userinfo
+            or url.query
+            or url.fragment
+            or not math.isfinite(self.timeout_seconds)
+            or self.timeout_seconds <= 0
         ):
             raise AIModelError("Fontys is not configured correctly")
 
@@ -54,19 +60,27 @@ class FontysClient:
             raise AIModelError("Fontys is unavailable") from None
 
         if response.status_code != 200:
-            raise AIModelError(f"Fontys refused the request (HTTP {response.status_code})")
+            raise AIModelError(
+                f"Fontys refused the request (HTTP {response.status_code})"
+            )
         try:
             choice = response.json()["choices"][0]
             text = choice["message"]["content"]
         except (ValueError, KeyError, TypeError, IndexError):
             raise AIModelError("Fontys returned an invalid response") from None
-        if choice.get("finish_reason") not in (None, "stop") or not isinstance(text, str) or not text.strip():
+        if (
+            choice.get("finish_reason") not in (None, "stop")
+            or not isinstance(text, str)
+            or not text.strip()
+        ):
             raise AIModelError("Fontys returned no complete generated text")
         if key in text:
             raise AIModelError("Fontys returned an invalid response")
         return text
 
-    def _post(self, client: httpx.Client, url: httpx.URL, key: str, payload: dict) -> httpx.Response:
+    def _post(
+        self, client: httpx.Client, url: httpx.URL, key: str, payload: dict
+    ) -> httpx.Response:
         return client.post(
             url,
             json=payload,

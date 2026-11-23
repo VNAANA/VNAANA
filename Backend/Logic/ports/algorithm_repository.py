@@ -18,18 +18,21 @@ from Backend.Logic.domain.story_reaction import Reaction, StoryReaction
 
 
 class AlgorithmRepository(Protocol):
-
     # ---- hourly job: reading a user's signals --------------------------------
 
     def list_consented_user_ids(self) -> list[uuid.UUID]:
         """Every user with analytics_consent = true."""
         ...
 
-    def list_events_since(self, user_id: uuid.UUID, since: datetime) -> list[EngagementEvent]:
+    def list_events_since(
+        self, user_id: uuid.UUID, since: datetime
+    ) -> list[EngagementEvent]:
         """The user's engagement events with occurred_at >= since, any event type."""
         ...
 
-    def list_reactions_since(self, user_id: uuid.UUID, since: datetime) -> list[StoryReaction]:
+    def list_reactions_since(
+        self, user_id: uuid.UUID, since: datetime
+    ) -> list[StoryReaction]:
         """The user's current likes/dislikes with updated_at >= since."""
         ...
 
@@ -39,7 +42,9 @@ class AlgorithmRepository(Protocol):
 
     # ---- hourly job: saving the result -----------------------------------------
 
-    def replace_tag_scores(self, user_id: uuid.UUID, scores: TagScores, computed_at: datetime) -> None:
+    def replace_tag_scores(
+        self, user_id: uuid.UUID, scores: TagScores, computed_at: datetime
+    ) -> None:
         """Swap all of this user's stored tag scores for the new ones."""
         ...
 

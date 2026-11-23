@@ -10,7 +10,11 @@ from Backend.Logic.ai_service import AIModelError
 class OllamaClient:
     def __init__(self, base_url: str, model: str, timeout_seconds: int = 90):
         parsed = urlparse(base_url)
-        if parsed.scheme != "http" or parsed.hostname not in ("localhost", "127.0.0.1", "::1"):
+        if parsed.scheme != "http" or parsed.hostname not in (
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        ):
             raise ValueError("Ollama base URL must use local HTTP")
         if not model.strip():
             raise ValueError("Ollama model name must not be empty")
@@ -32,16 +36,22 @@ class OllamaClient:
                 result = json.load(response)
         except (error.URLError, TimeoutError, OSError, ValueError) as exc:
             # Do not include request bodies, model output, or article text in errors.
-            raise AIModelError("Ollama is unavailable or returned an invalid response") from exc
+            raise AIModelError(
+                "Ollama is unavailable or returned an invalid response"
+            ) from exc
         if not isinstance(result, dict):
             raise AIModelError("Ollama returned an invalid response")
         return result
 
-    def generate(self, system: str, prompt: str, *, require_full_context: bool = False) -> str:
+    def generate(
+        self, system: str, prompt: str, *, require_full_context: bool = False
+    ) -> str:
         models = self._json_request("/api/tags").get("models")
-        installed = {
-            item.get("name") for item in models if isinstance(item, dict)
-        } if isinstance(models, list) else set()
+        installed = (
+            {item.get("name") for item in models if isinstance(item, dict)}
+            if isinstance(models, list)
+            else set()
+        )
         if self.model not in installed and f"{self.model}:latest" not in installed:
             raise AIModelError("Configured Ollama model is not installed")
         payload = {
@@ -53,7 +63,11 @@ class OllamaClient:
             "options": {"temperature": 0},
         }
         if require_full_context:
-            payload.update(truncate=False, shift=False, options={"temperature": 0, "num_ctx": 16_384})
+            payload.update(
+                truncate=False,
+                shift=False,
+                options={"temperature": 0, "num_ctx": 16_384},
+            )
         result = self._json_request("/api/generate", payload)
         text = result.get("response")
         if not isinstance(text, str):

@@ -35,9 +35,7 @@ class ProviderRepository(ProviderRepositoryPort):
         return self._to_domain(provider)
 
     def get_by_domain(self, domain: str) -> Provider | None:
-        stmt = select(ProviderModel).where(
-            ProviderModel.domain == domain
-        )
+        stmt = select(ProviderModel).where(ProviderModel.domain == domain)
 
         provider = self.db.scalars(stmt).first()
 
@@ -47,9 +45,7 @@ class ProviderRepository(ProviderRepositoryPort):
         return self._to_domain(provider)
 
     def list_all(self) -> list[Provider]:
-        providers = self.db.scalars(
-            select(ProviderModel).order_by(ProviderModel.name)
-        )
+        providers = self.db.scalars(select(ProviderModel).order_by(ProviderModel.name))
 
         return [self._to_domain(provider) for provider in providers]
 

@@ -12,7 +12,12 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "users",
-        sa.Column("onboarding_completed", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column(
+            "onboarding_completed",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.false(),
+        ),
     )
 
 

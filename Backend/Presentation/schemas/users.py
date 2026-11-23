@@ -8,8 +8,18 @@ from Backend.Logic.domain.story_reaction import Reaction
 from Backend.Presentation.schemas.common import ORMModel, TagRead
 
 TopicName = Literal[
-    "Politics", "Technology", "Sports", "Climate", "Economy", "Health",
-    "Entertainment", "World", "Culture", "Science", "Domestic", "International",
+    "Politics",
+    "Technology",
+    "Sports",
+    "Climate",
+    "Economy",
+    "Health",
+    "Entertainment",
+    "World",
+    "Culture",
+    "Science",
+    "Domestic",
+    "International",
 ]
 
 
@@ -22,7 +32,9 @@ class TopicPreferences(BaseModel):
     @model_validator(mode="after")
     def normalize_topics(self):
         self.liked = list(dict.fromkeys(self.liked))
-        self.disliked = [topic for topic in dict.fromkeys(self.disliked) if topic not in self.liked]
+        self.disliked = [
+            topic for topic in dict.fromkeys(self.disliked) if topic not in self.liked
+        ]
         return self
 
 

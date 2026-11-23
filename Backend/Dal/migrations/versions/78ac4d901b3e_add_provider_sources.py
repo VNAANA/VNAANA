@@ -17,7 +17,12 @@ def upgrade() -> None:
     op.create_table(
         "provider_sources",
         sa.Column("id", sa.UUID(), primary_key=True),
-        sa.Column("provider_id", sa.UUID(), sa.ForeignKey("providers.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "provider_id",
+            sa.UUID(),
+            sa.ForeignKey("providers.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("source_type", sa.String(), nullable=False),
         sa.Column("url", sa.String(), nullable=False),
@@ -25,7 +30,9 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("configuration", sa.JSON(), nullable=False),
     )
-    op.create_index("ix_provider_sources_provider_id", "provider_sources", ["provider_id"])
+    op.create_index(
+        "ix_provider_sources_provider_id", "provider_sources", ["provider_id"]
+    )
     op.create_index("ix_provider_sources_is_active", "provider_sources", ["is_active"])
 
 

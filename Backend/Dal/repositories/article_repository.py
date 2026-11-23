@@ -64,9 +64,7 @@ class ArticleRepository(ArticleRepositoryPort):
         self,
         canonical_url: str,
     ) -> Article | None:
-        stmt = select(ArticleModel).where(
-            ArticleModel.canonical_url == canonical_url
-        )
+        stmt = select(ArticleModel).where(ArticleModel.canonical_url == canonical_url)
 
         article_model = self.db.scalars(stmt).first()
 
@@ -86,18 +84,13 @@ class ArticleRepository(ArticleRepositoryPort):
         stmt = select(ArticleModel)
 
         if provider_id is not None:
-            stmt = stmt.where(
-                ArticleModel.provider_id == provider_id
-            )
+            stmt = stmt.where(ArticleModel.provider_id == provider_id)
 
         if language is not None:
-            stmt = stmt.where(
-                ArticleModel.language == language
-            )
+            stmt = stmt.where(ArticleModel.language == language)
 
         stmt = (
-            stmt
-            .order_by(
+            stmt.order_by(
                 ArticleModel.published_at.desc().nulls_last(),
                 ArticleModel.first_seen_at.desc(),
             )
@@ -107,10 +100,7 @@ class ArticleRepository(ArticleRepositoryPort):
 
         article_models = self.db.scalars(stmt)
 
-        return [
-            self._to_domain(article_model)
-            for article_model in article_models
-        ]
+        return [self._to_domain(article_model) for article_model in article_models]
 
     def add(self, **fields: Any) -> Article:
         article_model = ArticleModel(**fields)
@@ -134,9 +124,7 @@ class ArticleRepository(ArticleRepositoryPort):
 
         # IMPORTANT:
         # SQLAlchemy operations use the DAL model, not the domain model.
-        stmt = insert(ArticleModel).values(
-            **{**fields, "id": candidate_id}
-        )
+        stmt = insert(ArticleModel).values(**{**fields, "id": candidate_id})
 
         refresh_fields = (
             "provider_id",
@@ -196,10 +184,7 @@ class ArticleRepository(ArticleRepositoryPort):
 
         article_models = self.db.scalars(stmt)
 
-        return [
-            self._to_domain(article_model)
-            for article_model in article_models
-        ]
+        return [self._to_domain(article_model) for article_model in article_models]
 
     def list_unscraped(
         self,
@@ -216,10 +201,7 @@ class ArticleRepository(ArticleRepositoryPort):
 
         article_models = self.db.scalars(stmt)
 
-        return [
-            self._to_domain(article_model)
-            for article_model in article_models
-        ]
+        return [self._to_domain(article_model) for article_model in article_models]
 
     def update(
         self,
@@ -231,9 +213,7 @@ class ArticleRepository(ArticleRepositoryPort):
         article_model = self.db.get(ArticleModel, article.id)
 
         if article_model is None:
-            raise ValueError(
-                f"Article {article.id} not found"
-            )
+            raise ValueError(f"Article {article.id} not found")
 
         for key, value in fields.items():
             setattr(article_model, key, value)

@@ -20,13 +20,19 @@ class StoryArticle(Base):
     __tablename__ = "story_articles"
 
     story_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("stories.id", ondelete="CASCADE"), primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("stories.id", ondelete="CASCADE"),
+        primary_key=True,
     )
     article_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("articles.id", ondelete="CASCADE"), primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("articles.id", ondelete="CASCADE"),
+        primary_key=True,
     )
     similarity_score: Mapped[Decimal | None] = mapped_column(Numeric)
-    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=false())
+    is_primary: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     added_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

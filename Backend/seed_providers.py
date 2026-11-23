@@ -7,10 +7,7 @@ def main() -> None:
     print("1. Starting provider seed script")
 
     # One provider may have multiple RSS category feeds.
-    providers = {
-        source.provider_id: source
-        for source in MOCK_PROVIDER_SOURCES
-    }
+    providers = {source.provider_id: source for source in MOCK_PROVIDER_SOURCES}
 
     print(f"2. Found {len(providers)} unique providers")
 
@@ -23,18 +20,12 @@ def main() -> None:
         repository = ProviderRepository(db)
 
         for provider_id, source in providers.items():
-            print(
-                f"\nChecking: {source.provider_name} "
-                f"({source.provider_domain})"
-            )
+            print(f"\nChecking: {source.provider_name} ({source.provider_domain})")
 
             existing = repository.get(provider_id)
 
             if existing is not None:
-                print(
-                    f"  SKIPPED: Already exists "
-                    f"({existing.name})"
-                )
+                print(f"  SKIPPED: Already exists ({existing.name})")
                 skipped += 1
                 continue
 

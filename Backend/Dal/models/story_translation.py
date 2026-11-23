@@ -18,7 +18,9 @@ class StoryTranslation(Base):
     __tablename__ = "story_translations"
 
     story_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("stories.id", ondelete="CASCADE"), primary_key=True
+        UUID(as_uuid=True),
+        ForeignKey("stories.id", ondelete="CASCADE"),
+        primary_key=True,
     )
     language: Mapped[str] = mapped_column(String, primary_key=True)
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -26,7 +28,10 @@ class StoryTranslation(Base):
     context: Mapped[str | None] = mapped_column(Text, nullable=True)
     # SQLAlchemy updates this on writes; raw SQL writers must set it explicitly.
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     story: Mapped["Story"] = relationship(back_populates="translations")

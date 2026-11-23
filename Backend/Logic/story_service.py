@@ -130,12 +130,17 @@ class StoryService:
             # The story has no text at all, so there was nothing to translate.
             return story
 
-        return replace(story, **{
-            # A field the story has no text for stays empty, even if an
-            # older translation still holds text for it.
-            name: getattr(cached, name) if getattr(story, name) else getattr(story, name)
-            for name in TRANSLATED_FIELDS
-        })
+        return replace(
+            story,
+            **{
+                # A field the story has no text for stays empty, even if an
+                # older translation still holds text for it.
+                name: getattr(cached, name)
+                if getattr(story, name)
+                else getattr(story, name)
+                for name in TRANSLATED_FIELDS
+            },
+        )
 
     def _translate_and_save(
         self,
@@ -147,14 +152,16 @@ class StoryService:
         if self.translator is None:
             raise TranslationUnavailableError("Translation is not configured")
 
-        translated = dict(zip(
-            missing,
-            self.translator.translate(
-                list(missing.values()),
-                source=SOURCE_LANGUAGE,
-                target=target,
-            ),
-        ))
+        translated = dict(
+            zip(
+                missing,
+                self.translator.translate(
+                    list(missing.values()),
+                    source=SOURCE_LANGUAGE,
+                    target=target,
+                ),
+            )
+        )
 
         fields = {}
         for name in TRANSLATED_FIELDS:
@@ -213,25 +220,21 @@ class StoryService:
         return self.get_story(story_id)
 
     def add_genre_tags_if_current(
-        self, snapshot: Story, tags: dict[uuid.UUID, float | None],
+        self,
+        snapshot: Story,
+        tags: dict[uuid.UUID, float | None],
     ) -> GenreTagWrite:
         if not tags:
             raise ValueError("Genre tags must not be empty")
         return self.stories.add_genre_tags_if_current(snapshot, self._tag_scores(tags))
 
     def _tag_scores(
-        self, tags: dict[uuid.UUID, float | None],
+        self,
+        tags: dict[uuid.UUID, float | None],
     ) -> dict[uuid.UUID, Decimal | None]:
-        found = {
-            tag.id
-            for tag in self.tags.get_many(list(tags))
-        }
+        found = {tag.id for tag in self.tags.get_many(list(tags))}
 
-        missing = [
-            tag_id
-            for tag_id in tags
-            if tag_id not in found
-        ]
+        missing = [tag_id for tag_id in tags if tag_id not in found]
 
         if missing:
             raise NotFoundError(
@@ -256,13 +259,14 @@ class StoryService:
         if self.articles.get(article_id) is None:
             raise NotFoundError("Article", article_id)
 
-        if self.stories.get_article_link(
-            story_id,
-            article_id,
-        ) is not None:
-            raise ConflictError(
-                "Article is already linked to this story"
+        if (
+            self.stories.get_article_link(
+                story_id,
+                article_id,
             )
+            is not None
+        ):
+            raise ConflictError("Article is already linked to this story")
 
         if is_primary:
             self.stories.clear_primary(story_id)
@@ -271,9 +275,7 @@ class StoryService:
             story_id=story_id,
             article_id=article_id,
             similarity_score=(
-                Decimal(str(similarity_score))
-                if similarity_score is not None
-                else None
+                Decimal(str(similarity_score)) if similarity_score is not None else None
             ),
             is_primary=is_primary,
         )

@@ -8,6 +8,7 @@ Layers:
   logic/         business rules (services), no HTTP and no SQL
   dal/           database: models, session, repositories
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

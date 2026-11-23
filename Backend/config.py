@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     google_translate_api_key: str | None = None
     google_translate_timeout_seconds: float = 15
 
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
