@@ -36,6 +36,9 @@ class OllamaClientTests(unittest.TestCase):
         self.assertEqual(body["model"], "llama3.2")
         self.assertFalse(body["stream"])
         self.assertEqual(body["format"], "json")
+        self.assertEqual(body["options"], {"temperature": 0})
+        self.assertNotIn("truncate", body)
+        self.assertNotIn("shift", body)
 
     def test_missing_model_never_generates_or_downloads(self):
         client = OllamaClient("http://localhost:11434", "llama3.2")

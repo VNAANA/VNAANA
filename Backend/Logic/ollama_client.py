@@ -37,24 +37,24 @@ class OllamaClient:
             raise AIModelError("Ollama returned an invalid response")
         return result
 
-    def generate(self, system: str, prompt: str) -> str:
+    def generate(self, system: str, prompt: str, *, require_full_context: bool = False) -> str:
         models = self._json_request("/api/tags").get("models")
         installed = {
             item.get("name") for item in models if isinstance(item, dict)
         } if isinstance(models, list) else set()
         if self.model not in installed and f"{self.model}:latest" not in installed:
             raise AIModelError("Configured Ollama model is not installed")
-        result = self._json_request(
-            "/api/generate",
-            {
-                "model": self.model,
-                "system": system,
-                "prompt": prompt,
-                "format": "json",
-                "stream": False,
-                "options": {"temperature": 0},
-            },
-        )
+        payload = {
+            "model": self.model,
+            "system": system,
+            "prompt": prompt,
+            "format": "json",
+            "stream": False,
+            "options": {"temperature": 0},
+        }
+        if require_full_context:
+            payload.update(truncate=False, shift=False, options={"temperature": 0, "num_ctx": 16_384})
+        result = self._json_request("/api/generate", payload)
         text = result.get("response")
         if not isinstance(text, str):
             raise AIModelError("Ollama returned no generated text")

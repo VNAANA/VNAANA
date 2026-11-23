@@ -6,6 +6,7 @@ application services with their repository dependencies.
 Routers only depend on services.
 """
 
+from functools import partial
 from typing import Annotated
 
 from fastapi import Depends
@@ -73,7 +74,7 @@ def get_ai_service() -> AIService:
         model=settings.ollama_model,
         timeout_seconds=settings.ollama_timeout_seconds,
     )
-    return AIService(client.generate)
+    return AIService(client.generate, generate_story=partial(client.generate, require_full_context=True))
 
 
 AIServiceDep = Annotated[AIService, Depends(get_ai_service)]
