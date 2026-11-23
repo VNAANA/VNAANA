@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     genre_classification_model_path: Path | None = None
     genre_classification_device: str = "cpu"
+    genre_classification_pipeline_enabled: bool = False
 
     supabase_url: str | None = None
     supabase_publishable_key: str | None = None

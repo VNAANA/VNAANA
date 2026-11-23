@@ -5,6 +5,7 @@ from typing import Any
 
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
@@ -22,6 +23,7 @@ from Backend.Logic.domain.story_articles import StoryArticleDetails, StoryArticl
 from Backend.Logic.domain.story_translation import StoryTranslation
 from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Logic.ports.story_repository import (
+    GenreTagWrite,
     StoryRepository as StoryRepositoryPort,
 )
 
@@ -71,7 +73,7 @@ class StoryRepository(StoryRepositoryPort):
 
     # ---- stories ----
 
-    def get(self, story_id: uuid.UUID) -> Story | None:
+    def get(self, story_id: uuid.UUID) -> StoryDetails | None:
         story = self.db.scalar(select(StoryModel).where(StoryModel.id == story_id).execution_options(populate_existing=True).options(
             selectinload(StoryModel.tags),
             selectinload(StoryModel.articles).selectinload(StoryArticleModel.article),
@@ -160,11 +162,44 @@ class StoryRepository(StoryRepositoryPort):
 
     # ---- story_tags ----
 
+    def _lock_story_for_tags(
+        self, story_id: uuid.UUID,
+    ) -> Row[tuple[uuid.UUID, str, str | None, str | None]] | None:
+        return self.db.execute(
+            select(StoryModel.id, StoryModel.title, StoryModel.summary, StoryModel.context)
+            .where(StoryModel.id == story_id)
+            .with_for_update()
+        ).one_or_none()
+
+    def add_genre_tags_if_current(
+        self, snapshot: Story, tags: dict[uuid.UUID, Decimal | None],
+    ) -> GenreTagWrite:
+        story = self._lock_story_for_tags(snapshot.id)
+        if story is None:
+            return "missing"
+        if (story.title, story.summary, story.context) != (
+            snapshot.title, snapshot.summary, snapshot.context
+        ):
+            return "changed"
+        if self.db.scalar(
+            select(StoryTagModel.tag_id).where(StoryTagModel.story_id == story.id).limit(1)
+        ) is not None:
+            return "already_tagged"
+
+        self.db.add_all(
+            StoryTagModel(story_id=story.id, tag_id=tag_id, relevance_score=score)
+            for tag_id, score in tags.items()
+        )
+        self.db.flush()
+        return "saved"
+
     def replace_tags(
         self,
         story: Story,
         tags: dict[uuid.UUID, Decimal | None],
     ) -> None:
+        # Serialize manual replacement with automatic insertion on PostgreSQL.
+        self._lock_story_for_tags(story.id)
         stmt = select(StoryTagModel).where(
             StoryTagModel.story_id == story.id
         )
