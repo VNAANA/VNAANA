@@ -38,6 +38,7 @@ from Backend.Dal.repositories.user_repository import (
 from Backend.Logic.algorithm_service import AlgorithmService
 from Backend.Logic.ai_service import AIService
 from Backend.Logic.article_service import ArticleService
+from Backend.Logic.google_translate_client import GoogleTranslateClient
 from Backend.Logic.ollama_client import OllamaClient
 from Backend.Logic.story_service import StoryService
 from Backend.Logic.tag_service import TagService
@@ -91,13 +92,23 @@ ArticleServiceDep = Annotated[
 # Story
 # ---------------------------------------------------------------------------
 
+def get_translator() -> GoogleTranslateClient:
+    settings = get_settings()
+    return GoogleTranslateClient(
+        api_key=settings.google_translate_api_key,
+        timeout_seconds=settings.google_translate_timeout_seconds,
+    )
+
+
 def get_story_service(
     db: DbSession,
+    translator: Annotated[GoogleTranslateClient, Depends(get_translator)],
 ) -> StoryService:
     return StoryService(
         stories=DalStoryRepository(db),
         articles=DalArticleRepository(db),
         tags=DalTagRepository(db),
+        translator=translator,
     )
 
 

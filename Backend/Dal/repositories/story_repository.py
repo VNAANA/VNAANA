@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import delete, func, or_, select, update
-from sqlalchemy.engine import Row
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
@@ -12,12 +12,14 @@ from Backend.Dal.models import (
     StoryArticle as StoryArticleModel,
     StoryStatus,
     StoryTag as StoryTagModel,
+    StoryTranslation as StoryTranslationModel,
 )
 from Backend.Logic.domain.story import Story, StoryDetails, StoryTagDetails
 from Backend.Logic.domain.tag import Tag
 from dataclasses import asdict
 from Backend.Logic.domain.story_article_link import StoryArticleLink
 from Backend.Logic.domain.story_articles import StoryArticleDetails, StoryArticlesPage
+from Backend.Logic.domain.story_translation import StoryTranslation
 from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Logic.ports.story_repository import (
     GenreTagWrite,
@@ -319,3 +321,61 @@ class StoryRepository(StoryRepositoryPort):
         )
 
         return result.rowcount
+
+    # ---- story_translations ----
+
+    @staticmethod
+    def _translation_to_domain(row: StoryTranslationModel) -> StoryTranslation:
+        return StoryTranslation(
+            story_id=row.story_id,
+            language=row.language,
+            title=row.title,
+            summary=row.summary,
+            context=row.context,
+            updated_at=row.updated_at,
+        )
+
+    def get_translation(
+        self,
+        story_id: uuid.UUID,
+        language: str,
+    ) -> StoryTranslation | None:
+        row = self.db.get(StoryTranslationModel, (story_id, language))
+
+        if row is None:
+            return None
+
+        return self._translation_to_domain(row)
+
+    def save_translation(
+        self,
+        story_id: uuid.UUID,
+        language: str,
+        *,
+        title: str | None,
+        summary: str | None,
+        context: str | None,
+    ) -> StoryTranslation:
+        fields = {"title": title, "summary": summary, "context": context}
+
+        # Upsert: two users opening the same untranslated story at the same
+        # time would otherwise both insert and the second one would hit the
+        # primary key. onupdate doesn't run for ON CONFLICT, so updated_at is
+        # set here explicitly.
+        stmt = insert(StoryTranslationModel).values(
+            story_id=story_id,
+            language=language,
+            **fields,
+            updated_at=func.now(),
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[StoryTranslationModel.story_id, StoryTranslationModel.language],
+            set_={**fields, "updated_at": func.now()},
+        ).returning(StoryTranslationModel)
+
+        row = self.db.scalars(
+            stmt,
+            execution_options={"populate_existing": True},
+        ).one()
+
+        return self._translation_to_domain(row)
