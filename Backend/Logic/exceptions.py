@@ -24,3 +24,7 @@ class ConsentRequiredError(DomainError):
 
 class InvalidSearchError(DomainError):
     pass
+
+
+class TranslationUnavailableError(DomainError):
+    pass
