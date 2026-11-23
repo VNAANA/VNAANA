@@ -11,6 +11,7 @@ Layers:
 from fastapi import FastAPI
 
 from Backend.Presentation.error_handlers import register_error_handlers
+from Backend.Presentation.rate_limit import add_rate_limiting
 from Backend.Presentation.routers import ai, articles, auth, login, stories, tags, users
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,6 +28,11 @@ app = FastAPI(
         {"name": "tags"},
     ],
 )
+
+# Added before CORS on purpose: the last middleware added runs first, so CORS
+# answers preflight requests before the limiter counts them, and still adds
+# its headers to a 429 so the frontend can read it.
+add_rate_limiting(app)
 
 app.add_middleware(
     CORSMiddleware,

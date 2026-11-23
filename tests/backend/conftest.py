@@ -4,11 +4,21 @@ import pytest
 
 from Backend.Logic.algorithm_service import AlgorithmService
 from Backend.Logic.user_service import UserService
+from Backend.Presentation.rate_limit import reset_rate_limits
 from tests.backend.unit.algorithm.fakes import (
     FakeAlgorithmRepository,
     FakeStoryRepository,
     FakeUserRepository,
 )
+
+
+@pytest.fixture(autouse=True)
+def fresh_rate_limit():
+    # Every TestClient request comes from the same address, so without this
+    # the requests of earlier tests would count towards the limit of later ones.
+    reset_rate_limits()
+    yield
+    reset_rate_limits()
 
 
 @pytest.fixture

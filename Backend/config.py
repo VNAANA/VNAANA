@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     google_translate_api_key: str | None = None
     google_translate_timeout_seconds: float = 15
 
+    # Read from RATE_LIMIT. Requests per client IP for the whole API, in
+    # slowapi/limits notation ("60/minute", "1000/hour").
+    rate_limit: str = "60/minute"
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
