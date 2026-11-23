@@ -1,4 +1,4 @@
-"""Request and response contracts for article-only AI endpoints."""
+"""Request and response contracts for AI endpoints."""
 
 from typing import Literal
 
@@ -28,6 +28,31 @@ class AskRequest(SummarizeRequest):
     def question_not_blank(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("question must not be blank")
+        return value
+
+
+class StoryHistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=500)
+
+    @field_validator("content")
+    @classmethod
+    def content_not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("history content must not be blank")
+        return value
+
+
+class StoryAskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=MAX_QUESTION_CHARS)
+    language: Literal["en", "nl"]
+    history: list[StoryHistoryMessage] = Field(default_factory=list, max_length=4)
+
+    @field_validator("history")
+    @classmethod
+    def completed_exchanges(cls, value: list[StoryHistoryMessage]) -> list[StoryHistoryMessage]:
+        if [message.role for message in value] != ["user", "assistant"] * (len(value) // 2):
+            raise ValueError("history must contain completed user/assistant exchanges")
         return value
 
 
