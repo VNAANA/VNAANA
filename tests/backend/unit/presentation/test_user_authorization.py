@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from Backend.main import app
+from Backend.Logic.domain.feed import Feed, FeedStatus
 from Backend.Logic.exceptions import NotFoundError
 from Backend.Logic.user_service import UserService
 from Backend.Presentation.auth import get_authenticated_subject
@@ -44,7 +45,7 @@ def context():
         active_duration_ms=None, metadata=None,
     )
     algorithm = Mock()
-    algorithm.get_feed.return_value = dict(status="available", stories=[])
+    algorithm.get_feed.return_value = Feed(FeedStatus.available)
     previous = app.dependency_overrides.copy()
     app.dependency_overrides[get_user_service] = lambda: service
     app.dependency_overrides[get_algorithm_service] = lambda: algorithm

@@ -31,14 +31,14 @@ export function usePost() {
 }
 
 /* The part names are in the post strings (t.post.parts). */
-export type PartKey = 'whatHappened' | 'why' | 'fullArticle' | 'readMore'
+export type PartKey = 'whatHappened' | 'why' | 'context' | 'readMore'
 
 /*
- * The parts of an article's carousel, in order. "Full article" only appears when
- * the article text has been scraped. "Read more" (with the Ask Nova chat) is always last.
+ * The parts of a post's carousel, in order. "Context" only appears when the
+ * story has context text. "Read more" (with the Ask Nova chat) is always last.
  */
 export function getParts(article: Article): PartKey[] {
-  return article.content?.length
-    ? ['whatHappened', 'why', 'fullArticle', 'readMore']
+  return article.context?.length
+    ? ['whatHappened', 'why', 'context', 'readMore']
     : ['whatHappened', 'why', 'readMore']
 }

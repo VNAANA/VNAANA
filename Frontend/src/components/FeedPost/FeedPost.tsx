@@ -10,7 +10,7 @@ import { getParts, PostContext } from './PostContext'
 import type { PartKey } from './PostContext'
 import { PostHeader } from './PostHeader'
 import { ReactionBar } from './ReactionBar'
-import { FullArticlePart, ReadMorePart, WhatHappenedPart, WhyPart } from './sections/Parts'
+import { ContextPart, ReadMorePart, WhatHappenedPart, WhyPart } from './sections/Parts'
 import { usePostActions } from './usePostActions'
 import styles from './FeedPost.module.css'
 
@@ -23,7 +23,7 @@ type Props = {
 const PART_ELEMENTS: Record<PartKey, ReactNode> = {
   whatHappened: <WhatHappenedPart />,
   why: <WhyPart />,
-  fullArticle: <FullArticlePart />,
+  context: <ContextPart />,
   readMore: <ReadMorePart />,
 }
 
@@ -40,7 +40,7 @@ export function FeedPost({ article, onOpened }: Props) {
   const parts = getParts(article)
   const partLabels = parts.map((part) => t.post.parts[part])
   const carousel = useCarousel(parts.length)
-  const chat = useNovaChat(article.novaArticle)
+  const chat = useNovaChat(article.novaStory)
   const [hidden, setHidden] = useState(false)
   const [composerFocusRequest, setComposerFocusRequest] = useState(0)
   const undoRef = useRef<HTMLButtonElement>(null)

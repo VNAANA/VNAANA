@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 
-from Backend.Logic.domain.story import Story, StoryStatus
+from Backend.Logic.domain.feed import Feed, RankedStory
+from Backend.Logic.domain.story import Story, StoryCard, StoryStatus
 from Backend.Logic.domain.story_translation import StoryTranslation
 from Backend.Logic.exceptions import (
     ConflictError,
@@ -51,14 +52,22 @@ class StoryService:
         q: str | None = None,
         limit: int = 20,
         offset: int = 0,
-    ) -> list[Story]:
-        return self.stories.list(
+    ) -> list[StoryCard]:
+        return self.stories.to_cards(self.stories.list(
             status=status,
             tag_id=tag_id,
             search_terms=self._search_terms(q),
             limit=limit,
             offset=offset,
-        )
+        ))
+
+    def with_cards(self, feed: Feed) -> Feed:
+        """The feed with its stories as cards (tags, lead article, article count)."""
+        cards = self.stories.to_cards([ranked.story for ranked in feed.stories])
+        return Feed(feed.status, [
+            RankedStory(card, ranked.score)
+            for card, ranked in zip(cards, feed.stories)
+        ])
 
     @staticmethod
     def _search_terms(q: str | None) -> list[str] | None:

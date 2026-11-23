@@ -17,6 +17,7 @@ import subprocess
 import sys
 import time
 import urllib.parse
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -25,13 +26,13 @@ from playwright.sync_api import expect
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
-from Backend.Dal.models import Article, Base, Provider
+from Backend.Dal.models import Article, Base, Provider, Story, StoryArticle, StoryStatus
 from tests.e2e.support import (
     API_PORT,
     API_URL,
-    ARTICLE_TITLES,
+    STORY_TITLES,
     FRONTEND_URL,
-    SEEDED_ARTICLE,
+    SEEDED_STORY,
     TEST_EMAIL,
     TEST_PASSWORD,
     log_in,
@@ -85,7 +86,7 @@ def supabase() -> dict[str, str]:
 
 @pytest.fixture(scope="session")
 def database(supabase):
-    """A clean database built by the real migrations, with the test articles in it."""
+    """A clean database built by the real migrations, with the test stories in it."""
     engine = create_engine(supabase["db_url"])
 
     # Drop the app's tables (not Supabase's own) and rebuild them with Alembic.
@@ -100,20 +101,28 @@ def database(supabase):
     if migration.returncode != 0:
         pytest.fail(f"`alembic upgrade head` failed:\n{migration.stderr[-3000:]}", pytrace=False)
 
-    # Tags come from a migration; the feed needs articles, so add those here.
+    # Tags come from a migration; the feed shows published stories, each led
+    # by one article, so add those here.
     with Session(engine) as db:
         provider = Provider(name="E2E News", domain="e2e.vnaana.test", reliability_status="verified")
         db.add(provider)
         db.flush()
-        db.add_all(
-            Article(
+        for number, title in enumerate(STORY_TITLES, start=1):
+            article = Article(
                 provider_id=provider.id,
                 canonical_url=f"https://e2e.vnaana.test/articles/{number}",
-                title=title,
+                title=f"E2E article {number}",
                 description=f"Seeded article {number} for the end-to-end tests.",
             )
-            for number, title in enumerate(ARTICLE_TITLES, start=1)
-        )
+            story = Story(
+                title=title,
+                context=f"Background for seeded story {number}.",
+                status=StoryStatus.published,
+                first_published_at=datetime.now(timezone.utc),
+            )
+            db.add_all([article, story])
+            db.flush()
+            db.add(StoryArticle(story_id=story.id, article_id=article.id, is_primary=True))
         db.commit()
 
     yield engine
@@ -264,7 +273,7 @@ def logged_in_state(browser, browser_context_args, ready_user, tmp_path_factory)
     context = browser.new_context(**browser_context_args)
     page = context.new_page()
     log_in(page, ready_user["email"], ready_user["password"])
-    expect(page.get_by_role("article", name=SEEDED_ARTICLE).first).to_be_visible()
+    expect(page.get_by_role("article", name=SEEDED_STORY).first).to_be_visible()
     state = tmp_path_factory.mktemp("auth") / "state.json"
     context.storage_state(path=state)
     context.close()

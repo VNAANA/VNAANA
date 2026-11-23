@@ -38,6 +38,13 @@
 }
 
 /* Error / empty message */
+.loadingMore {
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
 .message {
   display: grid;
   justify-items: center;

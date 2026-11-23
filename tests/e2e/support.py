@@ -12,9 +12,9 @@ API_URL = f"http://127.0.0.1:{API_PORT}"
 TEST_EMAIL = "e2e@vnaana.test"
 TEST_PASSWORD = "e2e-password-123"
 
-# The feed asks for 5 random articles, so seeding exactly 5 means all of them show up.
-ARTICLE_TITLES = [f"E2E article {number}" for number in range(1, 6)]
-SEEDED_ARTICLE = re.compile(r"^E2E article \d$")
+# The feed loads 10 stories per page, so all 5 seeded stories are on the first page.
+STORY_TITLES = [f"E2E story {number}" for number in range(1, 6)]
+SEEDED_STORY = re.compile(r"^E2E story \d$")
 
 
 def log_in(page: Page, email: str, password: str) -> None:

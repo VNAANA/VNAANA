@@ -5,7 +5,7 @@ import { NovaChatLog, NovaComposer } from '../NovaChat'
 import { usePost } from '../PostContext'
 import styles from './Parts.module.css'
 
-/* The three parts of an article. FeedPost puts these inside a carousel. */
+/* The parts of a post. FeedPost puts these inside a carousel. */
 
 /* The article's image; without one, or when it fails to load, the publisher on a plain panel. */
 function ArticleImage({ className = '' }: { className?: string }) {
@@ -60,7 +60,7 @@ export function WhyPart() {
         <p className={styles.eyebrow}>{t.post.parts.why}</p>
         <h3 className={styles.heading}>{t.post.why.notExplained}</h3>
         <p className={styles.background}>
-          {article.content ? t.post.why.readNextSlide : t.post.why.readOnPublisher(article.publisher.name)}
+          {article.context ? t.post.why.readNextSlide : t.post.why.readOnPublisher(article.publisher.name)}
         </p>
         <p className={styles.aiNote}>
           <Info size={16} aria-hidden="true" />
@@ -99,14 +99,14 @@ export function WhyPart() {
   )
 }
 
-/* Only for articles whose text was scraped: the whole article, scrollable. */
-export function FullArticlePart() {
+/* Only for stories with context text: the story's background, scrollable. */
+export function ContextPart() {
   const { article } = usePost()
   const { t } = useStrings()
   const { readMinutes } = article.readMore
   return (
     <div className={styles.part}>
-      <p className={styles.eyebrow}>{t.post.parts.fullArticle}</p>
+      <p className={styles.eyebrow}>{t.post.parts.context}</p>
       <h3 className={styles.heading}>{article.title}</h3>
       <p className={styles.articleMeta}>
         {article.publisher.name}
@@ -114,7 +114,7 @@ export function FullArticlePart() {
         {readMinutes && ` · ${t.post.readMore.minRead(readMinutes)}`}
       </p>
       <div className={styles.articleBody}>
-        {article.content?.map((paragraph, i) => (
+        {article.context?.map((paragraph, i) => (
           <p key={i}>{paragraph}</p>
         ))}
       </div>

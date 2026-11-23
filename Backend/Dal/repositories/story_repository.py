@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -15,9 +17,9 @@ from Backend.Dal.models import (
     StoryTag as StoryTagModel,
     StoryTranslation as StoryTranslationModel,
 )
-from Backend.Logic.domain.story import Story, StoryDetails, StoryTagDetails
+from Backend.Logic.domain.story import Story, StoryCard, StoryDetails, StoryTagDetails
 from Backend.Logic.domain.tag import Tag
-from dataclasses import asdict
+from dataclasses import asdict, fields as dataclass_fields
 from Backend.Logic.domain.story_article_link import StoryArticleLink
 from Backend.Logic.domain.story_articles import StoryArticleDetails, StoryArticlesPage
 from Backend.Logic.domain.story_translation import StoryTranslation
@@ -138,6 +140,73 @@ class StoryRepository(StoryRepositoryPort):
             item.articles_count = articles_count
             results.append(item)
         return results
+
+    def to_cards(self, stories: list[Story]) -> list[StoryCard]:
+        if not stories:
+            return []
+        story_ids = [story.id for story in stories]
+
+        tags: dict[uuid.UUID, list[StoryTagDetails]] = {story_id: [] for story_id in story_ids}
+        tag_links = self.db.scalars(
+            select(StoryTagModel).where(StoryTagModel.story_id.in_(story_ids))
+        ).unique()
+        for link in tag_links:
+            tags[link.story_id].append(
+                StoryTagDetails(Tag(link.tag.id, link.tag.name), link.relevance_score)
+            )
+        for story_tags in tags.values():
+            # Most relevant first; tags without a score last, then by name for a stable order.
+            story_tags.sort(key=lambda item: (
+                item.relevance_score is None,
+                -(item.relevance_score or 0),
+                item.tag.name,
+            ))
+
+        counts = dict(self.db.execute(
+            select(StoryArticleModel.story_id, func.count())
+            .where(StoryArticleModel.story_id.in_(story_ids))
+            .group_by(StoryArticleModel.story_id)
+        ).all())
+
+        # The lead article per story: the primary one, else the first linked
+        # (the same order GET /stories/{id}/articles uses).
+        rank = func.row_number().over(
+            partition_by=StoryArticleModel.story_id,
+            order_by=(
+                StoryArticleModel.is_primary.desc(),
+                StoryArticleModel.added_at,
+                StoryArticleModel.article_id,
+            ),
+        ).label("rank")
+        ranked = (
+            select(StoryArticleModel.story_id, StoryArticleModel.article_id, rank)
+            .where(StoryArticleModel.story_id.in_(story_ids))
+            .subquery()
+        )
+        lead_links = self.db.scalars(
+            select(StoryArticleModel).join(
+                ranked,
+                (StoryArticleModel.story_id == ranked.c.story_id)
+                & (StoryArticleModel.article_id == ranked.c.article_id),
+            ).where(ranked.c.rank == 1)
+        ).unique()
+        leads = {
+            link.story_id: ArticleRepository._to_domain(link.article)
+            for link in lead_links
+        }
+
+        return [
+            StoryCard(
+                # Only the base Story fields, so a StoryDetails passed in works too.
+                **{
+                    **{name.name: getattr(story, name.name) for name in dataclass_fields(Story)},
+                    "articles_count": counts.get(story.id, 0),
+                },
+                tags=tags[story.id],
+                lead_article=leads.get(story.id),
+            )
+            for story in stories
+        ]
 
     def add(self, **fields: Any) -> Story:
         story_model = StoryModel(**fields)

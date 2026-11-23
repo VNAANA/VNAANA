@@ -1,12 +1,20 @@
-/* Ask Nova's single article-grounded API request. */
-import type { NovaArticle } from '../types'
+/*
+ * Ask Nova for a story: POST /ai/stories/{id}/ask (see Backend/ASK_NOVA_API.md).
+ * The backend reads the story's linked articles itself, so the frontend only
+ * sends the question, the answer language and the recent conversation.
+ */
 import type { NovaErrorCode } from '../data/strings'
 import { apiUrl } from './api'
 import type { Language } from './language'
 
 /* Nova answers in the display language chosen on the profile page. */
 export type NovaLanguage = Language
-export const MAX_NOVA_ARTICLE_CHARS = 12_000
+
+/* Limits the backend enforces (HTTP 422 otherwise). */
+export const MAX_NOVA_QUESTION_CHARS = 500
+const MAX_HISTORY_EXCHANGES = 2
+const MAX_HISTORY_MESSAGE_CHARS = 500
+const MAX_HISTORY_BYTES = 2_000
 
 /* A failed request. The chat shows the message for `code` in the display language. */
 export class NovaError extends Error {
@@ -18,61 +26,43 @@ export class NovaError extends Error {
   }
 }
 
-export type NovaSuggestion = {
-  label: string
-  action: 'ask' | 'simplify'
-}
-
 export type NovaAnswer = {
   text: string
+  /** URLs of the linked articles Nova cited, checked by the backend. */
   sources: string[]
   uncertainty: string
   status: 'answered' | 'insufficient_information'
 }
 
+/* One finished question and answer, used as context for follow-up questions. */
+export type NovaExchange = { question: string; answer: string }
+
+type HistoryMessage = { role: 'user' | 'assistant'; content: string }
+
 // Shown in the answer language; the label is also the question sent to Nova.
-export const NOVA_SUGGESTIONS: Record<NovaLanguage, readonly NovaSuggestion[]> = {
-  en: [
-    { label: 'Explain it simpler', action: 'simplify' },
-    { label: 'What led to this?', action: 'ask' },
-    { label: 'What happens next?', action: 'ask' },
-  ],
-  nl: [
-    { label: 'Leg het eenvoudiger uit', action: 'simplify' },
-    { label: 'Wat leidde hiertoe?', action: 'ask' },
-    { label: 'Wat gebeurt er nu?', action: 'ask' },
-  ],
+export const NOVA_SUGGESTIONS: Record<NovaLanguage, readonly string[]> = {
+  en: ['Explain it simpler', 'What led to this?', 'What happens next?'],
+  nl: ['Leg het eenvoudiger uit', 'Wat leidde hiertoe?', 'Wat gebeurt er nu?'],
 }
 
-export async function askNova(article: NovaArticle, question: string, language: NovaLanguage): Promise<NovaAnswer> {
-  return requestNova('/ai/ask', {
-    article_text: article.groundingText,
-    question,
-    language,
-    ...(article.sourceUrl ? { source_url: article.sourceUrl } : {}),
-  })
-}
-
-export async function simplifyNova(article: NovaArticle, language: NovaLanguage): Promise<NovaAnswer> {
-  return requestNova('/ai/summarize', {
-    article_text: article.groundingText,
-    language,
-    ...(article.sourceUrl ? { source_url: article.sourceUrl } : {}),
-  })
-}
-
-async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<string, unknown>): Promise<NovaAnswer> {
-  const url = apiUrl(path)
+export async function askNova(
+  storyId: string,
+  question: string,
+  language: NovaLanguage,
+  exchanges: readonly NovaExchange[] = [],
+): Promise<NovaAnswer> {
+  const url = apiUrl(`/ai/stories/${encodeURIComponent(storyId)}/ask`)
   let response: Response
   try {
     response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ question, language, history: toHistory(exchanges) }),
     })
   } catch {
     throw new NovaError('unreachable')
   }
+  if (response.status === 404) throw new NovaError('notFound')
   if (response.status === 422) throw new NovaError('invalidRequest')
   if (response.status === 503) throw new NovaError('modelUnavailable')
   if (!response.ok) throw new NovaError('failed')
@@ -95,4 +85,35 @@ async function requestNova(path: '/ai/ask' | '/ai/summarize', body: Record<strin
     throw new NovaError('invalidResponse')
   }
   return answer as NovaAnswer
+}
+
+/*
+ * The history the backend accepts: at most the last two exchanges, oldest
+ * first, each message at most 500 characters, and at most 2,000 UTF-8 bytes
+ * in total. Older exchanges are dropped until it fits.
+ */
+export function toHistory(exchanges: readonly NovaExchange[]): HistoryMessage[] {
+  // Blank messages are rejected, so an exchange with one is left out.
+  const complete = exchanges.filter((exchange) => exchange.question.trim() && exchange.answer.trim())
+  const history = complete.slice(-MAX_HISTORY_EXCHANGES).flatMap((exchange): HistoryMessage[] => [
+    { role: 'user', content: clip(exchange.question) },
+    { role: 'assistant', content: clip(exchange.answer) },
+  ])
+  while (history.length > 0 && historyBytes(history) > MAX_HISTORY_BYTES) history.splice(0, 2)
+  return history
+}
+
+function clip(text: string): string {
+  const trimmed = text.trim()
+  return trimmed.length <= MAX_HISTORY_MESSAGE_CHARS
+    ? trimmed
+    : `${trimmed.slice(0, MAX_HISTORY_MESSAGE_CHARS - 1).trimEnd()}…`
+}
+
+// The backend measures Python's json.dumps output, which puts a space after
+// every ':' and ','. Counting those spaces keeps this a safe upper bound.
+function historyBytes(history: HistoryMessage[]): number {
+  const json = JSON.stringify(history)
+  const separators = history.length * 3 + Math.max(0, history.length - 1)
+  return new TextEncoder().encode(json).length + separators
 }

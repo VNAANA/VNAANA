@@ -145,6 +145,53 @@ class PersistenceTests(unittest.TestCase):
         self.assertIsNone(repo.get(uuid.uuid4()))
         self.assertEqual(repo.list(status=StoryStatus.published, offset=1), [])
 
+    def test_story_cards_have_tags_lead_article_and_count(self):
+        from Backend.Dal.repositories.story_repository import StoryRepository
+        from Backend.Presentation.schemas.stories import StoryCardRead
+        with_primary, without_primary, empty = (
+            Story(title="With primary", context="Context text", status=StoryStatus.published),
+            Story(title="Without primary", status=StoryStatus.published),
+            Story(title="Empty", status=StoryStatus.published),
+        )
+        science, politics, unscored = Tag(name="Science"), Tag(name="Politics"), Tag(name="Unscored")
+        self.db.add_all([with_primary, without_primary, empty, science, politics, unscored])
+        self.db.flush()
+        articles = []
+        for i in range(3):
+            article = Article(provider_id=self.provider.id, canonical_url=f"https://example.test/card/{i}",
+                              title=f"Card article {i}", description=f"Description {i}",
+                              content="Long text that cards leave out")
+            self.db.add(article)
+            articles.append(article)
+        self.db.flush()
+        self.db.add_all([
+            StoryArticle(story_id=with_primary.id, article_id=articles[0].id, is_primary=False,
+                         added_at=datetime(2026, 1, 1, tzinfo=timezone.utc)),
+            StoryArticle(story_id=with_primary.id, article_id=articles[1].id, is_primary=True,
+                         added_at=datetime(2026, 1, 2, tzinfo=timezone.utc)),
+            StoryArticle(story_id=without_primary.id, article_id=articles[2].id, is_primary=False),
+            StoryTag(story_id=with_primary.id, tag_id=unscored.id, relevance_score=None),
+            StoryTag(story_id=with_primary.id, tag_id=science.id, relevance_score=.4),
+            StoryTag(story_id=with_primary.id, tag_id=politics.id, relevance_score=.9),
+        ])
+        self.db.commit()
+
+        repo = StoryRepository(self.db)
+        stories = [repo.get(empty.id), repo.get(with_primary.id), repo.get(without_primary.id)]
+        cards = [StoryCardRead.model_validate(card) for card in repo.to_cards(stories)]
+
+        self.assertEqual([card.id for card in cards], [empty.id, with_primary.id, without_primary.id])
+        self.assertEqual((cards[0].articles_count, cards[0].tags, cards[0].lead_article), (0, [], None))
+        self.assertEqual(cards[1].articles_count, 2)
+        self.assertEqual(cards[1].context, "Context text")
+        self.assertEqual([tag.tag.name for tag in cards[1].tags], ["Politics", "Science", "Unscored"])
+        self.assertEqual(cards[1].lead_article.id, articles[1].id)
+        self.assertEqual(cards[1].lead_article.description, "Description 1")
+        self.assertEqual(cards[1].lead_article.provider.name, "Source")
+        self.assertNotIn("content", cards[1].lead_article.model_dump())
+        self.assertEqual(cards[2].lead_article.id, articles[2].id)
+        self.assertEqual(repo.to_cards([]), [])
+
     def test_story_articles_endpoint_data_pagination_count_and_isolation(self):
         from Backend.Dal.repositories.story_repository import StoryRepository
         from Backend.Logic.story_service import StoryService

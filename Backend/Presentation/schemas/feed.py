@@ -1,10 +1,10 @@
 from Backend.Logic.domain.feed import FeedStatus
 from Backend.Presentation.schemas.common import ORMModel
-from Backend.Presentation.schemas.stories import StoryListItem
+from Backend.Presentation.schemas.stories import StoryCardRead
 
 
 class RankedStoryRead(ORMModel):
-    story: StoryListItem
+    story: StoryCardRead
     score: float
 
 

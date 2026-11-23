@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent } from 'react'
-import { BadgeCheck, Ellipsis, EyeOff, MapPin } from 'lucide-react'
-import { TOPIC_ICONS } from '../../data/topics'
+import { BadgeCheck, Ellipsis, EyeOff, MapPin, Tag } from 'lucide-react'
+import { TOPIC_ICONS, TOPICS } from '../../data/topics'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
 import { usePost } from './PostContext'
@@ -61,6 +61,27 @@ function TopicPill() {
       <Icon size={14} aria-hidden="true" />
       {t.topics[article.topic]}
     </span>
+  )
+}
+
+/* The story's tags. A tag named like one of our topics gets that topic's icon. */
+function TagPills() {
+  const { article } = usePost()
+  const { t } = useStrings()
+  if (!article.tags?.length) return null
+  return (
+    <ul className={styles.tagList} aria-label={t.post.tags}>
+      {article.tags.map((name) => {
+        const topic = TOPICS.find((known) => known.toLowerCase() === name.toLowerCase())
+        const Icon = topic ? TOPIC_ICONS[topic] : Tag
+        return (
+          <li key={name} className={styles.pill}>
+            <Icon size={14} aria-hidden="true" />
+            {topic ? t.topics[topic] : name}
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -154,7 +175,7 @@ function MoreMenu() {
   )
 }
 
-/* The top bar: byline, then the label pills (topic, location), then the ⋯ menu. */
+/* The top bar: byline, then the label pills (topic, tags, location), then the ⋯ menu. */
 export function PostHeader() {
   return (
     <header className={styles.header}>
@@ -163,6 +184,7 @@ export function PostHeader() {
       </div>
       <div className={styles.labels}>
         <TopicPill />
+        <TagPills />
         <LocationPill />
       </div>
       <div className={styles.headerMenu}>

@@ -14,7 +14,8 @@ import { TopicPreferencesDialog } from './components/TopicPreferences/TopicPrefe
 import { ConsentDialog } from './components/ConsentDialog/ConsentDialog'
 import { useAuth } from './hooks/useAuth'
 import { useTopicPreferences } from './hooks/useTopicPreferences'
-import { useFeedArticles } from './hooks/useFeedArticles'
+import { useFeedStories } from './hooks/useFeedStories'
+import { useLoadMoreTrigger } from './hooks/useInfiniteList'
 import { useStrings } from './hooks/useStrings'
 import { getAccount } from './utils/account'
 import { exploreFilterFromHash, isExploreHash } from './utils/explore'
@@ -28,7 +29,7 @@ const BRIEFING_STORAGE_KEY = 'vnaana.briefingDismissed'
 export default function App() {
   const hash = useHash()
   const auth = useAuth()
-  const feed = useFeedArticles()
+  const feed = useFeedStories(auth.session?.user.id ?? null, !auth.checkingSession)
   const { t } = useStrings()
   const topicState = useTopicPreferences()
   const metadata = auth.session?.user.user_metadata
@@ -40,6 +41,12 @@ export default function App() {
     () => readStorage(BRIEFING_STORAGE_KEY, 'session') === 'true',
   )
   const feedRef = useRef<HTMLElement>(null)
+  const loadMoreRef = useLoadMoreTrigger(
+    feedRef,
+    feed.loadMore,
+    feed.articles.length,
+    feed.status === 'ready' && feed.hasMore && !feed.loadMoreFailed,
+  )
 
   const dismissBriefing = () => {
     setBriefingDismissed(true)
@@ -150,9 +157,30 @@ export default function App() {
           </div>
         ))}
 
-        {feed.status === 'ready' && (
+        {/* Coming near this loads the next page of stories. */}
+        {feed.status === 'ready' && feed.hasMore && <div ref={loadMoreRef} aria-hidden="true" />}
+        {feed.loadingMore && (
+          <div className={styles.slide}>
+            <div className={styles.column}>
+              <p className="sr-only" role="status">
+                {t.feed.loadingMore}
+              </p>
+              <PostSkeleton />
+            </div>
+          </div>
+        )}
+        {feed.loadMoreFailed && (
+          <div className={styles.feedMessage} role="alert">
+            <p>{t.feed.loadMoreFailed}</p>
+            <button type="button" className={styles.retry} onClick={feed.loadMore}>
+              {t.feed.retry}
+            </button>
+          </div>
+        )}
+
+        {feed.status === 'ready' && !feed.hasMore && (
           <footer className={styles.feedEnd}>
-            <p>{t.feed.caughtUp}</p>
+            <p>{articles.length > 0 ? t.feed.caughtUp : t.feed.empty}</p>
           </footer>
         )}
       </main>
