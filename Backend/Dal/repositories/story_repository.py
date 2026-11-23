@@ -5,6 +5,7 @@ from typing import Any
 
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
