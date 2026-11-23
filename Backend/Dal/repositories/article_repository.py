@@ -4,6 +4,7 @@ from typing import Any, List
 
 from sqlalchemy import case, delete, exists, func, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session
 
 from Backend.Dal.models import (
