@@ -9,10 +9,10 @@ Layers:
   dal/           database: models, session, repositories
 """
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from Backend.Presentation.error_handlers import register_error_handlers
 from Backend.Presentation.routers import ai, articles, auth, login, stories, tags, users
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="VNAANA API",

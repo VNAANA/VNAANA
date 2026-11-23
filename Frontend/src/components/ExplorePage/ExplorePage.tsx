@@ -18,7 +18,12 @@ export function ExplorePage({ filter }: { filter: ExploreFilter }) {
   }
 
   return (
-    <main id="explore" className={styles.page} tabIndex={-1} aria-labelledby="explore-heading">
+    <main
+      id="explore"
+      className={styles.page}
+      tabIndex={-1}
+      aria-labelledby="explore-heading"
+    >
       <div className={styles.inner}>
         <header>
           <h1 id="explore-heading" className={styles.title}>
@@ -29,7 +34,10 @@ export function ExplorePage({ filter }: { filter: ExploreFilter }) {
 
         <ExploreFilters active={filter} onSelect={selectFilter} />
 
-        <section aria-label={t.explore.filters[filter]} aria-busy={status === 'loading'}>
+        <section
+          aria-label={t.explore.filters[filter]}
+          aria-busy={status === 'loading'}
+        >
           {status === 'loading' && (
             <>
               <p className="sr-only" role="status">
@@ -48,15 +56,25 @@ export function ExplorePage({ filter }: { filter: ExploreFilter }) {
           )}
           {status === 'ready' && items.length === 0 && (
             <div className={styles.message}>
-              <p>{filter === 'all' ? t.explore.emptyAll : t.explore.empty(t.explore.filters[filter])}</p>
+              <p>
+                {filter === 'all'
+                  ? t.explore.emptyAll
+                  : t.explore.empty(t.explore.filters[filter])}
+              </p>
               {filter !== 'all' && (
-                <button type="button" className={styles.button} onClick={() => selectFilter('all')}>
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={() => selectFilter('all')}
+                >
                   {t.explore.showAll}
                 </button>
               )}
             </div>
           )}
-          {status === 'ready' && items.length > 0 && <ExploreGrid items={items} />}
+          {status === 'ready' && items.length > 0 && (
+            <ExploreGrid items={items} />
+          )}
         </section>
       </div>
     </main>

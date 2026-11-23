@@ -13,8 +13,13 @@ function ArticleImage({ className = '' }: { className?: string }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
   if (!article.image || failedSrc === article.image.src) {
     return (
-      <div className={`${styles.imageFallback} ${className}`} aria-hidden="true">
-        <span className={styles.imageFallbackName}>{article.publisher.name}</span>
+      <div
+        className={`${styles.imageFallback} ${className}`}
+        aria-hidden="true"
+      >
+        <span className={styles.imageFallbackName}>
+          {article.publisher.name}
+        </span>
       </div>
     )
   }
@@ -60,7 +65,9 @@ export function WhyPart() {
         <p className={styles.eyebrow}>{t.post.parts.why}</p>
         <h3 className={styles.heading}>{t.post.why.notExplained}</h3>
         <p className={styles.background}>
-          {article.content ? t.post.why.readNextSlide : t.post.why.readOnPublisher(article.publisher.name)}
+          {article.content
+            ? t.post.why.readNextSlide
+            : t.post.why.readOnPublisher(article.publisher.name)}
         </p>
         <p className={styles.aiNote}>
           <Info size={16} aria-hidden="true" />
@@ -132,7 +139,8 @@ export function ReadMorePart() {
   // Keep the newest chat message in view
   useEffect(() => {
     const area = scrollRef.current
-    if (area && chat.messages.length > 0) area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' })
+    if (area && chat.messages.length > 0)
+      area.scrollTo({ top: area.scrollHeight, behavior: 'smooth' })
   }, [chat.messages.length, chat.pending])
 
   return (
@@ -146,10 +154,14 @@ export function ReadMorePart() {
           rel="noopener noreferrer"
           onClick={actions.markOpened}
         >
-          <span className={styles.sourceLabel}>{t.post.readMore.fullStoryOn(article.publisher.name)}</span>
+          <span className={styles.sourceLabel}>
+            {t.post.readMore.fullStoryOn(article.publisher.name)}
+          </span>
           <span className={styles.sourceTitle}>{article.title}</span>
           <span className={styles.sourceMeta}>
-            {readMore.readMinutes ? t.post.readMore.minRead(readMore.readMinutes) : t.post.readMore.readArticle}
+            {readMore.readMinutes
+              ? t.post.readMore.minRead(readMore.readMinutes)
+              : t.post.readMore.readArticle}
             <ExternalLink size={15} aria-hidden="true" />
             <span className="sr-only">{t.common.opensInNewTab}</span>
           </span>
@@ -157,14 +169,25 @@ export function ReadMorePart() {
 
         {readMore.perspectives.length > 0 && (
           <>
-            <h3 className={styles.subhead}>{t.post.readMore.otherPerspectives}</h3>
+            <h3 className={styles.subhead}>
+              {t.post.readMore.otherPerspectives}
+            </h3>
             <ul className={styles.perspectives}>
               {readMore.perspectives.map((perspective) => (
                 <li key={perspective.url}>
-                  <a className={styles.perspective} href={perspective.url} target="_blank" rel="noopener noreferrer">
+                  <a
+                    className={styles.perspective}
+                    href={perspective.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <span>
-                      <span className={styles.perspectivePublisher}>{perspective.publisher}</span>
-                      <span className={styles.perspectiveAngle}>{perspective.angle}</span>
+                      <span className={styles.perspectivePublisher}>
+                        {perspective.publisher}
+                      </span>
+                      <span className={styles.perspectiveAngle}>
+                        {perspective.angle}
+                      </span>
                     </span>
                     <ExternalLink size={15} aria-hidden="true" />
                     <span className="sr-only">{t.common.opensInNewTab}</span>

@@ -19,14 +19,28 @@ from sqlalchemy.orm import Session
 
 from Backend.Dal.models import (
     EngagementEvent as EngagementEventModel,
+)
+from Backend.Dal.models import (
     Story as StoryModel,
+)
+from Backend.Dal.models import (
     StoryReaction as StoryReactionModel,
+)
+from Backend.Dal.models import (
     StoryStatus,
+)
+from Backend.Dal.models import (
     StoryTag as StoryTagModel,
+)
+from Backend.Dal.models import (
     User as UserModel,
+)
+from Backend.Dal.models import (
     UserTag as UserTagModel,
 )
-from Backend.Dal.repositories.engagement_event_repository import EngagementEventRepository
+from Backend.Dal.repositories.engagement_event_repository import (
+    EngagementEventRepository,
+)
 from Backend.Dal.repositories.story_repository import StoryRepository
 from Backend.Logic.Algorithm.shared_types import StoryTags, TagScores
 from Backend.Logic.domain.declared_tag import DeclaredTag

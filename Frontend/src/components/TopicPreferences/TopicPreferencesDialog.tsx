@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStrings } from '../../hooks/useStrings'
-import { finishOnboarding, readTopicState, setTopicPreferences } from '../../utils/topicPreferences'
+import {
+  finishOnboarding,
+  readTopicState,
+  setTopicPreferences,
+} from '../../utils/topicPreferences'
 import { TopicPreferencesEditor } from './TopicPreferencesEditor'
 import type { TopicLists } from './TopicPreferencesEditor'
 import styles from './TopicPreferences.module.css'
@@ -21,10 +25,15 @@ type Props = {
  * saved with PUT /users/{id}/tags, both lists with PUT /users/{id}/preferences.
  * A native modal <dialog> keeps focus inside and closes on Escape (same as Skip/Cancel).
  */
-export function TopicPreferencesDialog({ mode = 'prompt', onClose = () => {} }: Props) {
+export function TopicPreferencesDialog({
+  mode = 'prompt',
+  onClose = () => {},
+}: Props) {
   const { t } = useStrings()
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [draft, setDraft] = useState<TopicLists>(() => readTopicState().preferences)
+  const [draft, setDraft] = useState<TopicLists>(
+    () => readTopicState().preferences,
+  )
   // Which button's request is running, so only that button shows progress.
   const [pending, setPending] = useState<'save' | 'skip' | null>(null)
   const busy = pending !== null
@@ -56,7 +65,8 @@ export function TopicPreferencesDialog({ mode = 'prompt', onClose = () => {} }: 
     })
 
   // Skipping the first-time prompt saves no topics, only completes onboarding so it isn't asked again.
-  const dismiss = () => (mode === 'prompt' ? run('skip', finishOnboarding) : onClose())
+  const dismiss = () =>
+    mode === 'prompt' ? run('skip', finishOnboarding) : onClose()
 
   return (
     <dialog
@@ -85,10 +95,20 @@ export function TopicPreferencesDialog({ mode = 'prompt', onClose = () => {} }: 
       </p>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.skip} onClick={() => void dismiss()} disabled={busy}>
+        <button
+          type="button"
+          className={styles.skip}
+          onClick={() => void dismiss()}
+          disabled={busy}
+        >
           {mode === 'edit' ? t.topicPrefs.cancel : t.topicPrefs.skip}
         </button>
-        <button type="button" className={styles.save} onClick={() => void save()} disabled={busy}>
+        <button
+          type="button"
+          className={styles.save}
+          onClick={() => void save()}
+          disabled={busy}
+        >
           {pending === 'save' ? t.topicPrefs.saving : t.topicPrefs.save}
         </button>
       </div>

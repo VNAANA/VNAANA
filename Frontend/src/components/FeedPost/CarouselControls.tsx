@@ -15,12 +15,17 @@ export function CarouselArrows() {
   return (
     // data-text-part: the middle parts are scrolling text, so the arrows get a solid bar on small screens.
     // The last part doesn't need one: its chat input makes room for the arrow.
-    <div className={styles.arrows} data-text-part={!carousel.isFirst && !carousel.isLast}>
+    <div
+      className={styles.arrows}
+      data-text-part={!carousel.isFirst && !carousel.isLast}
+    >
       <button
         type="button"
         className={`${styles.arrow} ${styles.prev}`}
         onClick={carousel.prev}
-        aria-label={t.post.carousel.previous(partLabels[carousel.index - 1] ?? '')}
+        aria-label={t.post.carousel.previous(
+          partLabels[carousel.index - 1] ?? '',
+        )}
         hidden={carousel.isFirst}
       >
         <ChevronLeft size={22} aria-hidden="true" />
@@ -53,7 +58,11 @@ export function PartDots() {
   return (
     <span className={styles.dots} aria-hidden="true">
       {Array.from({ length: carousel.count }, (_, i) => (
-        <span key={i} className={styles.dot} data-active={i === carousel.index} />
+        <span
+          key={i}
+          className={styles.dot}
+          data-active={i === carousel.index}
+        />
       ))}
     </span>
   )

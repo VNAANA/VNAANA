@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
-import { readGoogleStatus, readPasswordStatus, setAccountPassword } from '../../utils/accountAuth'
+import {
+  readGoogleStatus,
+  readPasswordStatus,
+  setAccountPassword,
+} from '../../utils/accountAuth'
 import { supabase } from '../../utils/supabase'
 import { startGoogleLink, type LinkResult } from '../../utils/googleLink'
-import { ArrowLeft, ChevronDown, CircleCheck, KeyRound, LogOut } from 'lucide-react'
+import {
+  ArrowLeft,
+  ChevronDown,
+  CircleCheck,
+  KeyRound,
+  LogOut,
+} from 'lucide-react'
 import type { useAuth } from '../../hooks/useAuth'
 import { useStrings } from '../../hooks/useStrings'
 import { getAccount } from '../../utils/account'
@@ -20,14 +30,24 @@ import { Logo } from '../Navigation/Logo'
 import { MobileTabBar } from '../Navigation/MobileBars'
 import styles from './ProfilePage.module.css'
 
-function PasswordForm({ userId, enabled, onSaved }: { userId: string; enabled: boolean; onSaved: () => void }) {
+function PasswordForm({
+  userId,
+  enabled,
+  onSaved,
+}: {
+  userId: string
+  enabled: boolean
+  onSaved: () => void
+}) {
   const { t } = useStrings()
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [current, setCurrent] = useState('')
   const [saving, setSaving] = useState(false)
   const [nonce, setNonce] = useState<string | null>(null)
-  const [result, setResult] = useState<'failed' | 'weak' | 'mismatch' | 'incorrect' | null>(null)
+  const [result, setResult] = useState<
+    'failed' | 'weak' | 'mismatch' | 'incorrect' | null
+  >(null)
 
   async function save(event: FormEvent) {
     event.preventDefault()
@@ -39,7 +59,12 @@ function PasswordForm({ userId, enabled, onSaved }: { userId: string; enabled: b
     setSaving(true)
     setResult(null)
     try {
-      const { error } = await setAccountPassword(userId, password, nonce?.trim(), enabled ? current : undefined)
+      const { error } = await setAccountPassword(
+        userId,
+        password,
+        nonce?.trim(),
+        enabled ? current : undefined,
+      )
       if (error) {
         if (error.code === 'reauthentication_needed' && nonce === null) {
           const challenge = await supabase.auth.reauthenticate()
@@ -66,35 +91,87 @@ function PasswordForm({ userId, enabled, onSaved }: { userId: string; enabled: b
 
   return (
     <form className={styles.passwordForm} onSubmit={save}>
-      {enabled && <label>{t.profile.currentPassword}
-        <input className={styles.select} type="password" autoComplete="current-password"
-          required value={current} onChange={event => setCurrent(event.target.value)} />
-      </label>}
-      <label className={styles.sectionTitle} htmlFor="account-password">{t.profile.newPassword}</label>
-      <input id="account-password" className={styles.select} type="password" autoComplete="new-password"
-        required minLength={8} value={password} onChange={(event) => {
+      {enabled && (
+        <label>
+          {t.profile.currentPassword}
+          <input
+            className={styles.select}
+            type="password"
+            autoComplete="current-password"
+            required
+            value={current}
+            onChange={(event) => setCurrent(event.target.value)}
+          />
+        </label>
+      )}
+      <label className={styles.sectionTitle} htmlFor="account-password">
+        {t.profile.newPassword}
+      </label>
+      <input
+        id="account-password"
+        className={styles.select}
+        type="password"
+        autoComplete="new-password"
+        required
+        minLength={8}
+        value={password}
+        onChange={(event) => {
           setPassword(event.target.value)
           setResult(null)
-        }} />
-      <label>{t.profile.confirmPassword}
-        <input className={styles.select} type="password" autoComplete="new-password"
-          required value={confirmation} aria-invalid={result === 'mismatch' || undefined}
-          onChange={event => { setConfirmation(event.target.value); setResult(null) }} />
+        }}
+      />
+      <label>
+        {t.profile.confirmPassword}
+        <input
+          className={styles.select}
+          type="password"
+          autoComplete="new-password"
+          required
+          value={confirmation}
+          aria-invalid={result === 'mismatch' || undefined}
+          onChange={(event) => {
+            setConfirmation(event.target.value)
+            setResult(null)
+          }}
+        />
       </label>
-      {nonce !== null && <label>{t.profile.verificationCode}
-        <input className={styles.select} autoComplete="one-time-code" value={nonce} required
-          onChange={event => setNonce(event.target.value)} /></label>}
-      <button className={styles.savePassword} type="submit" disabled={saving}>{t.profile.setPassword}</button>
+      {nonce !== null && (
+        <label>
+          {t.profile.verificationCode}
+          <input
+            className={styles.select}
+            autoComplete="one-time-code"
+            value={nonce}
+            required
+            onChange={(event) => setNonce(event.target.value)}
+          />
+        </label>
+      )}
+      <button className={styles.savePassword} type="submit" disabled={saving}>
+        {t.profile.setPassword}
+      </button>
       <p className={styles.hint} role="status">
-        {result === 'weak' ? t.login.notices.weakPassword : result && t.profile.passwordResult[result]}
+        {result === 'weak'
+          ? t.login.notices.weakPassword
+          : result && t.profile.passwordResult[result]}
       </p>
     </form>
   )
 }
 
-function AuthenticationMethods({ userId, token, linkResult }: { userId: string; token: string; linkResult: LinkResult | null }) {
+function AuthenticationMethods({
+  userId,
+  token,
+  linkResult,
+}: {
+  userId: string
+  token: string
+  linkResult: LinkResult | null
+}) {
   const { t } = useStrings()
-  const [status, setStatus] = useState<'checking' | Awaited<ReturnType<typeof readGoogleStatus>>>('checking')
+  const [status, setStatus] = useState<
+    'checking' | Awaited<ReturnType<typeof readGoogleStatus>>
+  >('checking')
   const [attempt, setAttempt] = useState(0)
   const [linking, setLinking] = useState(false)
   const [message, setMessage] = useState<LinkResult | null>(null)
@@ -104,22 +181,28 @@ function AuthenticationMethods({ userId, token, linkResult }: { userId: string; 
   useEffect(() => {
     const controller = new AbortController()
     setPasswordError(false)
-    void readPasswordStatus(token, controller.signal).then(value => {
-      if (!controller.signal.aborted) setEnabled(value)
-    }).catch(() => {
-      if (!controller.signal.aborted) {
-        setEnabled(null)
-        setPasswordError(true)
-      }
-    })
+    void readPasswordStatus(token, controller.signal)
+      .then((value) => {
+        if (!controller.signal.aborted) setEnabled(value)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setEnabled(null)
+          setPasswordError(true)
+        }
+      })
     return () => controller.abort()
   }, [token, attempt])
 
   useEffect(() => {
     let active = true
     setStatus('checking')
-    void readGoogleStatus(userId).then(value => { if (active) setStatus(value) })
-    return () => { active = false }
+    void readGoogleStatus(userId).then((value) => {
+      if (active) setStatus(value)
+    })
+    return () => {
+      active = false
+    }
   }, [userId, attempt, linkResult])
 
   async function connectGoogle() {
@@ -129,37 +212,87 @@ function AuthenticationMethods({ userId, token, linkResult }: { userId: string; 
     if (result) {
       setMessage(result)
       setLinking(false)
-      setAttempt(previous => previous + 1)
+      setAttempt((previous) => previous + 1)
     }
   }
 
   return (
     <section className={styles.actions} aria-labelledby="auth-methods-heading">
-      <h2 id="auth-methods-heading" className={styles.sectionTitle}>{t.profile.authMethods}</h2>
-      <p role="status" className={status === 'connected' ? styles.verified : undefined}>
+      <h2 id="auth-methods-heading" className={styles.sectionTitle}>
+        {t.profile.authMethods}
+      </h2>
+      <p
+        role="status"
+        className={status === 'connected' ? styles.verified : undefined}
+      >
         {status === 'connected' && <CircleCheck size={16} aria-hidden="true" />}
         {t.profile.googleStatus[status]}
       </p>
-      {status === 'disconnected' && <button type="button" className={styles.signOut}
-        disabled={linking} onClick={connectGoogle}>{t.profile.connectGoogle}</button>}
-      {(status === 'unavailable' || passwordError) && <button type="button" className={styles.signOut}
-        onClick={() => setAttempt(previous => previous + 1)}>{t.profile.retryMethods}</button>}
+      {status === 'disconnected' && (
+        <button
+          type="button"
+          className={styles.signOut}
+          disabled={linking}
+          onClick={connectGoogle}
+        >
+          {t.profile.connectGoogle}
+        </button>
+      )}
+      {(status === 'unavailable' || passwordError) && (
+        <button
+          type="button"
+          className={styles.signOut}
+          onClick={() => setAttempt((previous) => previous + 1)}
+        >
+          {t.profile.retryMethods}
+        </button>
+      )}
       {message && <p role="status">{t.profile.linkResult[message]}</p>}
-      {enabled === true && <p className={styles.verified}><CircleCheck size={16} aria-hidden="true" />{t.profile.passwordEnabled}</p>}
+      {enabled === true && (
+        <p className={styles.verified}>
+          <CircleCheck size={16} aria-hidden="true" />
+          {t.profile.passwordEnabled}
+        </p>
+      )}
       {passwordError && <p role="status">{t.profile.passwordUnavailable}</p>}
-      {enabled !== null && <details className={styles.passwordPanel} onChange={() => setSaved(false)}>
-        <summary className={styles.passwordToggle}>
-          <KeyRound size={20} aria-hidden="true" />
-          <span>
-            <strong>{enabled ? t.profile.changePassword : t.profile.addPassword}</strong>
-            <span className={styles.passwordHint}>{t.profile.passwordHint}</span>
-          </span>
-          <ChevronDown size={18} className={styles.chevron} aria-hidden="true" />
-        </summary>
-        <PasswordForm userId={userId} enabled={enabled} onSaved={() => { setEnabled(true); setSaved(true) }} />
-      </details>}
+      {enabled !== null && (
+        <details
+          className={styles.passwordPanel}
+          onChange={() => setSaved(false)}
+        >
+          <summary className={styles.passwordToggle}>
+            <KeyRound size={20} aria-hidden="true" />
+            <span>
+              <strong>
+                {enabled ? t.profile.changePassword : t.profile.addPassword}
+              </strong>
+              <span className={styles.passwordHint}>
+                {t.profile.passwordHint}
+              </span>
+            </span>
+            <ChevronDown
+              size={18}
+              className={styles.chevron}
+              aria-hidden="true"
+            />
+          </summary>
+          <PasswordForm
+            userId={userId}
+            enabled={enabled}
+            onSaved={() => {
+              setEnabled(true)
+              setSaved(true)
+            }}
+          />
+        </details>
+      )}
       <div role="status" aria-live="polite">
-        {saved && <p className={styles.verified}><CircleCheck size={16} aria-hidden="true" />{t.profile.passwordResult.saved}</p>}
+        {saved && (
+          <p className={styles.verified}>
+            <CircleCheck size={16} aria-hidden="true" />
+            {t.profile.passwordResult.saved}
+          </p>
+        )}
       </div>
     </section>
   )
@@ -176,7 +309,14 @@ type Props = {
  * "Profile settings" (name, email, language, authentication methods, sign out) and "Topics".
  */
 export function ProfilePage({ auth, tab }: Props) {
-  const { session, checkingSession, backendStatus, signingOut, signOut, linkResult } = auth
+  const {
+    session,
+    checkingSession,
+    backendStatus,
+    signingOut,
+    signOut,
+    linkResult,
+  } = auth
   const { language, t } = useStrings()
   const { preferences, userId } = useTopicPreferences()
   const [topicsFailed, setTopicsFailed] = useState(false)
@@ -193,7 +333,9 @@ export function ProfilePage({ auth, tab }: Props) {
   }
   const account = getAccount(session)
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>({})
+  const tabRefs = useRef<Partial<Record<ProfileTab, HTMLButtonElement | null>>>(
+    {},
+  )
 
   // Coming from the feed, start keyboard and screen reader users at the page title
   useEffect(() => {
@@ -201,7 +343,8 @@ export function ProfilePage({ auth, tab }: Props) {
   }, [])
 
   // replace() so switching tabs doesn't fill the back button's history.
-  const openTab = (next: ProfileTab) => window.location.replace(profileHash(next))
+  const openTab = (next: ProfileTab) =>
+    window.location.replace(profileHash(next))
 
   // Tabs pattern: arrow keys, Home and End move between tabs and open them.
   const onTabKeyDown = (event: KeyboardEvent) => {
@@ -238,7 +381,11 @@ export function ProfilePage({ auth, tab }: Props) {
 
           {account ? (
             <>
-              <div role="tablist" aria-label={t.profile.tabs.label} className={styles.tabs}>
+              <div
+                role="tablist"
+                aria-label={t.profile.tabs.label}
+                className={styles.tabs}
+              >
                 {PROFILE_TABS.map((id) => (
                   <button
                     key={id}
@@ -272,24 +419,35 @@ export function ProfilePage({ auth, tab }: Props) {
                       <AccountAvatar account={account} size={64} />
                       <div className={styles.who}>
                         <p className={styles.name}>{account.name}</p>
-                        {account.email && <p className={styles.email}>{account.email}</p>}
+                        {account.email && (
+                          <p className={styles.email}>{account.email}</p>
+                        )}
                       </div>
                     </div>
 
-                    <section className={styles.actions} aria-labelledby="language-heading">
+                    <section
+                      className={styles.actions}
+                      aria-labelledby="language-heading"
+                    >
                       <h2 id="language-heading" className={styles.sectionTitle}>
                         {t.profile.language}
                       </h2>
                       <select
                         className={styles.select}
                         value={language}
-                        onChange={(event) => changeLanguage(event.target.value as Language)}
+                        onChange={(event) =>
+                          changeLanguage(event.target.value as Language)
+                        }
                         aria-labelledby="language-heading"
                         aria-describedby="language-hint"
                       >
                         {/* Each language is named in itself, so it can be found whatever is selected */}
-                        <option value="en" lang="en">English</option>
-                        <option value="nl" lang="nl">Nederlands</option>
+                        <option value="en" lang="en">
+                          English
+                        </option>
+                        <option value="nl" lang="nl">
+                          Nederlands
+                        </option>
                       </select>
                       <p id="language-hint" className={styles.hint}>
                         {t.profile.languageHint}
@@ -299,13 +457,31 @@ export function ProfilePage({ auth, tab }: Props) {
                       </p>
                     </section>
 
-                    {session && <AuthenticationMethods key={session.user.id} userId={session.user.id} token={session.access_token} linkResult={linkResult} />}
+                    {session && (
+                      <AuthenticationMethods
+                        key={session.user.id}
+                        userId={session.user.id}
+                        token={session.access_token}
+                        linkResult={linkResult}
+                      />
+                    )}
 
-                    <section className={styles.actions} aria-labelledby="account-actions-heading">
-                      <h2 id="account-actions-heading" className={styles.sectionTitle}>
+                    <section
+                      className={styles.actions}
+                      aria-labelledby="account-actions-heading"
+                    >
+                      <h2
+                        id="account-actions-heading"
+                        className={styles.sectionTitle}
+                      >
                         {t.profile.accountActions}
                       </h2>
-                      <button type="button" className={styles.signOut} onClick={signOut} disabled={signingOut}>
+                      <button
+                        type="button"
+                        className={styles.signOut}
+                        onClick={signOut}
+                        disabled={signingOut}
+                      >
                         <LogOut size={20} aria-hidden="true" />
                         {signingOut ? t.common.signingOut : t.common.signOut}
                       </button>
@@ -314,14 +490,22 @@ export function ProfilePage({ auth, tab }: Props) {
                 )}
 
                 {tab === 'topics' && (
-                  <section className={styles.actions} aria-labelledby="topics-heading">
+                  <section
+                    className={styles.actions}
+                    aria-labelledby="topics-heading"
+                  >
                     <h2 id="topics-heading" className={styles.sectionTitle}>
                       {t.nav.topics}
                     </h2>
                     {userId ? (
                       <>
-                        <p className={styles.hint}>{t.topicPrefs.profileHint}</p>
-                        <TopicPreferencesEditor value={preferences} onChange={changeTopics} />
+                        <p className={styles.hint}>
+                          {t.topicPrefs.profileHint}
+                        </p>
+                        <TopicPreferencesEditor
+                          value={preferences}
+                          onChange={changeTopics}
+                        />
                         <p className={styles.topicsError} role="alert">
                           {topicsFailed && t.topicPrefs.saveFailed}
                         </p>
@@ -356,7 +540,11 @@ export function ProfilePage({ auth, tab }: Props) {
 
       {/* Phones keep the bottom tab bar here too; on desktop it hides itself. */}
       <div className={styles.tabBar}>
-        <MobileTabBar account={account} checkingSession={checkingSession} current="profile" />
+        <MobileTabBar
+          account={account}
+          checkingSession={checkingSession}
+          current="profile"
+        />
       </div>
     </div>
   )

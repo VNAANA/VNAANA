@@ -1,15 +1,11 @@
-from logging.config import fileConfig
 import os
+from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
+from Backend.Dal.models.base import Base
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, pool
-
-from Backend.Dal.models.base import Base
-
-from Backend.Dal import models
-
 
 config = context.config
 

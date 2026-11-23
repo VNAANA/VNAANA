@@ -5,8 +5,12 @@ import uuid
 from fastapi import APIRouter, Query, status
 
 from Backend.Logic.domain.story import StoryStatus
-from Backend.Presentation.dependencies import AlgorithmServiceDep, StoryServiceDep, UserServiceDep
 from Backend.Presentation.auth import AuthenticatedSubject, OptionalSubject
+from Backend.Presentation.dependencies import (
+    AlgorithmServiceDep,
+    StoryServiceDep,
+    UserServiceDep,
+)
 from Backend.Presentation.schemas.feed import FeedRead
 from Backend.Presentation.schemas.stories import (
     StoryArticleLink,

@@ -1,4 +1,12 @@
-import { Bookmark, Check, EyeOff, Heart, Share2, Sparkles, ThumbsDown } from 'lucide-react'
+import {
+  Bookmark,
+  Check,
+  EyeOff,
+  Heart,
+  Share2,
+  Sparkles,
+  ThumbsDown,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useStrings } from '../../hooks/useStrings'
 import { usePost } from './PostContext'
@@ -12,16 +20,38 @@ export function ActionButton({ kind }: { kind: ActionKind }) {
   const { t } = useStrings()
   const labels = t.post.reactions
 
-  const config: Record<ActionKind, { label: string; Icon: LucideIcon; onClick: () => void; pressed?: boolean }> = {
-    like: { label: labels.like, Icon: Heart, onClick: actions.toggleLike, pressed: actions.liked },
-    dislike: { label: labels.dislike, Icon: ThumbsDown, onClick: actions.toggleDislike, pressed: actions.disliked },
-    notInterested: { label: t.post.notInterested, Icon: EyeOff, onClick: actions.hide },
+  const config: Record<
+    ActionKind,
+    { label: string; Icon: LucideIcon; onClick: () => void; pressed?: boolean }
+  > = {
+    like: {
+      label: labels.like,
+      Icon: Heart,
+      onClick: actions.toggleLike,
+      pressed: actions.liked,
+    },
+    dislike: {
+      label: labels.dislike,
+      Icon: ThumbsDown,
+      onClick: actions.toggleDislike,
+      pressed: actions.disliked,
+    },
+    notInterested: {
+      label: t.post.notInterested,
+      Icon: EyeOff,
+      onClick: actions.hide,
+    },
     share: {
       label: actions.linkCopied ? labels.linkCopied : labels.share,
       Icon: actions.linkCopied ? Check : Share2,
       onClick: actions.share,
     },
-    save: { label: actions.saved ? labels.saved : labels.save, Icon: Bookmark, onClick: actions.toggleSave, pressed: actions.saved },
+    save: {
+      label: actions.saved ? labels.saved : labels.save,
+      Icon: Bookmark,
+      onClick: actions.toggleSave,
+      pressed: actions.saved,
+    },
   }
   const { label, Icon, onClick, pressed } = config[kind]
 
@@ -34,7 +64,11 @@ export function ActionButton({ kind }: { kind: ActionKind }) {
       aria-label={kind === 'notInterested' ? labels.notInterested : label}
       title={label}
     >
-      <Icon size={20} aria-hidden="true" fill={pressed ? 'currentColor' : 'none'} />
+      <Icon
+        size={20}
+        aria-hidden="true"
+        fill={pressed ? 'currentColor' : 'none'}
+      />
     </button>
   )
 }
@@ -43,7 +77,11 @@ export function AskNovaButton() {
   const { actions } = usePost()
   const { t } = useStrings()
   return (
-    <button type="button" className={styles.ask} onClick={() => actions.askNova()}>
+    <button
+      type="button"
+      className={styles.ask}
+      onClick={() => actions.askNova()}
+    >
       <Sparkles size={18} aria-hidden="true" />
       {t.nova.askNova}
     </button>
@@ -54,7 +92,11 @@ export function AskNovaButton() {
 export function ReactionBar({ kinds }: { kinds: ActionKind[] }) {
   const { t } = useStrings()
   return (
-    <div className={styles.bar} role="group" aria-label={t.post.reactions.group}>
+    <div
+      className={styles.bar}
+      role="group"
+      aria-label={t.post.reactions.group}
+    >
       {kinds.map((kind) => (
         <ActionButton key={kind} kind={kind} />
       ))}

@@ -10,7 +10,9 @@ export function ExploreTextTile({ item }: { item: ExploreItem }) {
   const { t } = useStrings()
   const Icon = item.topic && TOPIC_ICONS[item.topic]
   // "POLITICS · EINDHOVEN"
-  const label = [item.topic && t.topics[item.topic], item.location].filter(Boolean).join(' · ')
+  const label = [item.topic && t.topics[item.topic], item.location]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     <article className={styles.tile} style={topicColorStyle(item.topic)}>
@@ -22,7 +24,9 @@ export function ExploreTextTile({ item }: { item: ExploreItem }) {
               {label}
             </p>
           )}
-          {item.isExplainer && <span className={styles.badge}>{t.explore.explainer}</span>}
+          {item.isExplainer && (
+            <span className={styles.badge}>{t.explore.explainer}</span>
+          )}
         </div>
       )}
       <h2 className={styles.title}>

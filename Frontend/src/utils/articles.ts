@@ -26,8 +26,12 @@ export const FEED_SIZE = 5
 const SUMMARY_MAX_CHARS = 320
 const WORDS_PER_MINUTE = 200
 
-export async function fetchRandomArticles(signal?: AbortSignal): Promise<Article[]> {
-  const response = await fetch(apiUrl(`/articles/random?limit=${FEED_SIZE}`), { signal })
+export async function fetchRandomArticles(
+  signal?: AbortSignal,
+): Promise<Article[]> {
+  const response = await fetch(apiUrl(`/articles/random?limit=${FEED_SIZE}`), {
+    signal,
+  })
   if (!response.ok) throw new Error('Articles request failed')
   const articles: ApiArticle[] = await response.json()
   return articles.map(toArticle)
@@ -38,20 +42,28 @@ export function toArticle(article: ApiArticle): Article {
   const description = htmlToText(article.description)
   const summary = shorten(description || content[0] || '')
   const hasFullArticle = !!article.content?.trim()
-  const previewText = [article.title.trim(), description].filter(Boolean).join('\n\n')
+  const previewText = [article.title.trim(), description]
+    .filter(Boolean)
+    .join('\n\n')
   const groundingText = hasFullArticle ? article.content! : previewText
 
   return {
     id: article.id,
     // Keep AI grounding separate from the shortened text used by the feed display.
-    ...(groundingText ? {
-      novaArticle: {
-        groundingText,
-        groundingMode: hasFullArticle ? 'full_article' : 'preview',
-        ...(!hasFullArticle ? { previewIncludesDescription: !!description } : {}),
-        ...(article.canonical_url?.trim() ? { sourceUrl: article.canonical_url } : {}),
-      },
-    } : {}),
+    ...(groundingText
+      ? {
+          novaArticle: {
+            groundingText,
+            groundingMode: hasFullArticle ? 'full_article' : 'preview',
+            ...(!hasFullArticle
+              ? { previewIncludesDescription: !!description }
+              : {}),
+            ...(article.canonical_url?.trim()
+              ? { sourceUrl: article.canonical_url }
+              : {}),
+          },
+        }
+      : {}),
     publisher: {
       name: article.provider.name,
       initials: initials(article.provider.name),
@@ -60,9 +72,12 @@ export function toArticle(article: ApiArticle): Article {
     author: article.author ?? undefined,
     publishedAt: new Date(article.published_at ?? article.first_seen_at),
     feedReason: 'forYou',
-    whyPicked: 'Picked at random from the latest articles while your personal feed is being built.',
+    whyPicked:
+      'Picked at random from the latest articles while your personal feed is being built.',
     title: article.title,
-    ...(article.img_url?.trim() ? { image: { src: article.img_url, alt: article.title } } : {}),
+    ...(article.img_url?.trim()
+      ? { image: { src: article.img_url, alt: article.title } }
+      : {}),
     summary,
     content: content.length > 0 ? content : undefined,
     aiNote: { sourceCount: 1 },
@@ -77,7 +92,8 @@ export function toArticle(article: ApiArticle): Article {
 /* RSS descriptions often contain HTML. DOMParser never runs scripts, so this is safe. */
 function htmlToText(html: string | null) {
   if (!html) return ''
-  const text = new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
+  const text =
+    new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
   return text.replace(/\s+/g, ' ').trim()
 }
 
@@ -86,7 +102,9 @@ function shorten(text: string, max = SUMMARY_MAX_CHARS) {
   if (text.length <= max) return text
   const cut = text.slice(0, max)
   const sentenceEnd = cut.lastIndexOf('. ')
-  return sentenceEnd > max / 2 ? cut.slice(0, sentenceEnd + 1) : `${cut.slice(0, cut.lastIndexOf(' '))}…`
+  return sentenceEnd > max / 2
+    ? cut.slice(0, sentenceEnd + 1)
+    : `${cut.slice(0, cut.lastIndexOf(' '))}…`
 }
 
 /* Scraped content split into paragraphs. The "- Name, reporter" byline lines at the top are skipped. */
@@ -99,7 +117,10 @@ function toParagraphs(content: string | null) {
 
 function initials(name: string) {
   const words = name.split(/\s+/).filter(Boolean)
-  if (words.length === 1) return words[0].length <= 3 ? words[0].toUpperCase() : words[0].slice(0, 2).toUpperCase()
+  if (words.length === 1)
+    return words[0].length <= 3
+      ? words[0].toUpperCase()
+      : words[0].slice(0, 2).toUpperCase()
   return words
     .slice(0, 2)
     .map((word) => word[0])

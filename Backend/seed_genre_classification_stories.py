@@ -25,7 +25,6 @@ from Backend.Dal.repositories.tag_repository import TagRepository
 from Backend.Logic.domain.story import StoryStatus
 from Backend.Logic.story_service import StoryService
 
-
 ID_NAMESPACE = uuid.UUID("8b055cad-dfc9-4c8a-9417-e321dc35d642")
 TITLE_PREFIX = "[GC TEST]"
 ALLOWED_ENVIRONMENTS = {"test", "development", "production"}

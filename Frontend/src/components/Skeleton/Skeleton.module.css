@@ -2,7 +2,12 @@
 .block {
   display: block;
   border-radius: 8px;
-  background: linear-gradient(90deg, var(--line) 0%, var(--surface-2) 50%, var(--line) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--line) 0%,
+    var(--surface-2) 50%,
+    var(--line) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }

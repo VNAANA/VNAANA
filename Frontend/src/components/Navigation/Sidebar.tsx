@@ -32,10 +32,16 @@ export function Sidebar({ account, checkingSession, current }: Props) {
         <ul className={styles.mainNav}>
           {MAIN_PAGES.map(({ label, href, Icon }) => (
             <li key={label}>
-              <a href={href} className={styles.navItem} aria-current={label === current ? 'page' : undefined}>
+              <a
+                href={href}
+                className={styles.navItem}
+                aria-current={label === current ? 'page' : undefined}
+              >
                 <Icon size={20} aria-hidden="true" />
                 {t.nav[label]}
-                {label === current && <span className={styles.activeDot} aria-hidden="true" />}
+                {label === current && (
+                  <span className={styles.activeDot} aria-hidden="true" />
+                )}
               </a>
             </li>
           ))}
@@ -69,7 +75,11 @@ export function Sidebar({ account, checkingSession, current }: Props) {
             <Skeleton circle width={36} height={36} />
             <span className={styles.profileText}>
               <Skeleton width="70%" height={12} />
-              <Skeleton width="90%" height={10} className={styles.skeletonGap} />
+              <Skeleton
+                width="90%"
+                height={10}
+                className={styles.skeletonGap}
+              />
             </span>
             <span className="sr-only">Checking your account…</span>
           </div>
@@ -78,9 +88,15 @@ export function Sidebar({ account, checkingSession, current }: Props) {
             <AccountAvatar account={account} />
             <span className={styles.profileText}>
               <span className={styles.profileName}>{account.name}</span>
-              {account.email && <span className={styles.profileEmail}>{account.email}</span>}
+              {account.email && (
+                <span className={styles.profileEmail}>{account.email}</span>
+              )}
             </span>
-            <ChevronRight size={18} className={styles.profileChevron} aria-hidden="true" />
+            <ChevronRight
+              size={18}
+              className={styles.profileChevron}
+              aria-hidden="true"
+            />
             <span className="sr-only">{t.nav.viewProfile}</span>
           </a>
         ) : (
@@ -92,7 +108,10 @@ export function Sidebar({ account, checkingSession, current }: Props) {
       </div>
 
       {account && editingTopics && (
-        <TopicPreferencesDialog mode="edit" onClose={() => setEditingTopics(false)} />
+        <TopicPreferencesDialog
+          mode="edit"
+          onClose={() => setEditingTopics(false)}
+        />
       )}
     </aside>
   )

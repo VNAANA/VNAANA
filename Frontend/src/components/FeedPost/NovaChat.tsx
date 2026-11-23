@@ -17,10 +17,17 @@ export function NovaChatLog() {
   const { t } = useStrings()
 
   return (
-    <div className={styles.log} role="log" aria-live="polite" aria-label={t.nova.conversation}>
+    <div
+      className={styles.log}
+      role="log"
+      aria-live="polite"
+      aria-label={t.nova.conversation}
+    >
       {chat.groundingMode === 'preview' && (
         <p className={styles.intro}>
-          {chat.previewIncludesDescription ? t.nova.previewWithDescription : t.nova.previewHeadlineOnly}
+          {chat.previewIncludesDescription
+            ? t.nova.previewWithDescription
+            : t.nova.previewHeadlineOnly}
         </p>
       )}
       {chat.messages.length === 0 && (
@@ -47,15 +54,21 @@ export function NovaChatLog() {
         ) : (
           <div key={message.id} className={styles.nova}>
             <span className="sr-only">{t.nova.novaReplied}</span>
-            {message.answer.status === 'insufficient_information' && <strong>{t.nova.notAnswered}</strong>}
+            {message.answer.status === 'insufficient_information' && (
+              <strong>{t.nova.notAnswered}</strong>
+            )}
             <p>{message.answer.text}</p>
-            {message.answer.sources.length > 0 && <p className={styles.sources}>
-              <strong>{t.nova.submittedUrl}</strong> {message.answer.sources.join(', ')}
-            </p>}
+            {message.answer.sources.length > 0 && (
+              <p className={styles.sources}>
+                <strong>{t.nova.submittedUrl}</strong>{' '}
+                {message.answer.sources.join(', ')}
+              </p>
+            )}
             <p className={styles.uncertain}>
               <Info size={14} aria-hidden="true" />
               <span>
-                <strong>{t.nova.notCertain}</strong> {message.answer.uncertainty}
+                <strong>{t.nova.notCertain}</strong>{' '}
+                {message.answer.uncertainty}
               </span>
             </p>
           </div>
@@ -85,7 +98,8 @@ export function NovaComposer() {
   // An Ask Nova button elsewhere in the post asked for the input to be focused.
   // preventScroll stops the browser from scrolling the carousel or the feed.
   useEffect(() => {
-    if (composerFocusRequest > 0) inputRef.current?.focus({ preventScroll: true })
+    if (composerFocusRequest > 0)
+      inputRef.current?.focus({ preventScroll: true })
   }, [composerFocusRequest])
 
   const onSubmit = (event: FormEvent) => {
@@ -96,7 +110,11 @@ export function NovaComposer() {
 
   return (
     <div className={styles.composer}>
-      <SuggestionChips onPick={(suggestion) => void chat.sendSuggestion(suggestion)} tone="row" disabled={!chat.available || chat.pending} />
+      <SuggestionChips
+        onPick={(suggestion) => void chat.sendSuggestion(suggestion)}
+        tone="row"
+        disabled={!chat.available || chat.pending}
+      />
       <form className={styles.form} onSubmit={onSubmit}>
         <label htmlFor={inputId} className="sr-only">
           {t.nova.inputLabel}
@@ -111,7 +129,12 @@ export function NovaComposer() {
           autoComplete="off"
           disabled={!chat.available || chat.pending}
         />
-        <button type="submit" className={styles.send} aria-label={t.nova.send} disabled={!chat.available || chat.pending}>
+        <button
+          type="submit"
+          className={styles.send}
+          aria-label={t.nova.send}
+          disabled={!chat.available || chat.pending}
+        >
           <SendHorizontal size={18} aria-hidden="true" />
         </button>
       </form>

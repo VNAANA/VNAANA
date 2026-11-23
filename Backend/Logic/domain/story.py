@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 
-from Backend.Logic.domain.tag import Tag
 from Backend.Logic.domain.story_articles import StoryArticleDetails
+from Backend.Logic.domain.tag import Tag
 
 
 class StoryStatus(str, enum.Enum):

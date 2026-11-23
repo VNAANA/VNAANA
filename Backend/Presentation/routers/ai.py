@@ -10,7 +10,6 @@ from Backend.Logic.exceptions import NotFoundError
 from Backend.Presentation.dependencies import AIServiceDep, StoryServiceDep
 from Backend.Presentation.schemas.ai import AIResponse, AskRequest, StoryAskRequest, SummarizeRequest
 
-
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 

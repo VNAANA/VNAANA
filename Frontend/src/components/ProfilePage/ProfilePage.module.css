@@ -236,18 +236,25 @@
   list-style: none;
 }
 
-.passwordToggle::-webkit-details-marker { display: none; }
-.passwordToggle:hover { background: var(--foryou-bg); }
+.passwordToggle::-webkit-details-marker {
+  display: none;
+}
+.passwordToggle:hover {
+  background: var(--foryou-bg);
+}
 /* Open: the header stays plain, with a line between it and the form */
 .passwordPanel[open] .passwordToggle {
   border-bottom: 1px solid var(--line);
   border-radius: var(--radius-ui) var(--radius-ui) 0 0;
 }
-.passwordToggle:focus-visible, .savePassword:focus-visible {
+.passwordToggle:focus-visible,
+.savePassword:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-.passwordPanel[open] .chevron { transform: rotate(180deg); }
+.passwordPanel[open] .chevron {
+  transform: rotate(180deg);
+}
 .passwordHint {
   display: block;
   margin-top: 4px;
@@ -260,7 +267,10 @@
   gap: 16px;
   padding: 16px;
 }
-.passwordForm input { width: 100%; min-width: 0; }
+.passwordForm input {
+  width: 100%;
+  min-width: 0;
+}
 
 /* Every label looks the same, like the login and register forms:
    the "New password" label sits apart from its input, the others wrap theirs. */
@@ -274,17 +284,25 @@
   text-transform: none;
   color: var(--ink);
 }
-.passwordForm .sectionTitle { margin-bottom: -10px; } /* 16px gap → 6px, as inside the other labels */
+.passwordForm .sectionTitle {
+  margin-bottom: -10px;
+} /* 16px gap → 6px, as inside the other labels */
 
 .passwordForm input:focus-visible {
   outline-offset: 0;
   border-color: var(--accent);
 }
-.passwordForm input[aria-invalid='true'] { border-color: var(--error); }
+.passwordForm input[aria-invalid='true'] {
+  border-color: var(--error);
+}
 
 /* Empty status messages take no room (they stay in the page so screen readers announce them) */
-.passwordForm > p:empty { margin-top: -16px; }
-.actions > div:empty { margin-top: -10px; }
+.passwordForm > p:empty {
+  margin-top: -16px;
+}
+.actions > div:empty {
+  margin-top: -10px;
+}
 
 /* Same main button as the login and register forms */
 .savePassword {
@@ -298,8 +316,13 @@
   font-weight: 700;
   cursor: pointer;
 }
-.savePassword:hover { background: #262b34; }
-.savePassword:disabled { opacity: 0.65; cursor: wait; }
+.savePassword:hover {
+  background: #262b34;
+}
+.savePassword:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
 
 .verified {
   display: inline-flex;
@@ -312,4 +335,6 @@
   color: var(--topic-sports-ink);
   font-weight: 600;
 }
-.verified svg { flex-shrink: 0; }
+.verified svg {
+  flex-shrink: 0;
+}

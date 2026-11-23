@@ -12,7 +12,6 @@ from Backend.Presentation.schemas.articles import (
     ArticleRead,
 )
 
-
 router = APIRouter(
     prefix="/articles",
     tags=["articles"],

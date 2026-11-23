@@ -33,7 +33,9 @@
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .chip:hover {

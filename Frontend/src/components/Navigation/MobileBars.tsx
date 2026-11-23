@@ -22,10 +22,18 @@ export function MobileTopBar() {
   )
 }
 
-type TabBarProps = { account: Account | null; checkingSession: boolean; current: MainPage | 'profile' }
+type TabBarProps = {
+  account: Account | null
+  checkingSession: boolean
+  current: MainPage | 'profile'
+}
 
 /* Bottom tab bar for screens under 820px. */
-export function MobileTabBar({ account, checkingSession, current }: TabBarProps) {
+export function MobileTabBar({
+  account,
+  checkingSession,
+  current,
+}: TabBarProps) {
   const { t } = useStrings()
   // Topics opens a sheet; its Edit swaps the sheet for the topic preferences pop-up.
   const [open, setOpen] = useState<'none' | 'topics' | 'editTopics'>('none')
@@ -34,7 +42,11 @@ export function MobileTabBar({ account, checkingSession, current }: TabBarProps)
       <ul>
         {MAIN_PAGES.map(({ label, href, Icon }) => (
           <li key={label}>
-            <a href={href} className={styles.tab} aria-current={label === current ? 'page' : undefined}>
+            <a
+              href={href}
+              className={styles.tab}
+              aria-current={label === current ? 'page' : undefined}
+            >
               <Icon size={22} aria-hidden="true" />
               {t.nav[label]}
             </a>
@@ -60,7 +72,11 @@ export function MobileTabBar({ account, checkingSession, current }: TabBarProps)
               <span className="sr-only">Checking your account…</span>
             </div>
           ) : account ? (
-            <a href="#profile" className={styles.tab} aria-current={current === 'profile' ? 'page' : undefined}>
+            <a
+              href="#profile"
+              className={styles.tab}
+              aria-current={current === 'profile' ? 'page' : undefined}
+            >
               <AccountAvatar account={account} size={22} />
               {t.nav.profile}
             </a>
@@ -74,7 +90,11 @@ export function MobileTabBar({ account, checkingSession, current }: TabBarProps)
       </ul>
 
       {open === 'topics' && (
-        <TopicsSheet canEdit={!!account} onEdit={() => setOpen('editTopics')} onClose={() => setOpen('none')} />
+        <TopicsSheet
+          canEdit={!!account}
+          onEdit={() => setOpen('editTopics')}
+          onClose={() => setOpen('none')}
+        />
       )}
       {account && open === 'editTopics' && (
         <TopicPreferencesDialog mode="edit" onClose={() => setOpen('none')} />

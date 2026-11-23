@@ -10,7 +10,12 @@ import styles from './ExploreCardParts.module.css'
 export function CardLink({ item }: { item: ExploreItem }) {
   const { t } = useStrings()
   return (
-    <a href={item.href} className={styles.link} target="_blank" rel="noopener noreferrer">
+    <a
+      href={item.href}
+      className={styles.link}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       {item.title}
       <span className="sr-only"> {t.common.opensInNewTab}</span>
     </a>
@@ -24,7 +29,9 @@ export function CardMeta({ item }: { item: ExploreItem }) {
     <p className={styles.meta}>
       <span className={styles.publisher}>{item.publisher}</span>
       {' · '}
-      <time dateTime={item.publishedAt.toISOString()}>{timeAgo(item.publishedAt, t)}</time>
+      <time dateTime={item.publishedAt.toISOString()}>
+        {timeAgo(item.publishedAt, t)}
+      </time>
     </p>
   )
 }

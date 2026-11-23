@@ -13,7 +13,13 @@ import type { Language } from '../../utils/language'
 import { rememberRegisteredEmail } from '../../utils/registration'
 import { registerWithPassword } from '../../utils/accountAuth'
 
-type Field = 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword' | 'consent'
+type Field =
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'password'
+  | 'confirmPassword'
+  | 'consent'
 type TextField = Exclude<Field, 'consent'>
 type Errors = Partial<Record<Field, RegisterError>>
 type Form = Record<TextField, string> & { consent: boolean }
@@ -21,7 +27,14 @@ type Form = Record<TextField, string> & { consent: boolean }
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD = 8
 // Focus order for the first error, matching the order on screen
-const FIELD_ORDER: Field[] = ['firstName', 'lastName', 'email', 'password', 'confirmPassword', 'consent']
+const FIELD_ORDER: Field[] = [
+  'firstName',
+  'lastName',
+  'email',
+  'password',
+  'confirmPassword',
+  'consent',
+]
 
 function validate(form: Form): Errors {
   const errors: Errors = {}
@@ -30,9 +43,11 @@ function validate(form: Form): Errors {
   if (!form.email.trim()) errors.email = 'emailMissing'
   else if (!EMAIL_PATTERN.test(form.email.trim())) errors.email = 'emailInvalid'
   if (!form.password) errors.password = 'passwordMissing'
-  else if (form.password.length < MIN_PASSWORD) errors.password = 'passwordShort'
+  else if (form.password.length < MIN_PASSWORD)
+    errors.password = 'passwordShort'
   if (!form.confirmPassword) errors.confirmPassword = 'confirmPasswordMissing'
-  else if (form.confirmPassword !== form.password) errors.confirmPassword = 'passwordMismatch'
+  else if (form.confirmPassword !== form.password)
+    errors.confirmPassword = 'passwordMismatch'
   if (!form.consent) errors.consent = 'consentMissing'
   return errors
 }
@@ -40,7 +55,14 @@ function validate(form: Form): Errors {
 export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const { checkingSession } = auth
   const { language, t } = useStrings()
-  const [form, setForm] = useState<Form>({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', consent: false })
+  const [form, setForm] = useState<Form>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    consent: false,
+  })
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const [notice, setNotice] = useState<LoginNotice | null>(null)
@@ -52,7 +74,8 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     headingRef.current?.focus()
   }, [])
 
-  const update = (field: TextField, value: string) => setForm((current) => ({ ...current, [field]: value }))
+  const update = (field: TextField, value: string) =>
+    setForm((current) => ({ ...current, [field]: value }))
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -70,12 +93,19 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     try {
       const { data, error } = await registerWithPassword({ ...form, language })
       if (error) {
-        if (error.code === 'user_already_exists' || error.code === 'email_exists') {
+        if (
+          error.code === 'user_already_exists' ||
+          error.code === 'email_exists'
+        ) {
           rememberRegisteredEmail(email)
           window.location.hash = '#login'
           return
         }
-        setNotice(error.code === 'weak_password' ? 'weakPassword' : 'registrationFailed')
+        setNotice(
+          error.code === 'weak_password'
+            ? 'weakPassword'
+            : 'registrationFailed',
+        )
         return
       }
       if (!data.session) rememberRegisteredEmail(email)
@@ -99,7 +129,9 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   }
 
   const describedBy = (field: Field, hint?: string) =>
-    [hint, errors[field] && `register-${field}-error`].filter(Boolean).join(' ') || undefined
+    [hint, errors[field] && `register-${field}-error`]
+      .filter(Boolean)
+      .join(' ') || undefined
 
   const errorText = (field: Field) => {
     const error = errors[field]
@@ -112,7 +144,12 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
     )
   }
 
-  const textField = (field: Exclude<TextField, 'password' | 'confirmPassword'>,label: string, autoComplete: string, type = 'text') => (
+  const textField = (
+    field: Exclude<TextField, 'password' | 'confirmPassword'>,
+    label: string,
+    autoComplete: string,
+    type = 'text',
+  ) => (
     <div className={styles.field}>
       <label htmlFor={`register-${field}`} className={styles.label}>
         {label}
@@ -174,16 +211,25 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                   value={form.password}
                   onChange={(event) => update('password', event.target.value)}
                   aria-invalid={errors.password ? true : undefined}
-                  aria-describedby={describedBy('password', 'register-password-hint')}
+                  aria-describedby={describedBy(
+                    'password',
+                    'register-password-hint',
+                  )}
                 />
                 <button
                   type="button"
                   className={styles.reveal}
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
+                  aria-label={
+                    showPassword ? t.login.hidePassword : t.login.showPassword
+                  }
                   aria-pressed={showPassword}
                 >
-                  {showPassword ? <Eye size={20} aria-hidden="true" /> : <EyeOff size={20} aria-hidden="true" />}
+                  {showPassword ? (
+                    <Eye size={20} aria-hidden="true" />
+                  ) : (
+                    <EyeOff size={20} aria-hidden="true" />
+                  )}
                 </button>
               </div>
               <p id="register-password-hint" className={styles.hint}>
@@ -193,7 +239,10 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             </div>
 
             <div className={styles.field}>
-              <label htmlFor="register-confirmPassword" className={styles.label}>
+              <label
+                htmlFor="register-confirmPassword"
+                className={styles.label}
+              >
                 {t.register.confirmPassword}
               </label>
               <input
@@ -203,7 +252,9 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
                 value={form.confirmPassword}
-                onChange={(event) => update('confirmPassword', event.target.value)}
+                onChange={(event) =>
+                  update('confirmPassword', event.target.value)
+                }
                 aria-invalid={errors.confirmPassword ? true : undefined}
                 aria-describedby={describedBy('confirmPassword')}
               />
@@ -218,12 +269,18 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                 id="register-language"
                 className={styles.select}
                 value={language}
-                onChange={(event) => void setLanguage(event.target.value as Language)}
+                onChange={(event) =>
+                  void setLanguage(event.target.value as Language)
+                }
                 aria-describedby="register-language-hint"
               >
                 {/* Each language is named in itself, so it can be found whatever is selected */}
-                <option value="en" lang="en">English</option>
-                <option value="nl" lang="nl">Nederlands</option>
+                <option value="en" lang="en">
+                  English
+                </option>
+                <option value="nl" lang="nl">
+                  Nederlands
+                </option>
               </select>
               <p id="register-language-hint" className={styles.hint}>
                 {t.register.languageHint}
@@ -236,7 +293,12 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                   ref={setRef('consent')}
                   type="checkbox"
                   checked={form.consent}
-                  onChange={(event) => setForm((current) => ({ ...current, consent: event.target.checked }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      consent: event.target.checked,
+                    }))
+                  }
                   aria-invalid={errors.consent ? true : undefined}
                   aria-describedby={describedBy('consent')}
                 />
@@ -248,7 +310,11 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               {errorText('consent')}
             </div>
 
-            <button type="submit" className={styles.submit} disabled={submitting || checkingSession || !!auth.session}>
+            <button
+              type="submit"
+              className={styles.submit}
+              disabled={submitting || checkingSession || !!auth.session}
+            >
               {t.register.submit}
             </button>
           </form>
@@ -257,7 +323,12 @@ export function RegisterPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             <span>{t.login.or}</span>
           </p>
 
-          <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession || submitting || !!auth.session}>
+          <button
+            type="button"
+            className={styles.google}
+            onClick={onGoogle}
+            disabled={checkingSession || submitting || !!auth.session}
+          >
             <GoogleIcon />
             {t.login.continueWithGoogle}
           </button>

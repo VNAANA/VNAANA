@@ -9,6 +9,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from Backend.Presentation.auth import AuthenticatedSubject
 from Backend.Presentation.dependencies import UserServiceDep
 from Backend.Presentation.schemas.users import (
     ConsentUpdate,
@@ -22,7 +23,6 @@ from Backend.Presentation.schemas.users import (
     UserTagsUpdate,
     UserUpdate,
 )
-from Backend.Presentation.auth import AuthenticatedSubject
 
 router = APIRouter(prefix="/users", tags=["users"])
 

@@ -55,7 +55,12 @@ export function TopicsSheet({ canEdit, onEdit, onClose }: Props) {
               {t.nav.edit}
             </button>
           )}
-          <button type="button" className={styles.sheetClose} aria-label={t.nav.closeTopics} onClick={onClose}>
+          <button
+            type="button"
+            className={styles.sheetClose}
+            aria-label={t.nav.closeTopics}
+            onClick={onClose}
+          >
             <X size={20} aria-hidden="true" />
           </button>
         </div>

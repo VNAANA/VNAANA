@@ -7,11 +7,14 @@ const flow = 'link-google'
 export type LinkResult = 'linked' | 'conflict' | 'disabled' | 'failed'
 
 function failure(code?: string | null): LinkResult {
-  if (code === 'identity_already_exists' || code === 'email_exists') return 'conflict'
+  if (code === 'identity_already_exists' || code === 'email_exists')
+    return 'conflict'
   return code === 'manual_linking_disabled' ? 'disabled' : 'failed'
 }
 
-export async function startGoogleLink(expectedId: string): Promise<LinkResult | null> {
+export async function startGoogleLink(
+  expectedId: string,
+): Promise<LinkResult | null> {
   try {
     const status = await readGoogleStatus(expectedId)
     if (status === 'unavailable') return 'failed'
@@ -40,18 +43,30 @@ export function readLinkCallback(url: URL) {
   const fragment = new URLSearchParams(url.hash.slice(1))
   return {
     subject: readStorage(pendingKey, 'session'),
-    error: url.searchParams.get('error_code') || fragment.get('error_code') ||
-      url.searchParams.get('error') || fragment.get('error'),
+    error:
+      url.searchParams.get('error_code') ||
+      fragment.get('error_code') ||
+      url.searchParams.get('error') ||
+      fragment.get('error'),
   }
 }
 
-export async function finishGoogleLink(callback: NonNullable<ReturnType<typeof readLinkCallback>>): Promise<LinkResult> {
+export async function finishGoogleLink(
+  callback: NonNullable<ReturnType<typeof readLinkCallback>>,
+): Promise<LinkResult> {
   try {
     // Wait for the shared client's automatic code exchange before reading the user.
     const session = await supabase.auth.getSession()
     if (callback.error) return failure(callback.error)
-    if (session.error || !callback.subject || session.data.session?.user.id !== callback.subject) return 'failed'
-    return await readGoogleStatus(callback.subject) === 'connected' ? 'linked' : 'failed'
+    if (
+      session.error ||
+      !callback.subject ||
+      session.data.session?.user.id !== callback.subject
+    )
+      return 'failed'
+    return (await readGoogleStatus(callback.subject)) === 'connected'
+      ? 'linked'
+      : 'failed'
   } catch {
     return 'failed'
   } finally {

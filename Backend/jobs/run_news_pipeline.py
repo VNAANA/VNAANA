@@ -5,25 +5,24 @@ import asyncio
 import logging
 
 from Backend.config import get_settings
-from Backend.database import SessionLocal
 from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Dal.repositories.provider_repository import ProviderRepository
 from Backend.Dal.repositories.provider_source_repository import (
     ProviderSourceRepository,
 )
-from Backend.Dal.repositories.story_repository import StoryRepository
 from Backend.Dal.repositories.story_grouping import group_articles
+from Backend.Dal.repositories.story_repository import StoryRepository
+from Backend.database import SessionLocal
 from Backend.jobs.classify_grouped_stories import classify_grouped_stories
-from Backend.Logic.article_service import ArticleService
 from Backend.Logic.article_normalization_service import (
     ArticleNormalizationService,
 )
 from Backend.Logic.article_scraping_service import ArticleScrapingService
+from Backend.Logic.article_service import ArticleService
 from Backend.Logic.cleanup_service import CleanupService
-from Backend.Logic.provider_source_service import ProviderSourceService
 from Backend.Logic.news_gathering_service import NewsGatheringService
+from Backend.Logic.provider_source_service import ProviderSourceService
 from Backend.Logic.sources.rss_source import RSSSource
-
 
 logging.basicConfig(
     level=logging.INFO,

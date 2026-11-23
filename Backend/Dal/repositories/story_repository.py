@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import asdict
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -10,20 +11,29 @@ from sqlalchemy.orm import Session, selectinload
 
 from Backend.Dal.models import (
     Story as StoryModel,
+)
+from Backend.Dal.models import (
     StoryArticle as StoryArticleModel,
+)
+from Backend.Dal.models import (
     StoryStatus,
+)
+from Backend.Dal.models import (
     StoryTag as StoryTagModel,
+)
+from Backend.Dal.models import (
     StoryTranslation as StoryTranslationModel,
 )
+from Backend.Dal.repositories.article_repository import ArticleRepository
 from Backend.Logic.domain.story import Story, StoryDetails, StoryTagDetails
-from Backend.Logic.domain.tag import Tag
-from dataclasses import asdict
 from Backend.Logic.domain.story_article_link import StoryArticleLink
 from Backend.Logic.domain.story_articles import StoryArticleDetails, StoryArticlesPage
 from Backend.Logic.domain.story_translation import StoryTranslation
-from Backend.Dal.repositories.article_repository import ArticleRepository
+from Backend.Logic.domain.tag import Tag
 from Backend.Logic.ports.story_repository import (
     GenreTagWrite,
+)
+from Backend.Logic.ports.story_repository import (
     StoryRepository as StoryRepositoryPort,
 )
 

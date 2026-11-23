@@ -55,7 +55,10 @@
   color: var(--ink);
   backdrop-filter: blur(6px);
   opacity: 0.7;
-  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    background 0.15s ease;
 }
 
 .arrow:hover,
@@ -103,7 +106,9 @@
   height: 7px;
   border-radius: 50%;
   background: var(--line-strong);
-  transition: width 0.2s ease, background 0.2s ease;
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
 }
 
 .dot[data-active='true'] {

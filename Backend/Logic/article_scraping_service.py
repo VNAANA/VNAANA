@@ -1,11 +1,9 @@
 import logging
-from typing import Any
 
 import requests
 import trafilatura
 
 from Backend.Logic.ports.article_repository import ArticleRepository
-
 
 logger = logging.getLogger(__name__)
 

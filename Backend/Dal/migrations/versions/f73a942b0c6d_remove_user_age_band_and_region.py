@@ -1,7 +1,7 @@
 """Remove age band and region from user profiles."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "f73a942b0c6d"
 down_revision = "b71c9d06542a"

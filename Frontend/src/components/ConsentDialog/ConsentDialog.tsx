@@ -56,7 +56,12 @@ export function ConsentDialog() {
       </p>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.save} onClick={() => void accept()} disabled={busy}>
+        <button
+          type="button"
+          className={styles.save}
+          onClick={() => void accept()}
+          disabled={busy}
+        >
           {busy ? t.topicPrefs.saving : t.consentPrompt.understand}
         </button>
       </div>

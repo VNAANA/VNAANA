@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
-
 THRESHOLD = 0.60
 MAX_TAGS = 3
 MAX_INPUT_LENGTH = 256

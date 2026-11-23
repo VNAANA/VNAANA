@@ -79,7 +79,8 @@
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--part-pad-top, 26px) var(--part-pad-x, 20px) var(--part-pad-bottom, 20px);
+  padding: var(--part-pad-top, 26px) var(--part-pad-x, 20px)
+    var(--part-pad-bottom, 20px);
   background: var(--surface-2);
   color: var(--ink);
 }

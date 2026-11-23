@@ -5,7 +5,10 @@ import { Logo } from '../Navigation/Logo'
 import styles from './LoginPage.module.css'
 import { GoogleIcon } from './GoogleIcon'
 import { startGoogleSignIn } from '../../utils/googleSignIn'
-import { clearRegisteredEmail, readRegisteredEmail } from '../../utils/registration'
+import {
+  clearRegisteredEmail,
+  readRegisteredEmail,
+} from '../../utils/registration'
 import { loginWithPassword } from '../../utils/accountAuth'
 import type { LoginError, LoginNotice } from '../../data/strings'
 import type { useAuth } from '../../hooks/useAuth'
@@ -24,7 +27,13 @@ function validate(email: string, password: string): Errors {
 }
 
 export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
-  const { session, checkingSession, backendStatus, signingOut, signOut: onSignOut } = auth
+  const {
+    session,
+    checkingSession,
+    backendStatus,
+    signingOut,
+    signOut: onSignOut,
+  } = auth
   const { t } = useStrings()
   const [registeredEmail] = useState(readRegisteredEmail)
   const [email, setEmail] = useState(registeredEmail ?? '')
@@ -32,7 +41,9 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
   const [submitting, setSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
-  const [notice, setNotice] = useState<LoginNotice | null>(registeredEmail ? 'registered' : null)
+  const [notice, setNotice] = useState<LoginNotice | null>(
+    registeredEmail ? 'registered' : null,
+  )
   const headingRef = useRef<HTMLHeadingElement>(null)
   const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
@@ -54,7 +65,10 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
       setNotice(null)
       try {
         const { error } = await loginWithPassword(email, password)
-        if (error) setNotice(error.code === 'email_not_confirmed' ? 'registered' : 'loginFailed')
+        if (error)
+          setNotice(
+            error.code === 'email_not_confirmed' ? 'registered' : 'loginFailed',
+          )
         else setPassword('')
       } catch {
         setNotice('connectionFailed')
@@ -85,8 +99,10 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
             {t.common.logIn}
           </h1>
           <p className={styles.intro}>{t.login.intro}</p>
-            <p className={styles.notice} role="status">
-            {checkingSession ? t.common.checkingSession : backendStatus && t.auth[backendStatus]}
+          <p className={styles.notice} role="status">
+            {checkingSession
+              ? t.common.checkingSession
+              : backendStatus && t.auth[backendStatus]}
           </p>
           <form className={styles.form} onSubmit={onSubmit} noValidate>
             <div className={styles.field}>
@@ -103,7 +119,9 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 aria-invalid={errors.email ? true : undefined}
-                aria-describedby={errors.email ? 'login-email-error' : undefined}
+                aria-describedby={
+                  errors.email ? 'login-email-error' : undefined
+                }
               />
               {errors.email && (
                 <p id="login-email-error" className={styles.error}>
@@ -131,17 +149,25 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   aria-invalid={errors.password ? true : undefined}
-                  aria-describedby={errors.password ? 'login-password-error' : undefined}
+                  aria-describedby={
+                    errors.password ? 'login-password-error' : undefined
+                  }
                 />
                 <button
                   type="button"
                   className={styles.reveal}
                   onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
+                  aria-label={
+                    showPassword ? t.login.hidePassword : t.login.showPassword
+                  }
                   aria-pressed={showPassword}
                 >
                   {/* The icon shows the current state: crossed-out eye while the password is hidden */}
-                  {showPassword ? <Eye size={20} aria-hidden="true" /> : <EyeOff size={20} aria-hidden="true" />}
+                  {showPassword ? (
+                    <Eye size={20} aria-hidden="true" />
+                  ) : (
+                    <EyeOff size={20} aria-hidden="true" />
+                  )}
                 </button>
               </div>
               {errors.password && (
@@ -151,7 +177,11 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
               )}
             </div>
 
-            <button type="submit" className={styles.submit} disabled={submitting || checkingSession || !!session}>
+            <button
+              type="submit"
+              className={styles.submit}
+              disabled={submitting || checkingSession || !!session}
+            >
               {t.common.logIn}
             </button>
           </form>
@@ -161,11 +191,21 @@ export function LoginPage({ auth }: { auth: ReturnType<typeof useAuth> }) {
           </p>
 
           {session ? (
-            <button type="button" className={styles.google} onClick={onSignOut} disabled={signingOut}>
+            <button
+              type="button"
+              className={styles.google}
+              onClick={onSignOut}
+              disabled={signingOut}
+            >
               {signingOut ? t.common.signingOut : t.common.signOut}
             </button>
           ) : (
-            <button type="button" className={styles.google} onClick={onGoogle} disabled={checkingSession || submitting}>
+            <button
+              type="button"
+              className={styles.google}
+              onClick={onGoogle}
+              disabled={checkingSession || submitting}
+            >
               <GoogleIcon />
               {t.login.continueWithGoogle}
             </button>

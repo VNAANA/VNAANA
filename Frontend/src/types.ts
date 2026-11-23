@@ -36,7 +36,11 @@ export type Article = {
   summary: string
   /** The scraped article text, one string per paragraph. Adds a "Full article" part. */
   content?: string[]
-  why?: { heading: string; points: { keyword: string; text: string }[]; background: string }
+  why?: {
+    heading: string
+    points: { keyword: string; text: string }[]
+    background: string
+  }
   /** Without an uncertainty, the post says Nova hasn't compared sources yet. */
   aiNote: { sourceCount: number; uncertainty?: string }
   readMore: {

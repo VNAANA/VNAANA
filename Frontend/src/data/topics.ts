@@ -1,4 +1,12 @@
-import { Briefcase, Clapperboard, Cpu, FlaskConical, Globe, Landmark, Trophy } from 'lucide-react'
+import {
+  Briefcase,
+  Clapperboard,
+  Cpu,
+  FlaskConical,
+  Globe,
+  Landmark,
+  Trophy,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Topic } from '../types'
 

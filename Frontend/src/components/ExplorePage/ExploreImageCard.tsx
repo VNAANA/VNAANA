@@ -30,7 +30,10 @@ export function ExploreImageCard({ item, imageHeight, onImageError }: Props) {
         {(item.topic || item.location) && (
           <p className={styles.tags}>
             {item.topic && (
-              <span className={styles.topic} style={topicColorStyle(item.topic)}>
+              <span
+                className={styles.topic}
+                style={topicColorStyle(item.topic)}
+              >
                 {t.topics[item.topic]}
               </span>
             )}

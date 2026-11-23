@@ -1,7 +1,7 @@
 """Add an optional image URL to articles."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "af93290e72d1"
 down_revision = "e615972cdb40"

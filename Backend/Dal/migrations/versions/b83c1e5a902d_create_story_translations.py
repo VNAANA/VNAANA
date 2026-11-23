@@ -1,7 +1,7 @@
 """Move English story text into a language-specific translations table."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "b83c1e5a902d"

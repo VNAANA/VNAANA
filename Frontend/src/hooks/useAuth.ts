@@ -3,7 +3,11 @@ import type { Session } from '@supabase/supabase-js'
 import type { AuthStatus } from '../data/strings'
 import { supabase } from '../utils/supabase'
 import { useHash } from './useHash'
-import { finishGoogleLink, readLinkCallback, type LinkResult } from '../utils/googleLink'
+import {
+  finishGoogleLink,
+  readLinkCallback,
+  type LinkResult,
+} from '../utils/googleLink'
 import { bootstrapProfile, giveAnalyticsConsent } from '../utils/profileApi'
 import type { Profile } from '../utils/profileApi'
 import { clearTopicState, loadTopicState } from '../utils/topicPreferences'
@@ -11,7 +15,8 @@ import { clearProfileLanguage, loadProfileLanguage } from '../utils/language'
 
 const initialUrl = new URL(window.location.href)
 const linkCallback = readLinkCallback(initialUrl)
-const oauthError = initialUrl.searchParams.has('error') ||
+const oauthError =
+  initialUrl.searchParams.has('error') ||
   new URLSearchParams(initialUrl.hash.slice(1)).has('error')
 /*
  * The registration form's required consent checkbox is kept in Supabase user
@@ -20,9 +25,18 @@ const oauthError = initialUrl.searchParams.has('error') ||
  * Google account) App shows the consent pop-up instead. A failure is not
  * fatal: the pop-up asks, or the next bootstrap tries again.
  */
-async function applySignUpConsent(profile: Profile, session: Session): Promise<Profile> {
-  const agreedAtSignUp = session.user.user_metadata?.personalization_consent === true
-  if (profile.analyticsConsent || !agreedAtSignUp || profile.consentUpdatedAt !== null) return profile
+async function applySignUpConsent(
+  profile: Profile,
+  session: Session,
+): Promise<Profile> {
+  const agreedAtSignUp =
+    session.user.user_metadata?.personalization_consent === true
+  if (
+    profile.analyticsConsent ||
+    !agreedAtSignUp ||
+    profile.consentUpdatedAt !== null
+  )
+    return profile
   try {
     return await giveAnalyticsConsent(profile.id, session.access_token)
   } catch {
@@ -58,13 +72,19 @@ export function useAuth() {
     if (!linkCallback) return
     let active = true
     completion.current ??= finishGoogleLink(linkCallback)
-    void completion.current.then(result => {
+    void completion.current.then((result) => {
       if (!active) return
       setLinkResult(result)
-      window.history.replaceState(null, '', window.location.pathname + '#profile')
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + '#profile',
+      )
       window.dispatchEvent(new Event('hashchange'))
     })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [])
 
   useEffect(() => {
@@ -74,7 +94,9 @@ export function useAuth() {
   }, [hash, session, readyToken])
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, next) => {
       if (event === 'SIGNED_OUT') {
         setCallback(null)
         setLinkResult(null)
@@ -94,7 +116,8 @@ export function useAuth() {
       return
     }
     // A stale or mismatched linking callback must never provision another profile.
-    if (callback && (!linkResult || session.user.id !== callback.subject)) return
+    if (callback && (!linkResult || session.user.id !== callback.subject))
+      return
     const controller = new AbortController()
     const timeout = window.setTimeout(() => controller.abort(), 15000)
     let active = true
@@ -104,11 +127,18 @@ export function useAuth() {
     async function bootstrap() {
       // No "in progress" text: this runs on every load with a saved session, so it would flash each time.
       try {
-        const profile = await applySignUpConsent(await bootstrapProfile(token, controller.signal), current)
+        const profile = await applySignUpConsent(
+          await bootstrapProfile(token, controller.signal),
+          current,
+        )
         if (active) {
           loadTopicState(profile)
           // The registration form keeps its language in Supabase user metadata.
-          loadProfileLanguage(profile.id, profile.language, current.user.user_metadata?.language)
+          loadProfileLanguage(
+            profile.id,
+            profile.language,
+            current.user.user_metadata?.language,
+          )
           setBackendStatus(null)
           setReadyToken(token)
           if (window.location.hash === '#login') window.location.hash = ''
@@ -149,5 +179,12 @@ export function useAuth() {
     }
   }
 
-  return { session, checkingSession, backendStatus, signingOut, signOut, linkResult }
+  return {
+    session,
+    checkingSession,
+    backendStatus,
+    signingOut,
+    signOut,
+    linkResult,
+  }
 }

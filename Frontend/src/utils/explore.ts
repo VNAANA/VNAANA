@@ -55,8 +55,14 @@ export function exploreHash(filter: ExploreFilter) {
 }
 
 /* A random selection of articles; every call returns a different set. */
-export async function fetchExploreArticles(filter: ExploreFilter, signal?: AbortSignal) {
-  const response = await fetch(apiUrl(`/articles/random?limit=${EXPLORE_SIZE}${FILTER_QUERY[filter]}`), { signal })
+export async function fetchExploreArticles(
+  filter: ExploreFilter,
+  signal?: AbortSignal,
+) {
+  const response = await fetch(
+    apiUrl(`/articles/random?limit=${EXPLORE_SIZE}${FILTER_QUERY[filter]}`),
+    { signal },
+  )
   if (!response.ok) throw new Error('Explore request failed')
   const articles: ApiArticle[] = await response.json()
   return articles.map(toExploreItem)

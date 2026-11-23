@@ -16,7 +16,15 @@ type Props = {
 }
 
 /* Nova's greeting at the top of the feed, with a progress bar for today's articles. Can be dismissed. */
-export function BriefingCard({ firstName, forYouCount, dontMissCount, openedCount, readMinutes, updatedAt, onDismiss }: Props) {
+export function BriefingCard({
+  firstName,
+  forYouCount,
+  dontMissCount,
+  openedCount,
+  readMinutes,
+  updatedAt,
+  onDismiss,
+}: Props) {
   const { t } = useStrings()
   const total = forYouCount + dontMissCount
   // White segments = articles opened + the one you're on now
@@ -33,12 +41,19 @@ export function BriefingCard({ firstName, forYouCount, dontMissCount, openedCoun
         <div className={styles.progressRow}>
           <Segments total={total} filled={filled} className={styles.segments} />
           <p className={styles.meta}>
-            <span className="sr-only">{t.briefing.opened(openedCount, total)}</span>
+            <span className="sr-only">
+              {t.briefing.opened(openedCount, total)}
+            </span>
             {t.briefing.meta(readMinutes, updatedAt)}
           </p>
         </div>
       </div>
-      <button type="button" className={styles.dismiss} onClick={onDismiss} aria-label={t.briefing.dismiss}>
+      <button
+        type="button"
+        className={styles.dismiss}
+        onClick={onDismiss}
+        aria-label={t.briefing.dismiss}
+      >
         <X size={20} aria-hidden="true" />
       </button>
     </section>

@@ -1,11 +1,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Response
-from sqlalchemy.exc import SQLAlchemyError
 from pydantic import BaseModel
+from sqlalchemy.exc import SQLAlchemyError
 
-from Backend.Presentation.auth import AuthenticatedSubject
 from Backend.Dal.repositories.auth_credentials import has_password
+from Backend.Presentation.auth import AuthenticatedSubject
 from Backend.Presentation.dependencies import DbSession
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

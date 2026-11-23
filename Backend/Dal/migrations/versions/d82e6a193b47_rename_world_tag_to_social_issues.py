@@ -1,7 +1,7 @@
 """Rename the World tag to Social Issues, preserving its ID and relationships."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "d82e6a193b47"
 down_revision = "f73a942b0c6d"
