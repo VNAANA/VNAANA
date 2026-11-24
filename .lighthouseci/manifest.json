@@ -1,0 +1,80 @@
+[
+  {
+    "url": "http://localhost:5173/#login",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_10.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_10.report.json",
+    "summary": {
+      "performance": 0.9,
+      "accessibility": 0.96,
+      "best-practices": 1,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://localhost:5173/#sign-up",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_24.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_24.report.json",
+    "summary": {
+      "performance": 0.96,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://localhost:5173/",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_38.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_38.report.json",
+    "summary": {
+      "performance": 0.87,
+      "accessibility": 0.96,
+      "best-practices": 1,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://localhost:5173/#explore",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_52.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_38_52.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://localhost:5173/#profile",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_39_07.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_39_07.report.json",
+    "summary": {
+      "performance": 0.87,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://localhost:5173/#profile?tab=topics",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_39_22.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\.lighthouseci\\localhost--2026_11_24_16_39_22.report.json",
+    "summary": {
+      "performance": 0.85,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  }
+]

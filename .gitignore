@@ -312,3 +312,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .eslintcache
+
+
+tests/performance/data/auth-state.json

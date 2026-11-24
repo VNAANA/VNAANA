@@ -55,33 +55,56 @@ def port_in_use(host: str, port: int) -> bool:
 @pytest.fixture(scope="session")
 def supabase() -> dict[str, str]:
     """URLs and keys of the local Supabase, read from the Supabase CLI."""
-    if not port_in_use("127.0.0.1", 54321):
-        pytest.skip(f"Local Supabase is not running: {START_SUPABASE}")
     npx = shutil.which("npx")
     if npx is None:
         pytest.skip("npx not found: install Node.js 22+")
 
     result = subprocess.run(
         [npx, "--yes", "supabase@3", "status", "-o", "json", "--workdir", str(E2E)],
-        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=300,
     )
+
     if result.returncode != 0 or "{" not in result.stdout:
-        pytest.skip(f"Could not read the local Supabase status, {START_SUPABASE}\n{result.stderr[-500:]}")
-    status = json.loads(result.stdout[result.stdout.index("{"): result.stdout.rindex("}") + 1])
+        pytest.skip(
+            f"Local Supabase is not running: {START_SUPABASE}\n"
+            f"{result.stderr[-500:]}"
+        )
+
+    status = json.loads(
+        result.stdout[result.stdout.index("{"):result.stdout.rindex("}") + 1]
+    )
 
     keys = {
         "api_url": status["API_URL"],
-        "db_url": status["DB_URL"].replace("postgresql://", "postgresql+psycopg://", 1),
+        "db_url": status["DB_URL"].replace(
+            "postgresql://", "postgresql+psycopg://", 1
+        ),
         "publishable_key": status.get("PUBLISHABLE_KEY") or status["ANON_KEY"],
         "service_role_key": status["SERVICE_ROLE_KEY"],
     }
-    # The fixtures below delete data, so they may only ever touch this machine.
+
+    # Only allow destructive E2E operations against local services.
     for url in (keys["api_url"], keys["db_url"]):
         host = urllib.parse.urlsplit(url).hostname
         if host not in LOCAL_HOSTS:
-            pytest.fail(f"Refusing to run the E2E tests against a non-local Supabase ({host}).", pytrace=False)
-    return keys
+            pytest.fail(
+                f"Refusing to run E2E tests against non-local Supabase ({host}).",
+                pytrace=False,
+            )
 
+    try:
+        response = httpx.get(keys["api_url"], timeout=5)
+        if response.status_code >= 500:
+            pytest.skip("Local Supabase API is not healthy.")
+    except httpx.HTTPError:
+        pytest.skip("Local Supabase API is not reachable.")
+
+    return keys
 
 @pytest.fixture(scope="session")
 def database(supabase):
