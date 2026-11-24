@@ -60,11 +60,11 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(len(Base.metadata.tables), 14)
         self.assertNotIn("age_band", User.__table__.c)
         self.assertNotIn("region", User.__table__.c)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 88)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 89)
         self.assertNotIn("language", Story.__table__.c)
         for name in ("eng_title", "eng_summary", "eng_context"):
             self.assertNotIn(name, Story.__table__.c)
-        for name in ("title", "summary", "context"):
+        for name in ("title", "description", "summary", "context"):
             self.assertEqual(str(StoryTranslation.__table__.c[name].type), "TEXT")
             self.assertTrue(StoryTranslation.__table__.c[name].nullable)
         self.assertEqual(str(StoryTranslation.__table__.c.language.type), "VARCHAR")

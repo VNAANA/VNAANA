@@ -24,6 +24,7 @@ class StoryTranslation(Base):
     )
     language: Mapped[str] = mapped_column(String, primary_key=True)
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     context: Mapped[str | None] = mapped_column(Text, nullable=True)
     # SQLAlchemy updates this on writes; raw SQL writers must set it explicitly.
