@@ -75,6 +75,13 @@ class StoryListItem(ORMModel):
     status: StoryStatus
     first_published_at: datetime | None
     last_updated_at: datetime
+    translated_into: str | None = Field(
+        default=None,
+        description=(
+            "The language the whole story is shown in, when it was translated. "
+            "None: the original Dutch, or only partly translated."
+        ),
+    )
 
 
 class StoryLeadArticleRead(ArticleSummary):

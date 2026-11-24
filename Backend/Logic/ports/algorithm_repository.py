@@ -67,7 +67,8 @@ class AlgorithmRepository(Protocol):
     # ---- consent withdrawn (design doc D3) ---------------------------------------
 
     def delete_algorithm_data(self, user_id: uuid.UUID) -> None:
-        """Remove the user's reactions and tag scores straight away."""
+        """Remove the user's reactions (including like / dislike /
+        reaction_removed events) and tag scores straight away."""
         ...
 
     # ---- feed request ------------------------------------------------------------

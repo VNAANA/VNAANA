@@ -21,7 +21,7 @@ export type NovaStory = {
 
 /*
  * One post in the feed, built from a story (see utils/stories.ts). Stories don't
- * have Nova's "why it matters" analysis yet, and not every story has an image,
+ * always have a summary for "why it matters", and not every story has an image,
  * so those are optional and the post shows a fallback instead.
  */
 export type Article = {
@@ -37,11 +37,19 @@ export type Article = {
   scope?: NewsScope
   location?: string // "Eindhoven"
   feedReason: FeedReason
+  /** Set when the whole post (story text and description) is shown translated into this language. */
+  translatedInto?: 'en' | 'nl'
   image?: { src: string; alt: string }
   title: string
   summary: string
   /** The story's context, one string per paragraph. Adds a "Context" part. */
   context?: string[]
+  /**
+   * The story's summary from the database (translated when the user translated
+   * the story), one string per paragraph. Shown on the "Why it matters" part;
+   * without it, that part shows a placeholder.
+   */
+  whySummary?: string[]
   why?: {
     heading: string
     points: { keyword: string; text: string }[]

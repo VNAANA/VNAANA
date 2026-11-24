@@ -89,6 +89,15 @@ class StoryRepository(Protocol):
         language: str,
     ) -> StoryTranslation | None: ...
 
+    def get_translations(
+        self,
+        story_ids: list[uuid.UUID],
+        language: str,
+    ) -> dict[uuid.UUID, StoryTranslation]:
+        """The cached translations of these stories, by story id.
+        Stories without a translation are left out."""
+        ...
+
     def save_translation(
         self,
         story_id: uuid.UUID,
@@ -97,6 +106,8 @@ class StoryRepository(Protocol):
         title: str | None,
         summary: str | None,
         context: str | None,
+        description: str | None = None,
     ) -> StoryTranslation:
-        """Insert or overwrite the translation for this story and language."""
+        """Insert or overwrite the translation for this story and language.
+        description is the lead article's."""
         ...

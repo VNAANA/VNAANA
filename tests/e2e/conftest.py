@@ -9,14 +9,11 @@ migrations, test articles, a test account, and the API and Vite pointed at the
 local Supabase. Without local Supabase every E2E test is skipped.
 """
 
-import json
 import os
 import shutil
-import socket
 import subprocess
 import sys
 import time
-import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,6 +24,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from Backend.Dal.models import Article, Base, Provider, Story, StoryArticle, StoryStatus
+from tests.local_supabase import ROOT, migrate, port_in_use, read_local_supabase
 from tests.e2e.support import (
     API_PORT,
     API_URL,
@@ -38,51 +36,13 @@ from tests.e2e.support import (
     log_in,
 )
 
-ROOT = Path(__file__).resolve().parents[2]
-E2E = ROOT / "tests" / "e2e"
 FRONTEND = ROOT / "Frontend"
-START_SUPABASE = "run `npx supabase@3 start --workdir tests/e2e` first"
-LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
-
-
-def port_in_use(host: str, port: int) -> bool:
-    try:
-        with socket.create_connection((host, port), timeout=1):
-            return True
-    except OSError:
-        return False
 
 
 @pytest.fixture(scope="session")
 def supabase() -> dict[str, str]:
     """URLs and keys of the local Supabase, read from the Supabase CLI."""
-    if not port_in_use("127.0.0.1", 54321):
-        pytest.skip(f"Local Supabase is not running: {START_SUPABASE}")
-    npx = shutil.which("npx")
-    if npx is None:
-        pytest.skip("npx not found: install Node.js 22+")
-
-    result = subprocess.run(
-        [npx, "--yes", "supabase@3", "status", "-o", "json", "--workdir", str(E2E)],
-        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
-    )
-    if result.returncode != 0 or "{" not in result.stdout:
-        pytest.skip(f"Could not read the local Supabase status, {START_SUPABASE}\n{result.stderr[-500:]}")
-    status = json.loads(result.stdout[result.stdout.index("{"): result.stdout.rindex("}") + 1])
-
-    keys = {
-        "api_url": status["API_URL"],
-        "db_url": status["DB_URL"].replace("postgresql://", "postgresql+psycopg://", 1),
-        "publishable_key": status.get("PUBLISHABLE_KEY") or status["ANON_KEY"],
-        "service_role_key": status["SERVICE_ROLE_KEY"],
-    }
-    # The fixtures below delete data, so they may only ever touch this machine.
-    for url in (keys["api_url"], keys["db_url"]):
-        host = urllib.parse.urlsplit(url).hostname
-        if host not in LOCAL_HOSTS:
-            pytest.fail(f"Refusing to run the E2E tests against a non-local Supabase ({host}).", pytrace=False)
-    return keys
-
+    return read_local_supabase()
 
 @pytest.fixture(scope="session")
 def database(supabase):
@@ -93,13 +53,7 @@ def database(supabase):
     Base.metadata.drop_all(engine)
     with engine.begin() as connection:
         connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
-    migration = subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", "head"],
-        cwd=ROOT, env={**os.environ, "DATABASE_URL": supabase["db_url"]},
-        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
-    )
-    if migration.returncode != 0:
-        pytest.fail(f"`alembic upgrade head` failed:\n{migration.stderr[-3000:]}", pytrace=False)
+    migrate(supabase["db_url"])
 
     # Tags come from a migration; the feed shows published stories, each led
     # by one article, so add those here.
@@ -209,6 +163,9 @@ def servers(supabase, database, tmp_path_factory):
             "DATABASE_URL": supabase["db_url"],
             "SUPABASE_URL": supabase["api_url"],
             "SUPABASE_PUBLISHABLE_KEY": supabase["publishable_key"],
+            # Every E2E request comes from 127.0.0.1, and one page load already
+            # makes several API calls; the real limit would make runs flaky.
+            "RATE_LIMIT": "1000/minute",
         },
         logs / "api.log",
     )

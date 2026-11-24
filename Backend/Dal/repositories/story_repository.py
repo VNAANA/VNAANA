@@ -514,6 +514,7 @@ class StoryRepository(StoryRepositoryPort):
             summary=row.summary,
             context=row.context,
             updated_at=row.updated_at,
+            description=row.description,
         )
 
     def get_translation(
@@ -528,6 +529,23 @@ class StoryRepository(StoryRepositoryPort):
 
         return self._translation_to_domain(row)
 
+    def get_translations(
+        self,
+        story_ids: list[uuid.UUID],
+        language: str,
+    ) -> dict[uuid.UUID, StoryTranslation]:
+        if not story_ids:
+            return {}
+
+        rows = self.db.scalars(
+            select(StoryTranslationModel).where(
+                StoryTranslationModel.story_id.in_(story_ids),
+                StoryTranslationModel.language == language,
+            )
+        )
+
+        return {row.story_id: self._translation_to_domain(row) for row in rows}
+
     def save_translation(
         self,
         story_id: uuid.UUID,
@@ -536,10 +554,16 @@ class StoryRepository(StoryRepositoryPort):
         title: str | None,
         summary: str | None,
         context: str | None,
+        description: str | None = None,
     ) -> StoryTranslation:
-        fields = {"title": title, "summary": summary, "context": context}
+        fields = {
+            "title": title,
+            "summary": summary,
+            "context": context,
+            "description": description,
+        }
 
-        # Upsert: two users opening the same untranslated story at the same
+        # Upsert: two users translating the same story at the same
         # time would otherwise both insert and the second one would hit the
         # primary key. onupdate doesn't run for ON CONFLICT, so updated_at is
         # set here explicitly.

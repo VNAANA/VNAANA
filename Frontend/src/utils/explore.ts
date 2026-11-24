@@ -4,8 +4,13 @@
  * Components only use ExploreItem, never the raw API shape.
  */
 import type { Article, NewsScope, Topic } from '../types'
-import { apiUrl } from './api'
-import { storyDate, storyScope, storyTagNames, toArticle } from './stories'
+import {
+  fetchStoryList,
+  storyDate,
+  storyScope,
+  storyTagNames,
+  toArticle,
+} from './stories'
 import type { ApiStory } from './stories'
 
 /*
@@ -117,11 +122,8 @@ export async function fetchExploreStories(
   })
   filter.tagIds.forEach((id) => params.append('tag_id', id))
   if (filter.query) params.set('q', filter.query)
-  const query = `/stories?${params}`
-  const response = await fetch(apiUrl(query), { signal })
-  if (!response.ok) throw new Error('Explore request failed')
-  const stories: ApiStory[] = await response.json()
-  return stories
+  // Signed in, stories the user translated earlier come back translated.
+  return fetchStoryList(`/stories?${params}`, signal)
 }
 
 export function toExploreItem(story: ApiStory): ExploreItem {

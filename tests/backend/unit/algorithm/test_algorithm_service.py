@@ -45,10 +45,11 @@ def worked_example_user(repo, users):
         make_event(user.id, past["E"].id, "read_complete"),
         make_event(user.id, past["F"].id, "read_complete", happened_days_ago=6),
     ]
-    for story, reaction, days in [("C", Reaction.like, 3), ("D", Reaction.like, 0), ("G", Reaction.dislike, 0)]:
-        repo.reactions[(user.id, past[story].id)] = make_reaction(
-            user.id, past[story].id, reaction, happened_days_ago=days
-        )
+    # Likes and dislikes are engagement events too (Algorithm/reactions.py).
+    repo.events += [
+        make_event(user.id, past[story].id, reaction, happened_days_ago=days)
+        for story, reaction, days in [("C", "like", 3), ("D", "like", 0), ("G", "dislike", 0)]
+    ]
     repo.declared_tags[user.id] = [declared(t, declared_days_ago=15) for t in (HIKING, SPORT, EDUCATION)]
     return user
 
@@ -81,6 +82,68 @@ def test_job_ignores_actions_older_than_30_days(repo, users, algorithm_service):
     user = add_user(repo, users)
     story = repo.add_story(make_story(updated_days_ago=40), [HIKING])
     repo.events.append(make_event(user.id, story.id, "share", happened_days_ago=31))
+
+    algorithm_service.run_scoring(now=NOW)
+
+    assert repo.scores[user.id] == {}
+
+
+# ---- likes and dislikes come from the engagement events ---------------------------
+
+def test_a_like_event_counts_as_a_like(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story(), [HIKING])
+    repo.events.append(make_event(user.id, story.id, "like"))
+
+    algorithm_service.run_scoring(now=NOW)
+
+    assert repo.scores[user.id] == {HIKING: pytest.approx(2.0)}
+
+
+def test_tapping_like_again_and_again_is_still_one_like(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story(), [HIKING])
+    repo.events += [
+        make_event(user.id, story.id, "like", happened_days_ago=0.3),
+        make_event(user.id, story.id, "reaction_removed", happened_days_ago=0.2),
+        make_event(user.id, story.id, "like", happened_days_ago=0.1),
+    ]
+
+    algorithm_service.run_scoring(now=NOW)
+
+    assert repo.scores[user.id] == {HIKING: pytest.approx(2.0, abs=0.01)}
+
+
+def test_an_undone_like_counts_for_nothing(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story(), [HIKING])
+    repo.events += [
+        make_event(user.id, story.id, "like", happened_days_ago=1),
+        make_event(user.id, story.id, "reaction_removed"),
+    ]
+
+    algorithm_service.run_scoring(now=NOW)
+
+    assert repo.scores[user.id] == {}
+
+
+def test_not_interested_after_a_like_is_a_dislike(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story(), [HIKING])
+    repo.events += [
+        make_event(user.id, story.id, "like", happened_days_ago=1),
+        make_event(user.id, story.id, "dislike"),
+    ]
+
+    algorithm_service.run_scoring(now=NOW)
+
+    assert repo.scores[user.id] == {HIKING: pytest.approx(-5.0)}
+
+
+def test_the_story_reactions_table_is_not_read(repo, users, algorithm_service):
+    user = add_user(repo, users)
+    story = repo.add_story(make_story(), [HIKING])
+    repo.reactions[(user.id, story.id)] = make_reaction(user.id, story.id, Reaction.like)
 
     algorithm_service.run_scoring(now=NOW)
 

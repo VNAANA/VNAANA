@@ -24,6 +24,10 @@ from Backend.Logic.domain.story_reaction import Reaction, StoryReaction
 # ---- weights (design doc D1, D8) ---------------------------------------------
 # Source of truth for weights. The event_weights table only lists which
 # event types are allowed; its weight column is not read by the algorithm.
+#
+# Likes and dislikes are engagement events too, but they are not in
+# EVENT_WEIGHTS: only a story's latest one counts (Algorithm/reactions.py),
+# with REACTION_WEIGHTS, so tapping like twice is not two likes.
 
 EVENT_WEIGHTS: dict[str, float] = {
     "share": 5,

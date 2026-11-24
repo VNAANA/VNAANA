@@ -4,11 +4,10 @@ import uuid
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import create_engine, event, inspect, select, text
+import pytest
+from sqlalchemy import inspect, select, text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import Session, configure_mappers
+from sqlalchemy.orm import configure_mappers
 from sqlalchemy.schema import CreateTable
 
 from Backend.Dal.models import (
@@ -21,11 +20,6 @@ from Backend.Logic.exceptions import NotFoundError
 from Backend.Dal.repositories.story_grouping import group_articles
 from sqlalchemy.exc import IntegrityError
 from Backend.Presentation.schemas.users import UserCreate, UserRead, EngagementEventRead
-
-
-@compiles(JSONB, "sqlite")
-def compile_test_jsonb(type_, compiler, **kwargs):
-    return "JSON"
 
 
 class SchemaTests(unittest.TestCase):
@@ -66,15 +60,17 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(len(Base.metadata.tables), 13)
         self.assertNotIn("age_band", User.__table__.c)
         self.assertNotIn("region", User.__table__.c)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 83)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 84)
         self.assertNotIn("language", Story.__table__.c)
         for name in ("eng_title", "eng_summary", "eng_context"):
             self.assertNotIn(name, Story.__table__.c)
-        for name in ("title", "summary", "context"):
+        for name in ("title", "description", "summary", "context"):
             self.assertEqual(str(StoryTranslation.__table__.c[name].type), "TEXT")
             self.assertTrue(StoryTranslation.__table__.c[name].nullable)
         self.assertEqual(str(StoryTranslation.__table__.c.language.type), "VARCHAR")
         self.assertTrue(StoryTranslation.__table__.c.updated_at.type.timezone)
+        # Description translations live in story_translations now.
+        self.assertNotIn("article_translations", Base.metadata.tables)
         expected_server_defaults = {
             ("users", "onboarding_completed"),
             ("users", "analytics_consent"),
@@ -123,7 +119,7 @@ class PersistenceTests(unittest.TestCase):
         story = Story(title="Published story", context="Main content", summary="Summary",
                       status=StoryStatus.published, img_url="https://example.test/image.jpg")
         draft = Story(title="Draft story")
-        tag = Tag(name="Science")
+        tag = Tag(name="Test Science")
         article = Article(provider_id=self.provider.id, canonical_url="https://example.test/story-source",
                           title="Source", content="Source text")
         self.db.add_all([story, draft, tag, article])
@@ -138,7 +134,7 @@ class PersistenceTests(unittest.TestCase):
         self.assertEqual(card.articles_count, 1)
         detail = StoryRead.model_validate(repo.get(story.id))
         self.assertEqual(detail.context, "Main content")
-        self.assertEqual(detail.tags[0].tag.name, "Science")
+        self.assertEqual(detail.tags[0].tag.name, "Test Science")
         self.assertEqual(detail.articles[0].article.id, article.id)
         self.assertTrue(detail.articles[0].is_primary)
         self.assertEqual(StoryRead.model_validate(repo.get(draft.id)).articles, [])
@@ -153,7 +149,7 @@ class PersistenceTests(unittest.TestCase):
             Story(title="Without primary", status=StoryStatus.published),
             Story(title="Empty", status=StoryStatus.published),
         )
-        science, politics, unscored = Tag(name="Science"), Tag(name="Politics"), Tag(name="Unscored")
+        science, politics, unscored = Tag(name="Test Science"), Tag(name="Test Politics"), Tag(name="Unscored")
         self.db.add_all([with_primary, without_primary, empty, science, politics, unscored])
         self.db.flush()
         articles = []
@@ -184,7 +180,7 @@ class PersistenceTests(unittest.TestCase):
         self.assertEqual((cards[0].articles_count, cards[0].tags, cards[0].lead_article), (0, [], None))
         self.assertEqual(cards[1].articles_count, 2)
         self.assertEqual(cards[1].context, "Context text")
-        self.assertEqual([tag.tag.name for tag in cards[1].tags], ["Politics", "Science", "Unscored"])
+        self.assertEqual([tag.tag.name for tag in cards[1].tags], ["Test Politics", "Test Science", "Unscored"])
         self.assertEqual(cards[1].lead_article.id, articles[1].id)
         self.assertEqual(cards[1].lead_article.description, "Description 1")
         self.assertEqual(cards[1].lead_article.provider.name, "Source")
@@ -221,31 +217,15 @@ class PersistenceTests(unittest.TestCase):
         with self.assertRaises(NotFoundError):
             service.list_articles(uuid.uuid4())
 
-    def setUp(self):
-        self.engine = create_engine("sqlite://")
-        event.listen(self.engine, "connect", lambda db, _: db.execute("PRAGMA foreign_keys=ON"))
-        Base.metadata.create_all(self.engine)
-        self.db = Session(self.engine, expire_on_commit=False)
-        # SQLite loses tzinfo; emulate PostgreSQL timestamptz for these local tests.
-        def restore_timezone(article, *args):
-            for field in ("published_at", "first_seen_at"):
-                value = getattr(article, field)
-                if value is not None and value.tzinfo is None:
-                    from sqlalchemy.orm.attributes import set_committed_value
-                    set_committed_value(article, field, value.replace(tzinfo=timezone.utc))
-        self.restore_timezone = restore_timezone
-        event.listen(Article, "load", restore_timezone)
-        event.listen(Article, "refresh", restore_timezone)
+    @pytest.fixture(autouse=True)
+    def _database(self, db, new_session):
+        # The real migrated Postgres from ../conftest.py, rolled back after each test.
+        self.db = db
+        self.new_session = new_session
         self.provider = Provider(name="Source", domain="example.test", reliability_status="verified")
         self.db.add(self.provider)
         self.db.add(EventWeight(event_type="view", weight=Decimal("1.00")))
         self.db.commit()
-
-    def tearDown(self):
-        self.db.close()
-        event.remove(Article, "load", self.restore_timezone)
-        event.remove(Article, "refresh", self.restore_timezone)
-        self.engine.dispose()
 
     def test_grouping_day_preview_apply_and_publication_fields(self):
         from Backend.jobs.group_day import run
@@ -354,8 +334,7 @@ class PersistenceTests(unittest.TestCase):
         self.db.add(EngagementEvent(id=event_id, user_id=first.id, session_id=uuid.uuid4(),
                                     event_type="view", ingested_at=consent_time))
         self.db.commit()
-        self.db.close()
-        self.db = Session(self.engine, expire_on_commit=False)
+        self.db = self.new_session()
         repo = UserRepository(self.db)
         again = repo.get_or_create_by_identity("supabase", subject)
         self.db.commit()
@@ -380,8 +359,7 @@ class PersistenceTests(unittest.TestCase):
         newer = datetime(2025, 1, 2, tzinfo=timezone.utc)
         for incoming in (older, newer, None, older):
             result, _ = repo.ingest(**fields, last_updated_at=incoming)
-        # SQLite returns naive datetimes for timezone-aware columns.
-        self.assertEqual(result.last_updated_at.replace(tzinfo=timezone.utc), newer)
+        self.assertEqual(result.last_updated_at, newer)
 
     def test_ingestion_preserves_identity_and_non_null_content(self):
         repo = ArticleRepository(self.db)
@@ -447,7 +425,8 @@ class PersistenceTests(unittest.TestCase):
         # Raw SQL proves these defaults are supplied by the database.
         story_id, user_id = uuid.uuid4().hex, uuid.uuid4().hex
         self.db.execute(text("INSERT INTO stories (id, title) VALUES (:id, 'New')"), {"id": story_id})
-        self.db.execute(text("INSERT INTO users (id, auth_provider, auth_subject) VALUES (:id, 'test', :id)"), {"id": user_id})
+        self.db.execute(text("INSERT INTO users (id, auth_provider, auth_subject) VALUES (:id, 'test', :subject)"),
+                        {"id": user_id, "subject": user_id})
         story = self.db.get(Story, uuid.UUID(story_id))
         user = self.db.get(User, uuid.UUID(user_id))
         self.assertEqual(story.status, StoryStatus.draft)

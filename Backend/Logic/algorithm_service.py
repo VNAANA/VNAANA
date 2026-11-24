@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 from Backend.Logic.Algorithm.decay import LIFETIME_DAYS
 from Backend.Logic.Algorithm.ranking import is_unlocked, rank_stories
+from Backend.Logic.Algorithm.reactions import current_reactions
 from Backend.Logic.Algorithm.scoring import score_user
 from Backend.Logic.Algorithm.shared_types import TagScores
 from Backend.Logic.domain.feed import Feed, FeedStatus
@@ -52,7 +53,8 @@ class AlgorithmService:
         since = now - timedelta(days=LIFETIME_DAYS)
 
         events = self.algorithm.list_events_since(user_id, since)
-        reactions = self.algorithm.list_reactions_since(user_id, since)
+        # Likes and dislikes are engagement events, not story_reactions rows.
+        reactions = current_reactions(events)
         declared_tags = self.algorithm.list_declared_tags(user_id)
 
         story_ids = {event.story_id for event in events if event.story_id is not None}

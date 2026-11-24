@@ -85,6 +85,11 @@
   outline-offset: -3px;
 }
 
+.menuItem[aria-disabled='true'] {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 .menuItem svg {
   flex: none;
   margin-top: 1px;

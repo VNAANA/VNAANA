@@ -1,22 +1,31 @@
 /*
  * Stories from the backend, turned into the Article shape the feed uses.
- * A story's text (title, context, image) comes from the stories table; the
- * description, publisher and link come from its lead article (the primary one).
- * The story summary isn't shown yet.
+ * A story's text (title, summary, context, image) comes from the stories table,
+ * or its saved translation; the description, publisher and link come from its
+ * lead article (the primary one). The description is on the post's first part,
+ * the story summary on the "Why it matters" part.
  */
 import type { Article, FeedReason, NewsScope } from '../types'
 import { apiUrl } from './api'
+import { isLanguage } from './language'
 import { supabase } from './supabase'
 
 /* The parts of the backend's StoryCardRead response that the app uses. */
 export type ApiStory = {
   id: string
   title: string
+  /**
+   * The story's own summary; null (or missing) until one is written. When the
+   * user translated the story, the backend sends the saved translation instead.
+   */
+  summary?: string | null
   context: string | null
   img_url: string | null
   articles_count: number
   first_published_at: string | null
   last_updated_at: string
+  /** Set when the whole story was translated into this language (the Translate button). */
+  translated_into?: string | null
   tags: { tag: { id: string; name: string }; relevance_score: number | null }[]
   lead_article: {
     id: string
@@ -44,17 +53,68 @@ const SUMMARY_MAX_CHARS = 320
 const WORDS_PER_MINUTE = 200
 const MAX_TAGS = 3
 
+async function accessToken() {
+  return (await supabase.auth.getSession()).data.session?.access_token ?? null
+}
+
+/*
+ * A list of stories from GET /stories. Signed in, the token is sent so stories
+ * the user translated earlier come back translated. A token the backend
+ * refuses (401) shouldn't empty the feed, so then it asks again without one.
+ */
+export async function fetchStoryList(
+  path: string,
+  signal?: AbortSignal,
+): Promise<ApiStory[]> {
+  const token = await accessToken()
+  let response = await fetch(apiUrl(path), {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    signal,
+  })
+  if (token && response.status === 401)
+    response = await fetch(apiUrl(path), { signal })
+  if (!response.ok) throw new Error('Stories request failed')
+  return response.json()
+}
+
 /* Published stories, most recently updated first. */
-export async function fetchStories(
+export function fetchStories(
   offset: number,
   limit: number,
   signal?: AbortSignal,
 ): Promise<ApiStory[]> {
-  const response = await fetch(
-    apiUrl(`/stories?limit=${limit}&offset=${offset}`),
-    { signal },
-  )
-  if (!response.ok) throw new Error('Stories request failed')
+  return fetchStoryList(`/stories?limit=${limit}&offset=${offset}`, signal)
+}
+
+/** Why Translate failed: the translation service is down or out of quota, or anything else. */
+export class TranslateError extends Error {
+  readonly code: 'unavailable' | 'failed'
+
+  constructor(code: 'unavailable' | 'failed') {
+    super(`Translate failed: ${code}`)
+    this.code = code
+  }
+}
+
+/*
+ * The post's Translate button: POST /stories/{id}/translation. The backend
+ * translates the story and its lead article's description into the user's
+ * profile language, saves it, and returns the translated story.
+ */
+export async function translateStory(storyId: string): Promise<ApiStory> {
+  const token = await accessToken()
+  if (!token) throw new TranslateError('failed')
+  let response: Response
+  try {
+    response = await fetch(
+      apiUrl(`/stories/${encodeURIComponent(storyId)}/translation`),
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+    )
+  } catch {
+    throw new TranslateError('failed')
+  }
+  if (response.status === 503) throw new TranslateError('unavailable')
+  if (!response.ok) throw new TranslateError('failed')
   return response.json()
 }
 
@@ -68,7 +128,7 @@ export async function fetchForYouStories(
   limit: number,
   signal?: AbortSignal,
 ): Promise<ApiStory[] | null> {
-  const token = (await supabase.auth.getSession()).data.session?.access_token
+  const token = await accessToken()
   if (!token) return null
   let response: Response
   try {
@@ -118,6 +178,7 @@ export function toArticle(
 ): Article {
   const lead = story.lead_article
   const description = htmlToText(lead?.description ?? null)
+  const whySummary = storySummary(story)
   const context = toParagraphs(story.context)
   const imageUrl = story.img_url?.trim() || lead?.img_url?.trim()
   const publisherName = lead?.provider.name ?? 'VNAANA'
@@ -145,10 +206,14 @@ export function toArticle(
     tags: storyTagNames(story),
     scope: storyScope(story),
     feedReason,
+    ...(isLanguage(story.translated_into)
+      ? { translatedInto: story.translated_into }
+      : {}),
     title: story.title,
     ...(imageUrl ? { image: { src: imageUrl, alt: story.title } } : {}),
     summary: shorten(description),
     context: context.length > 0 ? context : undefined,
+    ...(whySummary.length > 0 ? { whySummary } : {}),
     aiNote: { sourceCount: Math.max(1, story.articles_count) },
     readMore: {
       url: lead?.canonical_url ?? '',
@@ -156,6 +221,18 @@ export function toArticle(
       perspectives: [],
     },
   }
+}
+
+/*
+ * The text for the "Why it matters" part: the story's summary (or its saved
+ * translation), one string per paragraph. Empty when the story has none yet;
+ * the part then shows its placeholder.
+ */
+export function storySummary(story: ApiStory): string[] {
+  return (story.summary ?? '')
+    .split(/\n+/)
+    .map((paragraph) => htmlToText(paragraph))
+    .filter((paragraph) => paragraph.length > 0)
 }
 
 /* When a story first went out; stories that were never published use their last update. */

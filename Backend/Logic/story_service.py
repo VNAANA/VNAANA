@@ -30,7 +30,19 @@ MIN_SEARCH_LENGTH = 2
 SOURCE_LANGUAGE = "nl"
 # Languages a story can be translated into. The frontend only offers en and nl.
 TRANSLATION_TARGETS = frozenset({"en"})
+# Story fields that get translated. The lead article's description is
+# translated too and saved with them, as "description".
 TRANSLATED_FIELDS = ("title", "summary", "context")
+
+
+def _is_current(saved: StoryTranslation | None, story: Story, name: str) -> bool:
+    """Whether the saved translation has up-to-date text for this field.
+    A story that changed after translating counts as outdated everywhere."""
+    return (
+        saved is not None
+        and saved.updated_at >= story.last_updated_at
+        and getattr(saved, name) is not None
+    )
 
 
 class StoryService:
@@ -58,8 +70,10 @@ class StoryService:
         q: str | None = None,
         limit: int = 20,
         offset: int = 0,
+        language: str | None = None,
     ) -> list[StoryCard]:
-        return self.stories.to_cards(
+        """language: show saved translations into it (the user's profile language)."""
+        cards = self.stories.to_cards(
             self.stories.list(
                 status=status,
                 tag_ids=tag_ids,
@@ -68,6 +82,7 @@ class StoryService:
                 offset=offset,
             )
         )
+        return self.with_translations(cards, language)
 
     def with_cards(self, feed: Feed) -> Feed:
         """The feed with its stories as cards (tags, lead article, article count)."""
@@ -115,74 +130,152 @@ class StoryService:
 
         return story
 
+    # ---- translation ----
+    #
+    # Google is only called when the user presses Translate on a post
+    # (translate_story). Everywhere else a story is shown with the
+    # translation that is already saved, as far as it is still up to date,
+    # and the rest stays Dutch.
+
     def get_story_in_language(
         self,
         story_id: uuid.UUID,
         language: str | None,
     ) -> Story:
-        """Return the story with its text in the given language.
-
-        No language, Dutch, or a language we don't translate to returns the
-        original story. Otherwise the cached translation is used, and Google
-        is only called for text that has no up-to-date translation yet.
-        """
+        """The story with its saved translation for this language, if any.
+        Never calls Google."""
         story = self.get_story(story_id)
+        target = self._translation_target(language)
+
+        if target is None:
+            return story
+
+        return self._with_translation(
+            story, self.stories.get_translation(story_id, target), target
+        )
+
+    def with_translations(
+        self,
+        stories: list[Story],
+        language: str | None,
+    ) -> list[Story]:
+        """The stories with their saved translations for this language.
+        One query for all of them; never calls Google."""
+        target = self._translation_target(language)
+
+        if target is None or not stories:
+            return stories
+
+        saved = self.stories.get_translations([story.id for story in stories], target)
+
+        return [
+            self._with_translation(story, saved.get(story.id), target)
+            for story in stories
+        ]
+
+    def with_feed_translations(self, feed: Feed, language: str | None) -> Feed:
+        """The feed's cards with their saved translations; scores and order stay."""
+        if self._translation_target(language) is None or not feed.stories:
+            return feed
+
+        cards = self.with_translations(
+            [ranked.story for ranked in feed.stories], language
+        )
+
+        return Feed(
+            feed.status,
+            [
+                RankedStory(card, ranked.score)
+                for card, ranked in zip(cards, feed.stories)
+            ],
+        )
+
+    def translate_story(
+        self,
+        story_id: uuid.UUID,
+        language: str | None,
+    ) -> StoryCard:
+        """Translate the post into this language and save it: the story's
+        title, summary and context, and the lead article's description.
+
+        Only text without an up-to-date translation goes to Google, all of it
+        in one request. No language, Dutch, or a language we don't translate
+        to returns the original card. A failed translation saves nothing and
+        raises TranslationUnavailableError.
+        """
+        card = self.stories.to_cards([self.get_story(story_id)])[0]
+        target = self._translation_target(language)
+
+        if target is None:
+            return card
+
+        saved = self.stories.get_translation(story_id, target)
+        missing = self._missing_text(card, saved)
+
+        if missing:
+            translated = dict(
+                zip(
+                    missing,
+                    self._require_translator().translate(
+                        list(missing.values()),
+                        source=SOURCE_LANGUAGE,
+                        target=target,
+                    ),
+                )
+            )
+            saved = self._save_translation(card, target, saved, translated)
+
+        return self._with_translation(card, saved, target)
+
+    @staticmethod
+    def _translation_target(language: str | None) -> str | None:
+        """The language to translate into, or None when the original is wanted."""
         target = (language or SOURCE_LANGUAGE).strip().lower()
 
         if target == SOURCE_LANGUAGE or target not in TRANSLATION_TARGETS:
-            return story
+            return None
 
-        cached = self.stories.get_translation(story_id, target)
-        # The story changed after it was translated, so every field is redone.
-        stale = cached is not None and cached.updated_at < story.last_updated_at
+        return target
 
+    @staticmethod
+    def _lead_description(story: Story) -> str | None:
+        if isinstance(story, StoryCard) and story.lead_article is not None:
+            return story.lead_article.description or None
+        return None
+
+    @classmethod
+    def _missing_text(
+        cls,
+        story: Story,
+        saved: StoryTranslation | None,
+    ) -> dict[str, str]:
+        """The post's text that has no up-to-date translation yet, by field.
+        "description" is the lead article's description."""
         missing = {
             name: getattr(story, name)
             for name in TRANSLATED_FIELDS
-            if getattr(story, name)
-            and (cached is None or stale or getattr(cached, name) is None)
+            if getattr(story, name) and not _is_current(saved, story, name)
         }
 
-        if missing:
-            cached = self._translate_and_save(story, target, cached, missing)
+        description = cls._lead_description(story)
+        if description and not _is_current(saved, story, "description"):
+            missing["description"] = description
 
-        if cached is None:
-            # The story has no text at all, so there was nothing to translate.
-            return story
+        return missing
 
-        return replace(
-            story,
-            **{
-                # A field the story has no text for stays empty, even if an
-                # older translation still holds text for it.
-                name: getattr(cached, name)
-                if getattr(story, name)
-                else getattr(story, name)
-                for name in TRANSLATED_FIELDS
-            },
-        )
-
-    def _translate_and_save(
-        self,
-        story: Story,
-        target: str,
-        cached: StoryTranslation | None,
-        missing: dict[str, str],
-    ) -> StoryTranslation:
+    def _require_translator(self) -> Translator:
         if self.translator is None:
             raise TranslationUnavailableError("Translation is not configured")
 
-        translated = dict(
-            zip(
-                missing,
-                self.translator.translate(
-                    list(missing.values()),
-                    source=SOURCE_LANGUAGE,
-                    target=target,
-                ),
-            )
-        )
+        return self.translator
 
+    def _save_translation(
+        self,
+        story: Story,
+        target: str,
+        saved: StoryTranslation | None,
+        translated: dict[str, str],
+    ) -> StoryTranslation:
         fields = {}
         for name in TRANSLATED_FIELDS:
             original = getattr(story, name)
@@ -193,9 +286,59 @@ class StoryService:
                 fields[name] = original
             else:
                 # Still up to date from the earlier translation.
-                fields[name] = getattr(cached, name)
+                fields[name] = getattr(saved, name)
+
+        if "description" in translated:
+            fields["description"] = translated["description"]
+        elif self._lead_description(story):
+            # Still up to date from the earlier translation.
+            fields["description"] = saved.description
+        else:
+            fields["description"] = None
 
         return self.stories.save_translation(story.id, target, **fields)
+
+    @classmethod
+    def _with_translation(
+        cls,
+        story: Story,
+        saved: StoryTranslation | None,
+        target: str,
+    ) -> Story:
+        """The story with every up-to-date translated text filled in.
+
+        Text without an up-to-date translation stays Dutch. translated_into
+        is only set when nothing is left in Dutch, so the frontend knows
+        whether to offer Translate.
+        """
+        if saved is None:
+            return story
+
+        changes = {}
+        complete = True
+
+        for name in TRANSLATED_FIELDS:
+            # A field the story has no text for stays empty, even if an
+            # older translation still holds text for it.
+            if not getattr(story, name):
+                continue
+            if _is_current(saved, story, name):
+                changes[name] = getattr(saved, name)
+            else:
+                complete = False
+
+        if cls._lead_description(story):
+            if _is_current(saved, story, "description"):
+                changes["lead_article"] = replace(
+                    story.lead_article, description=saved.description
+                )
+            else:
+                complete = False
+
+        if complete:
+            changes["translated_into"] = target
+
+        return replace(story, **changes)
 
     def create_story(
         self,
