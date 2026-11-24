@@ -54,6 +54,22 @@
   color: var(--muted);
 }
 
+.messageActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* "Titles with “flood” in Sports" above the grid while searching */
+.searchSummary {
+  margin: -8px 0 -8px; /* sits closer to the filters and grid than the page's 24px gap */
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .button {
   min-height: var(--tap);
   padding: 0 18px;

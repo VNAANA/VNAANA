@@ -1,7 +1,12 @@
 /* Parts shared by image cards and text tiles. The card must be position: relative. */
 
+/* A button that looks like the headline text */
 .link {
+  display: inline;
   color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
   text-decoration: none;
 }
 

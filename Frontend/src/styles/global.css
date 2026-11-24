@@ -79,6 +79,34 @@ a {
   border: 0;
 }
 
+/*
+ * Explore: opening a story grows its card into the post, closing shrinks it
+ * back (see ExplorePage). The rest of the screen cross-fades meanwhile.
+ */
+::view-transition-group(explore-story) {
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+::view-transition-old(explore-story),
+::view-transition-new(explore-story) {
+  /* Both fill the moving box, so the card and post don't stretch while they swap. */
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  animation-duration: 380ms;
+}
+
+/* The old picture fades out early, so the two never show as a ghosted double image halfway through. */
+::view-transition-old(explore-story) {
+  animation-duration: 160ms;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -29,7 +29,7 @@ const en = {
   nav: {
     home: 'Virtual News Anchor – home',
     searchLabel: 'Search news',
-    searchPlaceholder: 'Search',
+    searchPlaceholder: 'Search titles',
     main: 'Main',
     forYou: 'For You',
     explore: 'Explore',
@@ -226,6 +226,15 @@ const en = {
     empty: (filter: string) => `Nothing in ${filter} right now — try another topic.`,
     emptyAll: 'Nothing to explore right now. Check back soon.',
     showAll: 'Show all',
+    searchSummary: (query: string, tags: string | null) =>
+      `Titles with “${query}” in ${tags ?? 'all topics'}`,
+    searchEmpty: (query: string, tags: string | null) =>
+      `No titles with “${query}” in ${tags ?? 'any topic'}.`,
+    clearSearchShort: 'Clear search',
+    searchAllTopics: 'Search all topics',
+    readerLabel: 'Stories from Explore',
+    backToExplore: 'Back to Explore',
+    readerEnd: 'You’ve seen everything in Explore.',
     explainer: 'Explainer',
   },
   briefing: {
@@ -348,7 +357,7 @@ const nl: Strings = {
   nav: {
     home: 'Virtual News Anchor – startpagina',
     searchLabel: 'Zoeken in het nieuws',
-    searchPlaceholder: 'Zoeken',
+    searchPlaceholder: 'Zoek in titels',
     main: 'Hoofdmenu',
     forYou: 'Voor jou',
     explore: 'Ontdekken',
@@ -540,6 +549,13 @@ const nl: Strings = {
     empty: (filter) => `Nu niets in ${filter} — probeer een ander onderwerp.`,
     emptyAll: 'Er is nu niets te ontdekken. Kom straks terug.',
     showAll: 'Alles tonen',
+    searchSummary: (query, tags) => `Titels met ‘${query}’ in ${tags ?? 'alle onderwerpen'}`,
+    searchEmpty: (query, tags) => `Geen titels met ‘${query}’ in ${tags ?? 'welk onderwerp dan ook'}.`,
+    clearSearchShort: 'Zoekopdracht wissen',
+    searchAllTopics: 'Zoek in alle onderwerpen',
+    readerLabel: 'Verhalen uit Ontdekken',
+    backToExplore: 'Terug naar Ontdekken',
+    readerEnd: 'Je hebt alles in Ontdekken gezien.',
     explainer: 'Uitleg',
   },
   briefing: {

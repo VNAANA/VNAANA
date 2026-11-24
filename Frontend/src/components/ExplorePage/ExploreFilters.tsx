@@ -35,6 +35,7 @@ export function ExploreFilters({ active, onChange }: Props) {
   const ordered = orderByPreference(tags, preferences)
   const selectedTags = ordered.filter((tag) => selected.has(tag.id))
 
+  // Only the tags change; a search in the search bar stays and looks inside the new selection.
   const setTags = (tagIds: string[]) => onChange(exploreFilter(tagIds))
   const toggle = (id: string) =>
     setTags(selected.has(id) ? active.tagIds.filter((tagId) => tagId !== id) : [...active.tagIds, id])

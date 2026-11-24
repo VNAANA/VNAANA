@@ -44,7 +44,11 @@ def list_stories(
         max_length=50,
         description="Repeat to filter by several tags: stories with any of them.",
     ),
-    q: str | None = Query(None, max_length=100),
+    q: str | None = Query(
+        None,
+        max_length=100,
+        description="Words that must all appear in the title. With tag_id, only those tags' stories are searched.",
+    ),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):

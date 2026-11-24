@@ -30,19 +30,19 @@ before(async () => {
 after(async () => { await server?.close() })
 
 test('no tags in the hash means All', () => {
-  assert.deepEqual(explore.exploreFilterFromHash('#explore'), { tagIds: [] })
-  assert.equal(explore.exploreHash({ tagIds: [] }), '#explore')
+  assert.deepEqual(explore.exploreFilterFromHash('#explore'), { tagIds: [], query: '' })
+  assert.equal(explore.exploreHash({ tagIds: [], query: '' }), '#explore')
 })
 
 test('selected tags round-trip through the hash, sorted and without duplicates', () => {
-  const hash = explore.exploreHash({ tagIds: [sports, domestic, sports] })
+  const hash = explore.exploreHash({ tagIds: [sports, domestic, sports], query: '' })
   assert.equal(hash, `#explore?tags=${domestic},${sports}`)
-  assert.deepEqual(explore.exploreFilterFromHash(hash), { tagIds: [domestic, sports] })
+  assert.deepEqual(explore.exploreFilterFromHash(hash), { tagIds: [domestic, sports], query: '' })
 })
 
 test('anything in the hash that is not a tag ID is ignored', () => {
-  assert.deepEqual(explore.exploreFilterFromHash(`#explore?tags=nope,${sports},<script>`), { tagIds: [sports] })
-  assert.deepEqual(explore.exploreFilterFromHash('#explore?filter=science'), { tagIds: [] })
+  assert.deepEqual(explore.exploreFilterFromHash(`#explore?tags=nope,${sports},<script>`), { tagIds: [sports], query: '' })
+  assert.deepEqual(explore.exploreFilterFromHash('#explore?filter=science'), { tagIds: [], query: '' })
 })
 
 test('the sidebar link opens Explore filtered by that one tag', () => {

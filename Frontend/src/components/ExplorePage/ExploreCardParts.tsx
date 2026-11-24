@@ -1,20 +1,28 @@
+import { useContext } from 'react'
 import { tagIcon, tagLabel } from '../../data/tags'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
 import type { ExploreItem } from '../../utils/explore'
+import { OpenStoryContext } from './OpenStoryContext'
 import styles from './ExploreCardParts.module.css'
 
 /*
- * The headline link. Its ::after covers the whole card, so the card is one
- * click target while the link's name stays just the headline.
+ * The headline, as a button that opens the story inside the app (the source
+ * is linked from the post's "Read more"). Its ::after covers the whole card,
+ * so the card is one click target while the button's name stays just the headline.
  */
 export function CardLink({ item }: { item: ExploreItem }) {
-  const { t } = useStrings()
+  const openStory = useContext(OpenStoryContext)
   return (
-    <a href={item.href} className={styles.link} target="_blank" rel="noopener noreferrer">
+    <button
+      type="button"
+      className={styles.link}
+      data-story-card={item.id}
+      aria-haspopup="dialog"
+      onClick={(event) => openStory(item.id, event.currentTarget.closest('article') ?? event.currentTarget)}
+    >
       {item.title}
-      <span className="sr-only"> {t.common.opensInNewTab}</span>
-    </a>
+    </button>
   )
 }
 

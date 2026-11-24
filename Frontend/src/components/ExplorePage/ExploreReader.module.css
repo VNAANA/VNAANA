@@ -1,0 +1,144 @@
+/*
+ * The reader covers Explore. Desktop: everything right of the sidebar, so
+ * the sidebar (navigation, search, topics) stays usable. Mobile: the whole screen.
+ */
+.reader {
+  position: fixed;
+  z-index: 40;
+  inset: 0 0 0 var(--sidebar-w);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--bg);
+}
+
+/* Without the card-to-post morph (older browsers), the reader rises in instead. */
+@media (prefers-reduced-motion: no-preference) {
+  .reader[data-animate] {
+    animation: rise-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  padding: 12px 32px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 14px 0 10px;
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.back:hover {
+  background: var(--surface-2);
+}
+
+/* ---------- The posts: the same snapping layout as the For You feed (App.module.css) ---------- */
+
+.scroller {
+  position: relative; /* slides measure their offsetTop from here */
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-gutter: stable;
+}
+
+.slide {
+  display: grid;
+  align-items: center;
+  min-height: 100%;
+  padding: 24px 32px;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.slide:has([data-hidden='true']) {
+  min-height: 0;
+}
+
+.column {
+  container: feed / inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  max-width: var(--feed-w);
+  margin-inline: auto;
+}
+
+.message,
+.end {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 40px 32px 56px;
+  text-align: center;
+  color: var(--muted);
+  scroll-snap-align: end;
+}
+
+.retry {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+@media (max-width: 819.98px) {
+  .reader {
+    inset: 0;
+  }
+
+  .bar {
+    padding: 8px 12px;
+  }
+
+  .scroller {
+    scrollbar-gutter: auto;
+  }
+
+  .slide {
+    padding: 12px 16px;
+  }
+}
+
+/* Phones: a post is never taller than the screen (as in the feed). */
+@media (max-width: 819.98px) and (min-height: 700px) {
+  .slide {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .slide:has([data-hidden='true']) {
+    height: auto;
+  }
+
+  .slide > .column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+  }
+}

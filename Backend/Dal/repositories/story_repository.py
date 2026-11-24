@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session, selectinload
@@ -117,14 +117,11 @@ class StoryRepository(StoryRepositoryPort):
             tagged = select(StoryTagModel.story_id).where(StoryTagModel.tag_id.in_(tag_ids))
             stmt = stmt.where(StoryModel.id.in_(tagged))
 
+        # Search looks at the title only: every word must appear in it. Combined
+        # with tag_ids above, it searches only the stories with those tags.
         for term in search_terms or []:
             pattern = f"%{self._escape_like(term)}%"
-            stmt = stmt.where(
-                or_(
-                    StoryModel.title.ilike(pattern, escape="\\"),
-                    StoryModel.summary.ilike(pattern, escape="\\"),
-                )
-            )
+            stmt = stmt.where(StoryModel.title.ilike(pattern, escape="\\"))
 
         stmt = (
             stmt
