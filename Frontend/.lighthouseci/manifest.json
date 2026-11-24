@@ -1,0 +1,41 @@
+[
+  {
+    "url": "http://127.0.0.1:4173/",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\Frontend\\.lighthouseci\\127_0_0_1--2026_11_24_11_03_45.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\Frontend\\.lighthouseci\\127_0_0_1--2026_11_24_11_03_45.report.json",
+    "summary": {
+      "performance": 0.95,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://127.0.0.1:4173/",
+    "isRepresentativeRun": false,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\Frontend\\.lighthouseci\\127_0_0_1--2026_11_24_11_03_57.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\Frontend\\.lighthouseci\\127_0_0_1--2026_11_24_11_03_57.report.json",
+    "summary": {
+      "performance": 0.95,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  },
+  {
+    "url": "http://127.0.0.1:4173/",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\Frontend\\.lighthouseci\\127_0_0_1--2026_11_24_11_03_32.report.html",
+    "jsonPath": "C:\\Users\\User\\Documents\\GitHub\\VNAANA\\Frontend\\.lighthouseci\\127_0_0_1--2026_11_24_11_03_32.report.json",
+    "summary": {
+      "performance": 0.95,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 0.91,
+      "agentic-browsing": 0.5
+    }
+  }
+]

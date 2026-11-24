@@ -44,7 +44,6 @@ def supabase() -> dict[str, str]:
     """URLs and keys of the local Supabase, read from the Supabase CLI."""
     return read_local_supabase()
 
-
 @pytest.fixture(scope="session")
 def database(supabase):
     """A clean database built by the real migrations, with the test stories in it."""
