@@ -1,4 +1,5 @@
-"""GET /stories/{id}: which language gets asked for and how a failed
+"""Story routes and translation: which language gets asked for, the
+Translate button's POST /stories/{id}/translation, and how a failed
 translation reaches the client. No database, Supabase or Google calls."""
 
 from datetime import datetime, timezone
@@ -66,16 +67,93 @@ def test_signed_in_uses_the_profile_language(context):
     context.stories.get_story_in_language.assert_called_once_with(story_id, "en")
 
 
-def test_failed_translation_is_a_503(context):
+def test_story_list_uses_the_profile_language(context):
+    context.subject = uuid4()
     context.users.get_preferred_language.return_value = "en"
-    context.stories.get_story_in_language.side_effect = TranslationUnavailableError(
+    context.stories.list_stories.return_value = []
+
+    response = context.client.get("/stories?limit=5")
+
+    assert response.status_code == 200
+    context.users.get_preferred_language.assert_called_once_with(context.subject)
+    assert context.stories.list_stories.call_args.kwargs["language"] == "en"
+
+
+def test_story_list_signed_out_passes_no_language(context):
+    context.users.get_preferred_language.return_value = None
+    context.stories.list_stories.return_value = []
+
+    assert context.client.get("/stories").status_code == 200
+    context.users.get_preferred_language.assert_called_once_with(None)
+    assert context.stories.list_stories.call_args.kwargs["language"] is None
+
+
+# ---- POST /stories/{id}/translation: the Translate button ----
+
+
+@pytest.fixture
+def translate_context(context):
+    from Backend.Presentation.auth import get_authenticated_subject
+
+    context.subject = uuid4()
+    context.profile = SimpleNamespace(id=uuid4(), language="en")
+    context.users.get_authenticated_user.return_value = context.profile
+    app.dependency_overrides[get_authenticated_subject] = lambda: context.subject
+    return context
+
+
+def story_card(story_id, title="Title", translated_into="en"):
+    from Backend.Logic.domain.story import StoryCard
+
+    return StoryCard(
+        id=story_id, title=title, summary=None, context="Context",
+        status=StoryStatus.published, first_published_at=None,
+        last_updated_at=datetime(2026, 11, 24, tzinfo=timezone.utc),
+        translated_into=translated_into,
+    )
+
+
+def test_translate_uses_the_profile_language_and_returns_the_card(translate_context):
+    c = translate_context
+    story_id = uuid4()
+    c.stories.translate_story.return_value = story_card(story_id)
+
+    response = c.client.post(f"/stories/{story_id}/translation")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert (body["id"], body["title"], body["translated_into"]) == (str(story_id), "Title", "en")
+    c.users.get_authenticated_user.assert_called_once_with(c.subject)
+    c.stories.translate_story.assert_called_once_with(story_id, "en")
+
+
+def test_translate_needs_sign_in(context):
+    response = context.client.post(f"/stories/{uuid4()}/translation")
+
+    assert response.status_code == 401
+    context.stories.translate_story.assert_not_called()
+
+
+def test_failed_translation_is_a_503(translate_context):
+    translate_context.stories.translate_story.side_effect = TranslationUnavailableError(
         "Translation quota exceeded, try again later"
     )
 
-    response = context.client.get(f"/stories/{uuid4()}")
+    response = translate_context.client.post(f"/stories/{uuid4()}/translation")
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Translation quota exceeded, try again later"}
+
+
+def test_translating_an_unknown_story_is_a_404(translate_context):
+    from Backend.Logic.exceptions import NotFoundError
+
+    story_id = uuid4()
+    translate_context.stories.translate_story.side_effect = NotFoundError("Story", story_id)
+
+    response = translate_context.client.post(f"/stories/{story_id}/translation")
+
+    assert response.status_code == 404
 
 
 def test_for_you_route_is_still_matched_before_the_story_id(context):
@@ -151,7 +229,7 @@ def feed_context(context):
     )
     context.algorithm.get_feed.return_value = raw
     context.stories.with_cards.return_value = cards
-    context.stories.translate_feed.return_value = translated
+    context.stories.with_feed_translations.return_value = translated
     context.feeds = SimpleNamespace(raw=raw, cards=cards, translated=translated)
 
     app.dependency_overrides[get_algorithm_service] = lambda: context.algorithm
@@ -159,7 +237,7 @@ def feed_context(context):
     return context
 
 
-def test_for_you_is_translated_into_the_profile_language(feed_context):
+def test_for_you_shows_translations_in_the_profile_language(feed_context):
     c = feed_context
 
     response = c.client.get("/stories/for-you?limit=10&offset=20")
@@ -171,7 +249,7 @@ def test_for_you_is_translated_into_the_profile_language(feed_context):
     c.stories.with_cards.assert_called_once_with(c.feeds.raw)
     # The language comes from the profile that was already loaded, so no
     # second lookup through get_preferred_language.
-    c.stories.translate_feed.assert_called_once_with(c.feeds.cards, "en")
+    c.stories.with_feed_translations.assert_called_once_with(c.feeds.cards, "en")
     c.users.get_preferred_language.assert_not_called()
 
 
@@ -180,11 +258,11 @@ def test_for_you_without_a_profile_language_passes_none(feed_context):
     c.profile.language = None
 
     assert c.client.get("/stories/for-you").status_code == 200
-    c.stories.translate_feed.assert_called_once_with(c.feeds.cards, None)
+    c.stories.with_feed_translations.assert_called_once_with(c.feeds.cards, None)
 
 
-def test_for_you_with_a_failing_translator_still_answers_200(feed_context):
-    """Through the real StoryService, so the fallback is checked end to end."""
+def test_for_you_never_calls_google(feed_context):
+    """Through the real StoryService: an untranslated story stays Dutch."""
     from Backend.Logic.domain.feed import Feed, FeedStatus, RankedStory
     from Backend.Logic.domain.story import StoryCard
     from Backend.Logic.story_service import StoryService
@@ -208,5 +286,6 @@ def test_for_you_with_a_failing_translator_still_answers_200(feed_context):
 
     assert response.status_code == 200
     assert response.json()["stories"][0]["story"]["title"] == "Titel"
-    translator.translate.assert_called_once()
+    assert response.json()["stories"][0]["story"]["translated_into"] is None
+    translator.translate.assert_not_called()
     repo.save_translation.assert_not_called()

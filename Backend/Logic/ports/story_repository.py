@@ -104,6 +104,8 @@ class StoryRepository(Protocol):
         title: str | None,
         summary: str | None,
         context: str | None,
+        description: str | None = None,
     ) -> StoryTranslation:
-        """Insert or overwrite the translation for this story and language."""
+        """Insert or overwrite the translation for this story and language.
+        description is the lead article's."""
         ...

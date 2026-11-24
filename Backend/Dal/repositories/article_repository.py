@@ -10,13 +10,9 @@ from Backend.Dal.models import (
     Article as ArticleModel,
 )
 from Backend.Dal.models import (
-    ArticleTranslation as ArticleTranslationModel,
-)
-from Backend.Dal.models import (
     StoryArticle as StoryArticleModel,
 )
 from Backend.Logic.domain.article import Article, ArticleProvider
-from Backend.Logic.domain.article_translation import ArticleTranslation
 from Backend.Logic.ports.article_repository import (
     ArticleRepository as ArticleRepositoryPort,
 )
@@ -246,69 +242,3 @@ class ArticleRepository(ArticleRepositoryPort):
         )
 
         return result.rowcount
-
-    # ---- article_translations ----
-
-    @staticmethod
-    def _translation_to_domain(row: ArticleTranslationModel) -> ArticleTranslation:
-        return ArticleTranslation(
-            article_id=row.article_id,
-            language=row.language,
-            source_description=row.source_description,
-            description=row.description,
-            updated_at=row.updated_at,
-        )
-
-    def get_translations(
-        self,
-        article_ids: List[uuid.UUID],
-        language: str,
-    ) -> dict[uuid.UUID, ArticleTranslation]:
-        if not article_ids:
-            return {}
-
-        rows = self.db.scalars(
-            select(ArticleTranslationModel).where(
-                ArticleTranslationModel.article_id.in_(article_ids),
-                ArticleTranslationModel.language == language,
-            )
-        )
-
-        return {row.article_id: self._translation_to_domain(row) for row in rows}
-
-    def save_translation(
-        self,
-        article_id: uuid.UUID,
-        language: str,
-        *,
-        source_description: str,
-        description: str,
-    ) -> ArticleTranslation:
-        fields = {
-            "source_description": source_description,
-            "description": description,
-        }
-
-        # Upsert, for the same reason as story translations: two users loading
-        # the same untranslated feed page at once must not hit the primary key.
-        # onupdate doesn't run for ON CONFLICT, so updated_at is set here.
-        stmt = insert(ArticleTranslationModel).values(
-            article_id=article_id,
-            language=language,
-            **fields,
-            updated_at=func.now(),
-        )
-        stmt = stmt.on_conflict_do_update(
-            index_elements=[
-                ArticleTranslationModel.article_id,
-                ArticleTranslationModel.language,
-            ],
-            set_={**fields, "updated_at": func.now()},
-        ).returning(ArticleTranslationModel)
-
-        row = self.db.scalars(
-            stmt,
-            execution_options={"populate_existing": True},
-        ).one()
-
-        return self._translation_to_domain(row)

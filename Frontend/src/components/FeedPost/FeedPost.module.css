@@ -18,6 +18,51 @@
   }
 }
 
+/* "Translating…" / "Couldn't be translated" under the top bar; hidden when empty */
+.translationNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-ui);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: var(--text-meta);
+  font-weight: 600;
+}
+
+.translationNotice:empty {
+  display: none;
+}
+
+.translationNotice svg {
+  flex: none;
+}
+
+.spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.5s;
+  }
+}
+
+/* The Dutch text fades a little while its translation loads */
+.translating {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
 /* Centred progress dots, then heart / share / Ask Nova */
 .dotsRow {
   display: flex;

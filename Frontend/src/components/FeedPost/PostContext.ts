@@ -3,16 +3,19 @@ import type { Carousel } from '../../hooks/useCarousel'
 import type { NovaChat } from '../../hooks/useNovaChat'
 import type { Article } from '../../types'
 import type { PostActions } from './usePostActions'
+import type { PostTranslation } from './usePostTranslation'
 
 /*
  * Everything the pieces of a post need: the article, the shared carousel state,
- * the reaction handlers and the Ask Nova conversation. FeedPost provides it;
- * the pieces read it with usePost().
+ * the reaction handlers, Translate and the Ask Nova conversation. FeedPost
+ * provides it; the pieces read it with usePost().
  */
 export type PostContextValue = {
+  /** The post as shown: the translated version once Translate has finished. */
   article: Article
   carousel: Carousel
   actions: PostActions
+  translation: PostTranslation
   chat: NovaChat
   /** Goes up by one each time an Ask Nova button asks for the chat input to be focused. */
   composerFocusRequest: number

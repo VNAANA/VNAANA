@@ -24,7 +24,10 @@ before(async () => {
     plugins: [{
       name: 'supabase-stub', enforce: 'pre',
       resolveId(id) { if (id === './supabase') return '\0supabase-stub' },
-      load(id) { if (id === '\0supabase-stub') return 'export const supabase = {}' },
+      load(id) {
+        if (id === '\0supabase-stub')
+          return 'export const supabase = { auth: { getSession: async () => ({ data: { session: null } }) } }'
+      },
     }],
   })
   explore = await server.ssrLoadModule('/src/utils/explore.ts')

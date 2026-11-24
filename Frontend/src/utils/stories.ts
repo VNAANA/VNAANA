@@ -6,6 +6,7 @@
  */
 import type { Article, FeedReason, NewsScope } from '../types'
 import { apiUrl } from './api'
+import { isLanguage } from './language'
 import { supabase } from './supabase'
 
 /* The parts of the backend's StoryCardRead response that the app uses. */
@@ -17,6 +18,8 @@ export type ApiStory = {
   articles_count: number
   first_published_at: string | null
   last_updated_at: string
+  /** Set when the whole story was translated into this language (the Translate button). */
+  translated_into?: string | null
   tags: { tag: { id: string; name: string }; relevance_score: number | null }[]
   lead_article: {
     id: string
@@ -44,17 +47,68 @@ const SUMMARY_MAX_CHARS = 320
 const WORDS_PER_MINUTE = 200
 const MAX_TAGS = 3
 
+async function accessToken() {
+  return (await supabase.auth.getSession()).data.session?.access_token ?? null
+}
+
+/*
+ * A list of stories from GET /stories. Signed in, the token is sent so stories
+ * the user translated earlier come back translated. A token the backend
+ * refuses (401) shouldn't empty the feed, so then it asks again without one.
+ */
+export async function fetchStoryList(
+  path: string,
+  signal?: AbortSignal,
+): Promise<ApiStory[]> {
+  const token = await accessToken()
+  let response = await fetch(apiUrl(path), {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    signal,
+  })
+  if (token && response.status === 401)
+    response = await fetch(apiUrl(path), { signal })
+  if (!response.ok) throw new Error('Stories request failed')
+  return response.json()
+}
+
 /* Published stories, most recently updated first. */
-export async function fetchStories(
+export function fetchStories(
   offset: number,
   limit: number,
   signal?: AbortSignal,
 ): Promise<ApiStory[]> {
-  const response = await fetch(
-    apiUrl(`/stories?limit=${limit}&offset=${offset}`),
-    { signal },
-  )
-  if (!response.ok) throw new Error('Stories request failed')
+  return fetchStoryList(`/stories?limit=${limit}&offset=${offset}`, signal)
+}
+
+/** Why Translate failed: the translation service is down or out of quota, or anything else. */
+export class TranslateError extends Error {
+  readonly code: 'unavailable' | 'failed'
+
+  constructor(code: 'unavailable' | 'failed') {
+    super(`Translate failed: ${code}`)
+    this.code = code
+  }
+}
+
+/*
+ * The post's Translate button: POST /stories/{id}/translation. The backend
+ * translates the story and its lead article's description into the user's
+ * profile language, saves it, and returns the translated story.
+ */
+export async function translateStory(storyId: string): Promise<ApiStory> {
+  const token = await accessToken()
+  if (!token) throw new TranslateError('failed')
+  let response: Response
+  try {
+    response = await fetch(
+      apiUrl(`/stories/${encodeURIComponent(storyId)}/translation`),
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+    )
+  } catch {
+    throw new TranslateError('failed')
+  }
+  if (response.status === 503) throw new TranslateError('unavailable')
+  if (!response.ok) throw new TranslateError('failed')
   return response.json()
 }
 
@@ -68,7 +122,7 @@ export async function fetchForYouStories(
   limit: number,
   signal?: AbortSignal,
 ): Promise<ApiStory[] | null> {
-  const token = (await supabase.auth.getSession()).data.session?.access_token
+  const token = await accessToken()
   if (!token) return null
   let response: Response
   try {
@@ -145,6 +199,9 @@ export function toArticle(
     tags: storyTagNames(story),
     scope: storyScope(story),
     feedReason,
+    ...(isLanguage(story.translated_into)
+      ? { translatedInto: story.translated_into }
+      : {}),
     title: story.title,
     ...(imageUrl ? { image: { src: imageUrl, alt: story.title } } : {}),
     summary: shorten(description),

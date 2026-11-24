@@ -285,6 +285,10 @@ const en = {
     postOptions: 'Post options',
     notInterested: 'Not interested',
     notInterestedHint: 'Show fewer articles like this',
+    translate: 'Translate',
+    translateHint: 'Show this story in English',
+    translating: 'Translating…',
+    translateFailed: 'This story couldn’t be translated. Try again later.',
     timeAgo: {
       justNow: 'Just now',
       minutes: (n: number) => `${n}m ago`,
@@ -647,6 +651,11 @@ const nl: Strings = {
     postOptions: 'Berichtopties',
     notInterested: 'Niet geïnteresseerd',
     notInterestedHint: 'Toon minder verhalen zoals dit',
+    translate: 'Vertalen',
+    translateHint: 'Toon dit verhaal in het Engels',
+    translating: 'Bezig met vertalen…',
+    translateFailed:
+      'Dit verhaal kon niet worden vertaald. Probeer het later opnieuw.',
     timeAgo: {
       justNow: 'Zojuist',
       minutes: (n) => `${n} min geleden`,

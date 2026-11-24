@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent } from 'react'
-import { BadgeCheck, Ellipsis, EyeOff, MapPin } from 'lucide-react'
+import { BadgeCheck, Ellipsis, EyeOff, Languages, MapPin } from 'lucide-react'
 import { tagIcon, tagLabel } from '../../data/tags'
 import { TOPIC_ICONS } from '../../data/topics'
 import { useSignedIn } from '../../hooks/useSignedIn'
@@ -109,7 +109,7 @@ function LocationPill() {
  * Esc, clicking outside or tabbing away closes it.
  */
 function MoreMenu() {
-  const { article, actions } = usePost()
+  const { article, actions, translation } = usePost()
   const { t } = useStrings()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -164,8 +164,36 @@ function MoreMenu() {
           aria-label={t.post.postOptions}
           className={styles.menu}
         >
+          {/* Only while the post isn't shown in the display language yet. */}
+          {translation.canTranslate && (
+            <button
+              ref={firstItemRef}
+              type="button"
+              role="menuitem"
+              className={styles.menuItem}
+              // Not `disabled`: the menu focuses its first item when it opens.
+              aria-disabled={translation.status === 'loading' || undefined}
+              onClick={() => {
+                setOpen(false)
+                buttonRef.current?.focus()
+                void translation.translate()
+              }}
+            >
+              <Languages size={18} aria-hidden="true" />
+              <span>
+                <span className={styles.menuItemTitle}>
+                  {translation.status === 'loading'
+                    ? t.post.translating
+                    : t.post.translate}
+                </span>
+                <span className={styles.menuItemHint}>
+                  {t.post.translateHint}
+                </span>
+              </span>
+            </button>
+          )}
           <button
-            ref={firstItemRef}
+            ref={translation.canTranslate ? undefined : firstItemRef}
             type="button"
             role="menuitem"
             className={styles.menuItem}
@@ -196,7 +224,7 @@ function MoreMenu() {
  */
 export function PostHeader() {
   const { article } = usePost()
-  // "Not interested" is the menu's only option and needs an account, so signed out there is no ⋯ menu.
+  // Both options ("Translate" and "Not interested") need an account, so signed out there is no ⋯ menu.
   const signedIn = useSignedIn()
   return (
     <header className={styles.header}>

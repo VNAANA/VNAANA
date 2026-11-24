@@ -37,6 +37,8 @@ export type Article = {
   scope?: NewsScope
   location?: string // "Eindhoven"
   feedReason: FeedReason
+  /** Set when the whole post (story text and description) is shown translated into this language. */
+  translatedInto?: 'en' | 'nl'
   image?: { src: string; alt: string }
   title: string
   summary: string

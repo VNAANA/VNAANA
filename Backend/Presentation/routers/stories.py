@@ -39,6 +39,8 @@ def get_story_articles(
 @router.get("", response_model=list[StoryCardRead])
 def list_stories(
     service: StoryServiceDep,
+    users: UserServiceDep,
+    subject: OptionalSubject,
     status_filter: StoryStatus | None = Query(
         StoryStatus.published,
         alias="status",
@@ -56,12 +58,15 @@ def list_stories(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
+    """Signed in: stories the user translated earlier are shown translated
+    (see POST /stories/{id}/translation). Signed out: the original stories."""
     return service.list_stories(
         status=status_filter,
         tag_ids=tag_id,
         q=q,
         limit=limit,
         offset=offset,
+        language=users.get_preferred_language(subject),
     )
 
 
@@ -76,10 +81,10 @@ def get_for_you(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
-    """The personal feed in the user's profile language. Translation problems
-    never fail the feed: untranslated stories are returned as they are."""
+    """The personal feed. Stories already translated into the user's profile
+    language are shown translated; the rest stay in the original language."""
     user = users.get_authenticated_user(subject)
-    return stories.translate_feed(
+    return stories.with_feed_translations(
         stories.with_cards(
             service.get_feed(
                 user.id,
@@ -105,25 +110,38 @@ def create_story(
     )
 
 
-@router.get(
-    "/{story_id}",
-    response_model=StoryRead,
-    responses={
-        503: {
-            "description": "The story needed translating and the translation service failed"
-        },
-    },
-)
+@router.get("/{story_id}", response_model=StoryRead)
 def get_story(
     story_id: uuid.UUID,
     service: StoryServiceDep,
     users: UserServiceDep,
     subject: OptionalSubject,
 ):
-    """Signed in: the story in the user's profile language, translated on
-    first request and cached after that. Signed out: the original story."""
+    """Signed in: the story with its saved translation into the user's
+    profile language, if it has one. Signed out: the original story."""
     language = users.get_preferred_language(subject)
     return service.get_story_in_language(story_id, language)
+
+
+@router.post(
+    "/{story_id}/translation",
+    response_model=StoryCardRead,
+    responses={
+        503: {"description": "The translation service failed; nothing was saved"},
+    },
+)
+def translate_story(
+    story_id: uuid.UUID,
+    service: StoryServiceDep,
+    users: UserServiceDep,
+    subject: AuthenticatedSubject,
+):
+    """The post's Translate button: translates the story (title, summary,
+    context) and its lead article's description into the user's profile
+    language, saves it, and returns the translated card. Text that was
+    translated before is not sent to Google again."""
+    user = users.get_authenticated_user(subject)
+    return service.translate_story(story_id, user.language)
 
 
 @router.patch("/{story_id}", response_model=StoryRead)

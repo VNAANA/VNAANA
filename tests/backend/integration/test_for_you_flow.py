@@ -188,8 +188,8 @@ class FakeTranslator:
         return [f"EN:{text}" for text in texts]
 
 
-def test_an_english_user_gets_the_feed_translated_and_cached(client, stories, db):
-    from Backend.Dal.models import Article, Provider, StoryArticle
+def test_an_english_user_translates_a_post_and_the_feed_shows_it(client, stories, db):
+    from Backend.Dal.models import Article, Provider, StoryArticle, StoryTranslation
     from Backend.main import app
     from Backend.Presentation.dependencies import get_translator
 
@@ -217,26 +217,50 @@ def test_an_english_user_gets_the_feed_translated_and_cached(client, stories, db
     tags = {tag["name"]: tag["id"] for tag in client.get("/tags").json()}
     client.put(f"/users/{user_id}/tags", json={"tag_ids": [tags["Technology"]]}).raise_for_status()
 
+    # Loading the feed never translates: everything is still Dutch.
     body = feed(client)
-    assert titles(body)[0] == "EN:Technology story"
-    lead = body["stories"][0]["story"]["lead_article"]
-    assert lead["description"] == "EN:Beschrijving"
-    # Every story of the page went to Google in a single call.
-    assert len(translator.calls) == 1
+    assert titles(body)[0] == "Technology story"
+    assert body["stories"][0]["story"]["translated_into"] is None
+    assert translator.calls == []
 
-    # Loading the feed again comes from the cache, even with Google down.
+    # The Translate button: the story's text and the lead article's
+    # description go to Google in one call and come back translated.
+    response = client.post(f"/stories/{stories['Technology']}/translation")
+    assert response.status_code == 200, response.text
+    card = response.json()
+    assert card["title"] == "EN:Technology story"
+    assert card["lead_article"]["description"] == "EN:Beschrijving"
+    assert card["translated_into"] == "en"
+    assert translator.calls == [["Technology story", "Beschrijving"]]
+
+    # Saved in story_translations, description included.
+    saved = db.get(StoryTranslation, (stories["Technology"], "en"))
+    db.refresh(saved)
+    assert (saved.title, saved.description) == ("EN:Technology story", "EN:Beschrijving")
+
+    # From now on the feed shows the saved translation, even with Google down;
+    # the stories nobody translated stay Dutch.
     translator.fail = True
     body = feed(client)
     assert titles(body)[0] == "EN:Technology story"
     assert body["stories"][0]["story"]["lead_article"]["description"] == "EN:Beschrijving"
+    assert body["stories"][0]["story"]["translated_into"] == "en"
+    assert "Sports story" in titles(body)
+    # The general story list (Explore) shows it too.
+    listed = {story["id"]: story for story in client.get("/stories").json()}
+    assert listed[str(stories["Technology"])]["title"] == "EN:Technology story"
     assert len(translator.calls) == 1
 
-    # A story that changed can't be translated now: it falls back to the
-    # original instead of failing the whole feed.
+    # Translate while Google is down: a 503 and nothing changes.
+    sports = client.post(f"/stories/{stories['Sports']}/translation")
+    assert sports.status_code == 503
+    assert db.get(StoryTranslation, (stories["Sports"], "en")) is None
+
+    # A story that changed after translating shows its new Dutch text again
+    # instead of an outdated translation.
     db.get(Story, stories["Technology"]).title = "Nieuw verhaal"
     db.get(Story, stories["Technology"]).last_updated_at = datetime.now(timezone.utc) + timedelta(minutes=5)
     db.commit()
     body = feed(client)
     assert body["status"] == "available"
     assert "Nieuw verhaal" in titles(body)
-    assert len(translator.calls) == 2

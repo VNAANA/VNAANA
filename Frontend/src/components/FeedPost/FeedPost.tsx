@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { CircleAlert, LoaderCircle } from 'lucide-react'
 import { useCarousel } from '../../hooks/useCarousel'
 import { useNovaChat } from '../../hooks/useNovaChat'
 import { useReaction } from '../../hooks/useReaction'
@@ -19,12 +20,42 @@ import {
   WhyPart,
 } from './sections/Parts'
 import { usePostActions } from './usePostActions'
+import { usePostTranslation } from './usePostTranslation'
+import type { TranslationStatus } from './usePostTranslation'
 import styles from './FeedPost.module.css'
 
 type Props = {
   article: Article
   /** Called when the user opens the article (moves past part 1, reads more or asks Nova). */
   onOpened: (articleId: string) => void
+}
+
+/*
+ * "Translating…" while Translate runs, or why it failed. The live region is
+ * always there, so screen readers announce the text when it appears.
+ */
+function TranslationNotice({ status }: { status: TranslationStatus }) {
+  const { t } = useStrings()
+  return (
+    <p className={styles.translationNotice} role="status">
+      {status === 'loading' && (
+        <>
+          <LoaderCircle
+            size={16}
+            className={styles.spinner}
+            aria-hidden="true"
+          />
+          {t.post.translating}
+        </>
+      )}
+      {status === 'failed' && (
+        <>
+          <CircleAlert size={16} aria-hidden="true" />
+          {t.post.translateFailed}
+        </>
+      )}
+    </p>
+  )
 }
 
 const PART_ELEMENTS: Record<PartKey, ReactNode> = {
@@ -42,8 +73,11 @@ const PART_ELEMENTS: Record<PartKey, ReactNode> = {
  * summary before the image (they swipe away together), progress dots, then
  * heart / share / Ask Nova.
  */
-export function FeedPost({ article, onOpened }: Props) {
+export function FeedPost({ article: loaded, onOpened }: Props) {
   const { t } = useStrings()
+  // Once the user pressed Translate, the translated post replaces the loaded one.
+  const translation = usePostTranslation(loaded)
+  const article = translation.article
   const parts = getParts(article)
   const partLabels = parts.map((part) => t.post.parts[part])
   const carousel = useCarousel(parts.length)
@@ -131,6 +165,7 @@ export function FeedPost({ article, onOpened }: Props) {
         article,
         carousel,
         actions,
+        translation,
         chat,
         composerFocusRequest,
         titleId,
@@ -142,11 +177,17 @@ export function FeedPost({ article, onOpened }: Props) {
         ref={postRef}
         className={styles.post}
         aria-labelledby={titleId}
+        aria-busy={translation.status === 'loading' || undefined}
         tabIndex={-1}
       >
         <PostHeader />
+        <TranslationNotice status={translation.status} />
         <PostCarousel
-          className={styles.carousel}
+          className={
+            translation.status === 'loading'
+              ? `${styles.carousel} ${styles.translating}`
+              : styles.carousel
+          }
           // Room for the "1 / 3" pill above the text and the Why / Read more panels
           partPadding={{ top: 52 }}
           parts={parts.map((part) => PART_ELEMENTS[part])}

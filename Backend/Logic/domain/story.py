@@ -26,6 +26,9 @@ class Story:
     last_updated_at: datetime
     img_url: str | None = None
     articles_count: int = 0
+    # Set when all of the story's text is shown in this language (see
+    # StoryService). None means the original Dutch, or only partly translated.
+    translated_into: str | None = None
 
 
 @dataclass
