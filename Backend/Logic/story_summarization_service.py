@@ -39,6 +39,33 @@ def build_story_summary_prompt(title: str, sources: list[dict]) -> str:
     return "\n\n".join((instruction, f"STORY TITLE: {title}", *blocks))
 
 
+def story_summary_sources(story: StoryDetails) -> tuple[list, list[dict]]:
+    links = sorted(
+        story.articles,
+        key=lambda link: (
+            link.article.published_at is None,
+            link.article.published_at,
+            str(link.article.id),
+        ),
+    )
+    sources = [
+        {
+            "article_id": str(link.article.id),
+            "title": link.article.title,
+            "publisher": link.article.provider.name,
+            "published_at": (
+                link.article.published_at.isoformat()
+                if link.article.published_at
+                else None
+            ),
+            "is_primary": link.is_primary,
+            "body": link.article.content or "",
+        }
+        for link in links
+    ]
+    return links, sources
+
+
 class StorySummarizationService:
     def __init__(
         self, generate: Callable[[str], dict], provider: str, model: str, settings: dict
@@ -63,29 +90,7 @@ class StorySummarizationService:
         if not story.title.strip() or not story.articles:
             return dict(record, reason="missing_title_or_articles")
 
-        links = sorted(
-            story.articles,
-            key=lambda link: (
-                link.article.published_at is None,
-                link.article.published_at,
-                str(link.article.id),
-            ),
-        )
-        sources = [
-            {
-                "article_id": str(link.article.id),
-                "title": link.article.title,
-                "publisher": link.article.provider.name,
-                "published_at": (
-                    link.article.published_at.isoformat()
-                    if link.article.published_at
-                    else None
-                ),
-                "is_primary": link.is_primary,
-                "body": link.article.content or "",
-            }
-            for link in links
-        ]
+        links, sources = story_summary_sources(story)
         record.update(
             articles=[
                 {key: value for key, value in source.items() if key != "body"}
@@ -150,6 +155,8 @@ class StorySummarizationService:
                 record.update(status="success", summary=summary.strip())
         except AIModelError as exc:
             record.update(reason="provider_error", error=str(exc))
+            if getattr(exc, "status_code", None) is not None:
+                record["provider_http_status"] = exc.status_code
         finally:
             record["elapsed_seconds"] = round(time.perf_counter() - started, 6)
         return record

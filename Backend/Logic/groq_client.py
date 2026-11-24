@@ -10,6 +10,12 @@ GROQ_SUMMARY_OPTIONS = {
 }
 
 
+class GroqRequestError(AIModelError):
+    def __init__(self, status_code: int):
+        super().__init__(f"Groq request failed (HTTP {status_code})")
+        self.status_code = status_code
+
+
 class GroqClient:
     def __init__(self, api_key: str, timeout_seconds: int = 90):
         self.api_key = api_key
@@ -42,9 +48,7 @@ class GroqClient:
                 },
             }
         except httpx.HTTPStatusError as exc:
-            raise AIModelError(
-                f"Groq request failed (HTTP {exc.response.status_code})"
-            ) from None
+            raise GroqRequestError(exc.response.status_code) from None
         except (
             httpx.HTTPError,
             ValueError,

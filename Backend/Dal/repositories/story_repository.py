@@ -7,11 +7,14 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session, selectinload
 
+from Backend.Dal.models import (
+    Article as ArticleModel,
+)
 from Backend.Dal.models import (
     Story as StoryModel,
 )
@@ -271,6 +274,45 @@ class StoryRepository(StoryRepositoryPort):
         self.db.flush()
 
         return self._to_domain(story_model)
+
+    def list_summary_candidate_ids(
+        self, *, limit: int, excluded_ids: set[uuid.UUID]
+    ) -> list[uuid.UUID]:
+        links = select(StoryArticleModel.article_id).where(
+            StoryArticleModel.story_id == StoryModel.id
+        )
+        missing_body = links.join(
+            ArticleModel, StoryArticleModel.article_id == ArticleModel.id
+        ).where(
+            ~func.coalesce(ArticleModel.content, "").regexp_match(r"[^[:space:]]")
+        )
+        stmt = (
+            select(StoryModel.id)
+            .where(
+                StoryModel.status == StoryStatus.published,
+                ~func.coalesce(StoryModel.summary, "").regexp_match(r"[^[:space:]]"),
+                func.coalesce(StoryModel.title, "").regexp_match(r"[^[:space:]]"),
+                exists(links),
+                ~exists(missing_body),
+                StoryModel.id.not_in(sorted(excluded_ids)),
+            )
+            .order_by(StoryModel.first_published_at.asc().nulls_last(), StoryModel.id)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt))
+
+    def get_for_summary_publication(self, story_id: uuid.UUID) -> StoryDetails | None:
+        if self.db.get_bind().dialect.name != "postgresql":
+            raise RuntimeError("Summary publication requires PostgreSQL")
+
+        # This lock protects Story fields. Independent Article and link edits
+        # can still race with the evidence check.
+        locked_id = self.db.scalar(
+            select(StoryModel.id)
+            .where(StoryModel.id == story_id)
+            .with_for_update(nowait=True)
+        )
+        return self.get(locked_id) if locked_id is not None else None
 
     # ---- story_tags ----
 

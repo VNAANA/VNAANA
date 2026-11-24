@@ -1,7 +1,10 @@
 import argparse
+import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from uuid import UUID
 
 from sqlalchemy import text
@@ -20,7 +23,11 @@ from Backend.Logic.groq_client import (
 )
 from Backend.Logic.ollama_client import STORY_SUMMARY_OPTIONS, OllamaClient
 from Backend.Logic.story_service import StoryService
-from Backend.Logic.story_summarization_service import StorySummarizationService
+from Backend.Logic.story_summarization_service import (
+    StorySummarizationService,
+    build_story_summary_prompt,
+    story_summary_sources,
+)
 
 RESULTS = (
     Path(__file__).resolve().parents[2]
@@ -31,20 +38,23 @@ RESULTS = (
 MAX_STORIES = 10
 
 
+def open_read_only(db) -> None:
+    if db.get_bind().dialect.name != "postgresql":
+        raise RuntimeError("Story summarization requires PostgreSQL")
+    db.connection(
+        execution_options={
+            "isolation_level": "REPEATABLE READ",
+            "postgresql_readonly": True,
+        }
+    )
+    if db.scalar(text("SELECT current_setting('transaction_read_only')")) != "on":
+        raise RuntimeError("Could not confirm a read-only transaction")
+
+
 def read_story(story_id: UUID, session_factory) -> StoryDetails:
     with session_factory() as db:
         try:
-            if db.get_bind().dialect.name != "postgresql":
-                raise RuntimeError("The pilot requires read-only PostgreSQL access")
-            db.connection(
-                execution_options={
-                    "isolation_level": "REPEATABLE READ",
-                    "postgresql_readonly": True,
-                }
-            )
-            read_only = db.scalar(text("SELECT current_setting('transaction_read_only')"))
-            if read_only != "on":
-                raise RuntimeError("Could not confirm a read-only transaction")
+            open_read_only(db)
             story_service = StoryService(
                 StoryRepository(db), ArticleRepository(db), TagRepository(db)
             )
@@ -52,6 +62,106 @@ def read_story(story_id: UUID, session_factory) -> StoryDetails:
             if not isinstance(story, StoryDetails):
                 raise RuntimeError("Story retrieval did not include linked Articles")
             return story
+        finally:
+            db.rollback()
+
+
+def read_result(path: Path) -> dict | None:
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(record, dict):
+            raise ValueError("Invalid result")
+        return record
+    except (OSError, ValueError):
+        print(f"Invalid or unreadable result: {path.name}")
+        return None
+
+
+def iter_results(directory: Path):
+    for path in sorted(directory.glob("*.json")):
+        if path.name.endswith(".reconciliation.json"):
+            continue
+        record = read_result(path)
+        try:
+            UUID(record["story_id"])
+        except (KeyError, TypeError, ValueError, AttributeError):
+            if record is not None:
+                print(f"Invalid Story ID in result: {path.name}")
+            continue
+        if record.get("status") not in ("success", "skipped", "failed"):
+            print(f"Invalid generation status in result: {path.name}")
+            continue
+        yield path, record
+
+
+def select_backfill_ids(limit: int, session_factory, service: StorySummarizationService) -> list[UUID]:
+    latest = {}
+    uncertain = []
+    excluded = set()
+    for path, record in iter_results(RESULTS):
+        story_id = UUID(record["story_id"])
+        status = record.get("database_status")
+        if record.get("backfill"):
+            latest[story_id] = record
+        if status == "saved" and record.get("database_verification") == "matched":
+            excluded.add(story_id)
+        elif status == "pending" or (
+            status in {"saved", "failed"} and record.get("status") == "success"
+        ):
+            uncertain.append((story_id, path, record))
+
+    with session_factory() as db:
+        try:
+            open_read_only(db)
+            repository = StoryRepository(db)
+            for story_id, path, record in uncertain:
+                reconciliation = path.with_suffix(".reconciliation.json")
+                if reconciliation.exists():
+                    previous = read_result(reconciliation)
+                    if not previous or previous.get("outcome") != "not_stored":
+                        excluded.add(story_id)
+                    continue
+                story = repository.get(story_id)
+                stored = story.summary if story is not None else None
+                generated = record.get("summary")
+                if stored and stored.strip():
+                    outcome = "confirmed_saved" if stored == generated else "different_summary"
+                    excluded.add(story_id)
+                else:
+                    outcome = "not_stored"
+                write_result(reconciliation, {
+                    "story_id": str(story_id), "result_file": path.name, "outcome": outcome,
+                    "checked_at_utc": datetime.now(timezone.utc).isoformat(),
+                })
+                print(f"{story_id}: previous save reconciled ({outcome})")
+
+            for story_id, record in latest.items():
+                if (
+                    story_id not in excluded
+                    and record.get("reason") in {"model_context_limit", "estimated_groq_token_limit"}
+                    and record.get("provider") == service.provider
+                    and record.get("model") == service.model
+                    and isinstance(record.get("settings"), dict)
+                    and all(
+                        record["settings"].get(key) == service.settings.get(key)
+                        for key in ("num_ctx", "token_budget", "max_completion_tokens")
+                    )
+                ):
+                    story = repository.get(story_id)
+                    if isinstance(story, StoryDetails):
+                        _, sources = story_summary_sources(story)
+                        prompt = build_story_summary_prompt(story.title, sources)
+                        if hashlib.sha256(prompt.encode("utf-8")).hexdigest() == record.get("input_sha256"):
+                            excluded.add(story_id)
+
+            selected = repository.list_summary_candidate_ids(
+                limit=limit, excluded_ids=excluded | latest.keys()
+            )
+            if len(selected) < limit:
+                selected += repository.list_summary_candidate_ids(
+                    limit=limit - len(selected), excluded_ids=excluded | set(selected)
+                )
+            return selected
         finally:
             db.rollback()
 
@@ -92,10 +202,12 @@ def build_service(settings: Settings, provider: str) -> StorySummarizationServic
 
 
 def summarize_stories(
-    story_ids: list[UUID], service: StorySummarizationService, session_factory
+    story_ids: list[UUID], service: StorySummarizationService, session_factory,
+    *, save: bool = False, backfill: bool = False,
 ) -> int:
     RESULTS.mkdir(parents=True, exist_ok=True)
     failures = 0
+    consecutive_provider_errors = 0
     for story_id in dict.fromkeys(story_ids):
         try:
             story = read_story(story_id, session_factory)
@@ -104,8 +216,27 @@ def summarize_stories(
         except (SQLAlchemyError, RuntimeError):
             record = {"status": "failed", "reason": "database_read_failed"}
         else:
-            record = service.candidate(story)
+            if story.summary and story.summary.strip():
+                record = {"status": "skipped", "reason": "already_summarized"}
+            else:
+                record = service.candidate(story)
 
+        stop_reason = None
+        if record.get("reason") == "provider_error":
+            code = record.get("provider_http_status")
+            if code in {401, 402, 403, 429}:
+                stop_reason = f"HTTP {code}"
+            elif code not in {400, 413, 422}:
+                consecutive_provider_errors += 1
+                if consecutive_provider_errors >= 2:
+                    stop_reason = "repeated provider errors"
+        elif record["status"] == "success":
+            consecutive_provider_errors = 0
+
+        should_save = save and record["status"] == "success"
+        record["database_status"] = (
+            "pending" if should_save else "skipped" if save else "not_requested"
+        )
         stamp = datetime.now(timezone.utc)
         record.update(
             story_id=str(story_id),
@@ -114,23 +245,103 @@ def summarize_stories(
             model=service.model,
             settings=service.settings,
         )
+        if backfill:
+            record["backfill"] = True
         path = RESULTS / f"{stamp:%Y%m%dT%H%M%S%fZ}_{story_id}_{service.provider}.json"
-        with path.open("x", encoding="utf-8") as file:
-            json.dump(record, file, ensure_ascii=False, indent=2)
-            file.write("\n")
-        reason = record.get("reason", "candidate saved")
-        print(f"{story_id}: {record['status']} ({reason}) – {path}")
-        failures += record["status"] == "failed"
+        try:
+            write_result(path, record)
+        except OSError:
+            print(f"{story_id}: failed (local_result_write_failed)")
+            failures += 1
+            if stop_reason:
+                print(f"Stopped before remaining Stories ({stop_reason}).")
+                break
+            continue
+
+        if should_save:
+            outcome = save_summary(story_id, record, session_factory)
+            record["database_status"] = outcome if outcome in {"saved", "failed"} else "skipped"
+            record["database_reason"] = outcome
+            if backfill and outcome == "saved":
+                try:
+                    stored = read_story(story_id, session_factory)
+                except (NotFoundError, SQLAlchemyError, RuntimeError):
+                    record["database_verification"] = "read_failed"
+                else:
+                    record["database_verification"] = (
+                        "matched" if stored.summary == record["summary"] else "mismatch"
+                    )
+            # Preserve the original result if writing the final status fails.
+            try:
+                write_result(path, record, replace=True)
+            except OSError:
+                print(f"{story_id}: failed (local_status_write_failed, database outcome: {outcome})")
+                failures += 1
+                continue
+
+        reason = record.get("database_reason", record.get("reason", "candidate saved"))
+        verification = record.get("database_verification")
+        if verification and verification != "matched":
+            reason = verification
+        print(f"{story_id}: {record['status']} / {record['database_status']} ({reason}) – {path}")
+        failures += (
+            record["status"] == "failed" or record["database_status"] == "failed"
+            or verification in {"read_failed", "mismatch"}
+        )
+        if stop_reason:
+            print(f"Stopped before remaining Stories ({stop_reason}).")
+            break
     return failures
+
+
+def write_result(path: Path, record: dict, *, replace: bool = False) -> None:
+    contents = json.dumps(record, ensure_ascii=False, indent=2) + "\n"
+    temporary = None
+    try:
+        with NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, suffix=".tmp", delete=False
+        ) as file:
+            temporary = Path(file.name)
+            file.write(contents)
+            file.flush()
+            os.fsync(file.fileno())
+        if replace:
+            temporary.replace(path)
+        else:
+            os.link(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def save_summary(story_id: UUID, record: dict, session_factory) -> str:
+    try:
+        with session_factory() as db, db.begin():
+            db.connection(execution_options={"isolation_level": "READ COMMITTED"})
+            stories = StoryService(
+                StoryRepository(db), ArticleRepository(db), TagRepository(db)
+            )
+            outcome = stories.save_generated_summary(
+                story_id, record["summary"], record["input_sha256"]
+            )
+    except (SQLAlchemyError, RuntimeError):
+        return "failed"
+    return outcome
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate local candidates for explicit Story IDs."
     )
-    parser.add_argument("story_ids", type=UUID, nargs="+")
+    parser.add_argument("story_ids", type=UUID, nargs="*")
+    parser.add_argument("--backfill", type=int, metavar="LIMIT")
     parser.add_argument("--provider", choices=("groq", "ollama"))
+    parser.add_argument("--save", action="store_true", help="Save valid summaries to the database.")
     args = parser.parse_args()
+    if bool(args.story_ids) == (args.backfill is not None):
+        parser.error("Pass explicit Story IDs or --backfill LIMIT")
+    if args.backfill is not None and (not 1 <= args.backfill <= MAX_STORIES or not args.save):
+        parser.error(f"--backfill requires --save and a limit from 1 to {MAX_STORIES}")
     if len(args.story_ids) > MAX_STORIES:
         parser.error(f"Pass at most {MAX_STORIES} Story IDs")
     settings = get_settings()
@@ -142,7 +353,18 @@ def main() -> int:
 
     from Backend.database import SessionLocal
 
-    return int(bool(summarize_stories(args.story_ids, service, SessionLocal)))
+    story_ids = args.story_ids
+    if args.backfill is not None:
+        try:
+            story_ids = select_backfill_ids(args.backfill, SessionLocal, service)
+        except (OSError, ValueError, KeyError, AttributeError, SQLAlchemyError, RuntimeError) as exc:
+            parser.exit(1, f"Backfill selection failed ({type(exc).__name__}).\n")
+        if not story_ids:
+            print("No unattempted eligible Stories found.")
+            return 0
+    return int(bool(summarize_stories(
+        story_ids, service, SessionLocal, save=args.save, backfill=args.backfill is not None
+    )))
 
 
 if __name__ == "__main__":
