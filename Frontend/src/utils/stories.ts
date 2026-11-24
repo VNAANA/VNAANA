@@ -1,8 +1,9 @@
 /*
  * Stories from the backend, turned into the Article shape the feed uses.
- * A story's text (title, context, image) comes from the stories table; the
- * description, publisher and link come from its lead article (the primary one).
- * The story summary isn't shown yet.
+ * A story's text (title, summary, context, image) comes from the stories table,
+ * or its saved translation; the description, publisher and link come from its
+ * lead article (the primary one). The description is on the post's first part,
+ * the story summary on the "Why it matters" part.
  */
 import type { Article, FeedReason, NewsScope } from '../types'
 import { apiUrl } from './api'
@@ -13,6 +14,11 @@ import { supabase } from './supabase'
 export type ApiStory = {
   id: string
   title: string
+  /**
+   * The story's own summary; null (or missing) until one is written. When the
+   * user translated the story, the backend sends the saved translation instead.
+   */
+  summary?: string | null
   context: string | null
   img_url: string | null
   articles_count: number
@@ -172,6 +178,7 @@ export function toArticle(
 ): Article {
   const lead = story.lead_article
   const description = htmlToText(lead?.description ?? null)
+  const whySummary = storySummary(story)
   const context = toParagraphs(story.context)
   const imageUrl = story.img_url?.trim() || lead?.img_url?.trim()
   const publisherName = lead?.provider.name ?? 'VNAANA'
@@ -206,6 +213,7 @@ export function toArticle(
     ...(imageUrl ? { image: { src: imageUrl, alt: story.title } } : {}),
     summary: shorten(description),
     context: context.length > 0 ? context : undefined,
+    ...(whySummary.length > 0 ? { whySummary } : {}),
     aiNote: { sourceCount: Math.max(1, story.articles_count) },
     readMore: {
       url: lead?.canonical_url ?? '',
@@ -213,6 +221,18 @@ export function toArticle(
       perspectives: [],
     },
   }
+}
+
+/*
+ * The text for the "Why it matters" part: the story's summary (or its saved
+ * translation), one string per paragraph. Empty when the story has none yet;
+ * the part then shows its placeholder.
+ */
+export function storySummary(story: ApiStory): string[] {
+  return (story.summary ?? '')
+    .split(/\n+/)
+    .map((paragraph) => htmlToText(paragraph))
+    .filter((paragraph) => paragraph.length > 0)
 }
 
 /* When a story first went out; stories that were never published use their last update. */

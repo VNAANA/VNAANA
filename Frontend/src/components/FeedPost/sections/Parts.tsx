@@ -55,10 +55,30 @@ export function WhatHappenedPart() {
 export function WhyPart() {
   const { article } = usePost()
   const { t } = useStrings()
-  const { why, aiNote } = article
+  const { why, whySummary, aiNote } = article
   const uncertainty = aiNote.uncertainty ?? t.post.why.notCompared
 
-  // No analysis from Nova yet: point to where the reader can find the article itself.
+  // No structured analysis, but the story has a summary (or its translation): show it.
+  if (!why && whySummary) {
+    return (
+      <div className={styles.part}>
+        <p className={styles.eyebrow}>{t.post.parts.why}</p>
+        <div className={styles.articleBody}>
+          {whySummary.map((paragraph, i) => (
+            <p key={i}>{paragraph}</p>
+          ))}
+        </div>
+        <p className={styles.aiNote}>
+          <Info size={16} aria-hidden="true" />
+          <span>
+            {t.post.why.aiSummary(aiNote.sourceCount)} · {uncertainty}
+          </span>
+        </p>
+      </div>
+    )
+  }
+
+  // Nothing from Nova yet: point to where the reader can find the article itself.
   if (!why) {
     return (
       <div className={styles.part}>

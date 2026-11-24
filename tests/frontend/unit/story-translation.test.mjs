@@ -108,6 +108,29 @@ test('the translated story becomes the post, with its translated description', a
   assert.equal(article.feedReason, 'dontMiss')
 })
 
+test('the story summary goes to the Why it matters part, one string per paragraph', () => {
+  const article = stories.toArticle(apiStory({ summary: '  First point.\n\nSecond point.  ' }))
+
+  assert.deepEqual(article.whySummary, ['First point.', 'Second point.'])
+  // The first part keeps the lead article's description.
+  assert.equal(article.summary, 'Description')
+})
+
+test('without a story summary, Why it matters has no text and shows its placeholder', () => {
+  assert.equal(stories.toArticle(apiStory({ summary: null })).whySummary, undefined)
+  assert.equal(stories.toArticle(apiStory({ summary: '  \n ' })).whySummary, undefined)
+  // An older backend without the field.
+  assert.equal(stories.toArticle(apiStory({ summary: undefined })).whySummary, undefined)
+})
+
+test('a translated summary from the backend is shown like the original', async () => {
+  respond([200, apiStory({ summary: 'Translated summary', translated_into: 'en' })])
+
+  const article = stories.toArticle(await stories.translateStory('story-1'))
+
+  assert.deepEqual(article.whySummary, ['Translated summary'])
+})
+
 test('a story nobody translated has no translatedInto', () => {
   assert.equal(stories.toArticle(apiStory({ translated_into: null })).translatedInto, undefined)
   // An older backend without the field, or a language the app doesn't know.
