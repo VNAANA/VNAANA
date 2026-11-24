@@ -1,12 +1,16 @@
 /*
- * What the signed-in user does with stories, stored on the backend so the
- * For You ranking can learn from it (Backend/Logic/Algorithm/scoring.py):
+ * What the signed-in user does with stories, stored on the backend as
+ * engagement events (POST /users/{id}/events) so the For You ranking can
+ * learn from it (Backend/Logic/Algorithm/scoring.py). Nothing goes into
+ * story_reactions.
  *
  * - reactions: like (+2 for the story's tags) and dislike (−5). "Not
- *   interested" is a dislike. GET/PUT/DELETE /users/{id}/reactions[/{story}]
- * - events:    share (+5) when a share or link copy succeeds, and
- *              read_complete (+1) once the reader moves past a post's first part.
- *              POST /users/{id}/events
+ *              interested" is a dislike; tapping again sends reaction_removed.
+ *              Only a story's latest one counts (Algorithm/reactions.py).
+ *              GET /users/{id}/reactions gives back the current ones, worked
+ *              out from those events.
+ * - share (+5) when a share or link copy succeeds, and
+ *   read_complete (+1) once the reader moves past a post's first part.
  *
  * Only for a signed-in user with analytics consent (the backend refuses
  * anything else). Signed out, nothing is stored and the buttons aren't offered.
@@ -18,6 +22,7 @@ import { readTopicState, subscribeTopicState } from './topicPreferences'
 
 export type Reaction = 'like' | 'dislike'
 export type EventType = 'share' | 'read_complete'
+type ReactionEvent = Reaction | 'reaction_removed'
 
 // ---------- Who may be tracked ----------
 
@@ -112,11 +117,7 @@ export function setReaction(
     if (loadedFor !== userId) return
     const want = shown.get(storyId) ?? null
     if (want === (stored.get(storyId) ?? null)) return
-    if (want)
-      await call('PUT', `/users/${userId}/reactions/${storyId}`, {
-        reaction: want,
-      })
-    else await call('DELETE', `/users/${userId}/reactions/${storyId}`)
+    await sendEvent(userId, storyId, want ?? 'reaction_removed')
     if (loadedFor !== userId) return
     if (want) stored.set(storyId, want)
     else stored.delete(storyId)
@@ -158,6 +159,21 @@ export function sessionId() {
 // A story counts as read once per page load, so going back and forth doesn't add up.
 const readStories = new Set<string>()
 
+function sendEvent(
+  userId: string,
+  storyId: string,
+  eventType: EventType | ReactionEvent,
+  metadata?: Record<string, unknown>,
+) {
+  return call('POST', `/users/${userId}/events`, {
+    session_id: sessionId(),
+    story_id: storyId,
+    event_type: eventType,
+    occurred_at: new Date().toISOString(),
+    ...(metadata ? { metadata } : {}),
+  })
+}
+
 /* Send one event. Never throws: tracking must not break reading or sharing. */
 export async function logEvent(
   storyId: string,
@@ -167,13 +183,7 @@ export async function logEvent(
   const userId = trackedUser()
   if (!userId) return false
   try {
-    await call('POST', `/users/${userId}/events`, {
-      session_id: sessionId(),
-      story_id: storyId,
-      event_type: eventType,
-      occurred_at: new Date().toISOString(),
-      ...(metadata ? { metadata } : {}),
-    })
+    await sendEvent(userId, storyId, eventType, metadata)
     return true
   } catch {
     return false

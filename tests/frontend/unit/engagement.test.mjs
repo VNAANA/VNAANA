@@ -4,8 +4,8 @@ import { createServer } from 'vite'
 import { fileURLToPath } from 'node:url'
 
 /*
- * Like / Not interested (dislike), share and read: what is sent to the
- * backend, and when nothing may be sent (signed out, no consent).
+ * Like / Not interested (dislike), share and read: all sent to the backend as
+ * engagement events, and when nothing may be sent (signed out, no consent).
  */
 
 const frontendRoot = fileURLToPath(new URL('../../../Frontend', import.meta.url))
@@ -99,29 +99,44 @@ test('signing in loads the user\'s reactions, so a liked heart is filled again',
   assert.equal(engagement.readReaction(OTHER), null)
 })
 
-test('like is shown straight away and stored with PUT', async () => {
+test('like is shown straight away and stored as a like event', async () => {
   signIn()
   const saving = engagement.setReaction(STORY, 'like')
   assert.equal(engagement.readReaction(STORY), 'like')
   assert.equal(await saving, true)
-  assert.deepEqual(writes(), [{
-    method: 'PUT', path: `/users/${USER}/reactions/${STORY}`, auth: 'Bearer token', body: { reaction: 'like' },
-  }])
+  const [event] = writes()
+  assert.equal(event.method, 'POST')
+  assert.equal(event.path, `/users/${USER}/events`)
+  assert.equal(event.auth, 'Bearer token')
+  assert.equal(event.body.event_type, 'like')
+  assert.equal(event.body.story_id, STORY)
+  assert.match(event.body.session_id, /^[0-9a-f-]{36}$/)
 })
 
-test('tapping like again removes it with DELETE', async () => {
+test('a reaction never touches the story reactions endpoints', async () => {
   signIn()
   await engagement.setReaction(STORY, 'like')
-  respond = () => new Response(null, { status: 204 })
-  assert.equal(await engagement.setReaction(STORY, null), true)
-  assert.equal(engagement.readReaction(STORY), null)
-  assert.deepEqual(writes().map((request) => request.method), ['PUT', 'DELETE'])
+  await engagement.setReaction(STORY, 'dislike')
+  await engagement.setReaction(STORY, null)
+  assert.equal(writes().length, 3)
+  for (const request of writes()) {
+    assert.equal(request.method, 'POST')
+    assert.equal(request.path, `/users/${USER}/events`)
+  }
 })
 
-test('"Not interested" is stored as a dislike', async () => {
+test('tapping like again sends reaction_removed', async () => {
+  signIn()
+  await engagement.setReaction(STORY, 'like')
+  assert.equal(await engagement.setReaction(STORY, null), true)
+  assert.equal(engagement.readReaction(STORY), null)
+  assert.deepEqual(writes().map((request) => request.body.event_type), ['like', 'reaction_removed'])
+})
+
+test('"Not interested" is stored as a dislike event', async () => {
   signIn()
   await engagement.setReaction(STORY, 'dislike')
-  assert.deepEqual(writes()[0].body, { reaction: 'dislike' })
+  assert.equal(writes()[0].body.event_type, 'dislike')
 })
 
 test('if storing fails, the button goes back to what the backend has', async () => {
@@ -133,7 +148,7 @@ test('if storing fails, the button goes back to what the backend has', async () 
 
 test('quick taps are sent one at a time and end on the last choice', async () => {
   signIn()
-  respond = (method) => new Response(method === 'DELETE' ? null : '{}', { status: method === 'DELETE' ? 204 : 200 })
+  respond = () => new Response('{}', { status: 201 })
   const first = engagement.setReaction(STORY, 'like')
   const second = engagement.setReaction(STORY, null)
   const third = engagement.setReaction(STORY, 'like')
@@ -141,7 +156,7 @@ test('quick taps are sent one at a time and end on the last choice', async () =>
   assert.equal(engagement.readReaction(STORY), 'like')
   // The last two cancel out while the first is still on its way, so only what's needed is sent.
   const sent = writes()
-  assert.equal(sent.at(-1)?.method, 'PUT')
+  assert.equal(sent.at(-1)?.body.event_type, 'like')
   assert.ok(sent.length <= 3)
 })
 

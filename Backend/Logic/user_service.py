@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from Backend.Logic.Algorithm.reactions import current_reactions
 from Backend.Logic.domain.engagement_event import EngagementEvent
 from Backend.Logic.domain.story_reaction import Reaction, StoryReaction
 from Backend.Logic.domain.user import User
@@ -15,7 +16,7 @@ from Backend.Logic.ports.story_repository import StoryRepository
 from Backend.Logic.ports.tag_repository import TagRepository
 from Backend.Logic.ports.user_repository import UserRepository
 
-# "Since the beginning": list_reactions_since with this returns every reaction.
+# "Since the beginning": list_events_since with this returns every event.
 _EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
 
@@ -221,12 +222,14 @@ class UserService:
     def list_reactions(self, user_id: uuid.UUID) -> list[StoryReaction]:
         """Every story the user currently likes or dislikes, so the app can show it again.
 
-        All of them, not only the last 30 days the algorithm counts: a story
-        liked long ago is still liked.
+        Worked out from the like / dislike / reaction_removed engagement
+        events (Algorithm/reactions.py), not from story_reactions. All of
+        them, not only the last 30 days the algorithm counts: a story liked
+        long ago is still liked.
         """
         self.get_user(user_id)
 
-        return self.algorithm.list_reactions_since(user_id, _EPOCH)
+        return current_reactions(self.algorithm.list_events_since(user_id, _EPOCH))
 
     def set_reaction(
         self,
