@@ -94,6 +94,50 @@ def iter_results(directory: Path):
         yield path, record
 
 
+def _reconcile_saves(repository, uncertain, excluded):
+    for story_id, path, record in uncertain:
+        reconciliation = path.with_suffix(".reconciliation.json")
+        if reconciliation.exists():
+            previous = read_result(reconciliation)
+            if not previous or previous.get("outcome") != "not_stored":
+                excluded.add(story_id)
+            continue
+        story = repository.get(story_id)
+        stored = story.summary if story is not None else None
+        generated = record.get("summary")
+        if stored and stored.strip():
+            outcome = "confirmed_saved" if stored == generated else "different_summary"
+            excluded.add(story_id)
+        else:
+            outcome = "not_stored"
+        write_result(reconciliation, {
+            "story_id": str(story_id), "result_file": path.name, "outcome": outcome,
+            "checked_at_utc": datetime.now(timezone.utc).isoformat(),
+        })
+        print(f"{story_id}: previous save reconciled ({outcome})")
+
+
+def _exclude_unchanged_input_limits(repository, latest, service, excluded):
+    for story_id, record in latest.items():
+        if (
+            story_id not in excluded
+            and record.get("reason") in {"model_context_limit", "estimated_groq_token_limit"}
+            and record.get("provider") == service.provider
+            and record.get("model") == service.model
+            and isinstance(record.get("settings"), dict)
+            and all(
+                record["settings"].get(key) == service.settings.get(key)
+                for key in ("num_ctx", "token_budget", "max_completion_tokens")
+            )
+        ):
+            story = repository.get(story_id)
+            if isinstance(story, StoryDetails):
+                _, sources = story_summary_sources(story)
+                prompt = build_story_summary_prompt(story.title, sources)
+                if hashlib.sha256(prompt.encode("utf-8")).hexdigest() == record.get("input_sha256"):
+                    excluded.add(story_id)
+
+
 def select_backfill_ids(limit: int, session_factory, service: StorySummarizationService) -> list[UUID]:
     latest = {}
     uncertain = []
@@ -114,45 +158,8 @@ def select_backfill_ids(limit: int, session_factory, service: StorySummarization
         try:
             open_read_only(db)
             repository = StoryRepository(db)
-            for story_id, path, record in uncertain:
-                reconciliation = path.with_suffix(".reconciliation.json")
-                if reconciliation.exists():
-                    previous = read_result(reconciliation)
-                    if not previous or previous.get("outcome") != "not_stored":
-                        excluded.add(story_id)
-                    continue
-                story = repository.get(story_id)
-                stored = story.summary if story is not None else None
-                generated = record.get("summary")
-                if stored and stored.strip():
-                    outcome = "confirmed_saved" if stored == generated else "different_summary"
-                    excluded.add(story_id)
-                else:
-                    outcome = "not_stored"
-                write_result(reconciliation, {
-                    "story_id": str(story_id), "result_file": path.name, "outcome": outcome,
-                    "checked_at_utc": datetime.now(timezone.utc).isoformat(),
-                })
-                print(f"{story_id}: previous save reconciled ({outcome})")
-
-            for story_id, record in latest.items():
-                if (
-                    story_id not in excluded
-                    and record.get("reason") in {"model_context_limit", "estimated_groq_token_limit"}
-                    and record.get("provider") == service.provider
-                    and record.get("model") == service.model
-                    and isinstance(record.get("settings"), dict)
-                    and all(
-                        record["settings"].get(key) == service.settings.get(key)
-                        for key in ("num_ctx", "token_budget", "max_completion_tokens")
-                    )
-                ):
-                    story = repository.get(story_id)
-                    if isinstance(story, StoryDetails):
-                        _, sources = story_summary_sources(story)
-                        prompt = build_story_summary_prompt(story.title, sources)
-                        if hashlib.sha256(prompt.encode("utf-8")).hexdigest() == record.get("input_sha256"):
-                            excluded.add(story_id)
+            _reconcile_saves(repository, uncertain, excluded)
+            _exclude_unchanged_input_limits(repository, latest, service, excluded)
 
             selected = repository.list_summary_candidate_ids(
                 limit=limit, excluded_ids=excluded | latest.keys()
@@ -209,89 +216,103 @@ def summarize_stories(
     failures = 0
     consecutive_provider_errors = 0
     for story_id in dict.fromkeys(story_ids):
-        try:
-            story = read_story(story_id, session_factory)
-        except NotFoundError:
-            record = {"status": "skipped", "reason": "story_not_found"}
-        except (SQLAlchemyError, RuntimeError):
-            record = {"status": "failed", "reason": "database_read_failed"}
-        else:
-            if story.summary and story.summary.strip():
-                record = {"status": "skipped", "reason": "already_summarized"}
-            else:
-                record = service.candidate(story)
-
-        stop_reason = None
-        if record.get("reason") == "provider_error":
-            code = record.get("provider_http_status")
-            if code in {401, 402, 403, 429}:
-                stop_reason = f"HTTP {code}"
-            elif code not in {400, 413, 422}:
-                consecutive_provider_errors += 1
-                if consecutive_provider_errors >= 2:
-                    stop_reason = "repeated provider errors"
-        elif record["status"] == "success":
-            consecutive_provider_errors = 0
-
-        should_save = save and record["status"] == "success"
-        record["database_status"] = (
-            "pending" if should_save else "skipped" if save else "not_requested"
+        record = _generate_candidate(story_id, service, session_factory)
+        consecutive_provider_errors, stop_reason = _provider_progress(
+            record, consecutive_provider_errors
         )
-        stamp = datetime.now(timezone.utc)
-        record.update(
-            story_id=str(story_id),
-            created_at_utc=stamp.isoformat(),
-            provider=service.provider,
-            model=service.model,
-            settings=service.settings,
-        )
-        if backfill:
-            record["backfill"] = True
-        path = RESULTS / f"{stamp:%Y%m%dT%H%M%S%fZ}_{story_id}_{service.provider}.json"
-        try:
-            write_result(path, record)
-        except OSError:
-            print(f"{story_id}: failed (local_result_write_failed)")
-            failures += 1
-            if stop_reason:
-                print(f"Stopped before remaining Stories ({stop_reason}).")
-                break
-            continue
-
-        if should_save:
-            outcome = save_summary(story_id, record, session_factory)
-            record["database_status"] = outcome if outcome in {"saved", "failed"} else "skipped"
-            record["database_reason"] = outcome
-            if backfill and outcome == "saved":
-                try:
-                    stored = read_story(story_id, session_factory)
-                except (NotFoundError, SQLAlchemyError, RuntimeError):
-                    record["database_verification"] = "read_failed"
-                else:
-                    record["database_verification"] = (
-                        "matched" if stored.summary == record["summary"] else "mismatch"
-                    )
-            # Preserve the original result if writing the final status fails.
-            try:
-                write_result(path, record, replace=True)
-            except OSError:
-                print(f"{story_id}: failed (local_status_write_failed, database outcome: {outcome})")
-                failures += 1
-                continue
-
-        reason = record.get("database_reason", record.get("reason", "candidate saved"))
-        verification = record.get("database_verification")
-        if verification and verification != "matched":
-            reason = verification
-        print(f"{story_id}: {record['status']} / {record['database_status']} ({reason}) – {path}")
-        failures += (
-            record["status"] == "failed" or record["database_status"] == "failed"
-            or verification in {"read_failed", "mismatch"}
+        failures += _record_story_result(
+            story_id, record, service, session_factory, save=save, backfill=backfill
         )
         if stop_reason:
             print(f"Stopped before remaining Stories ({stop_reason}).")
             break
     return failures
+
+
+def _generate_candidate(story_id, service, session_factory):
+    try:
+        story = read_story(story_id, session_factory)
+    except NotFoundError:
+        return {"status": "skipped", "reason": "story_not_found"}
+    except (SQLAlchemyError, RuntimeError):
+        return {"status": "failed", "reason": "database_read_failed"}
+    if story.summary and story.summary.strip():
+        return {"status": "skipped", "reason": "already_summarized"}
+    return service.candidate(story)
+
+
+def _provider_progress(record, consecutive_errors):
+    if record.get("reason") != "provider_error":
+        return (0 if record["status"] == "success" else consecutive_errors), None
+
+    code = record.get("provider_http_status")
+    if code in {401, 402, 403, 429}:
+        return consecutive_errors, f"HTTP {code}"
+    if code not in {400, 413, 422}:
+        consecutive_errors += 1
+        if consecutive_errors >= 2:
+            return consecutive_errors, "repeated provider errors"
+    return consecutive_errors, None
+
+
+def _save_and_verify(story_id, record, session_factory, *, backfill):
+    outcome = save_summary(story_id, record, session_factory)
+    record["database_status"] = outcome if outcome in {"saved", "failed"} else "skipped"
+    record["database_reason"] = outcome
+    if not backfill or outcome != "saved":
+        return outcome
+
+    try:
+        stored = read_story(story_id, session_factory)
+    except (NotFoundError, SQLAlchemyError, RuntimeError):
+        record["database_verification"] = "read_failed"
+    else:
+        record["database_verification"] = (
+            "matched" if stored.summary == record["summary"] else "mismatch"
+        )
+    return outcome
+
+
+def _record_story_result(story_id, record, service, session_factory, *, save, backfill):
+    should_save = save and record["status"] == "success"
+    record["database_status"] = (
+        "pending" if should_save else "skipped" if save else "not_requested"
+    )
+    stamp = datetime.now(timezone.utc)
+    record.update(
+        story_id=str(story_id),
+        created_at_utc=stamp.isoformat(),
+        provider=service.provider,
+        model=service.model,
+        settings=service.settings,
+    )
+    if backfill:
+        record["backfill"] = True
+    path = RESULTS / f"{stamp:%Y%m%dT%H%M%S%fZ}_{story_id}_{service.provider}.json"
+    try:
+        write_result(path, record)
+    except OSError:
+        print(f"{story_id}: failed (local_result_write_failed)")
+        return True
+
+    if should_save:
+        outcome = _save_and_verify(story_id, record, session_factory, backfill=backfill)
+        # Preserve the original result if writing the final status fails.
+        try:
+            write_result(path, record, replace=True)
+        except OSError:
+            print(f"{story_id}: failed (local_status_write_failed, database outcome: {outcome})")
+            return True
+
+    reason = record.get("database_reason", record.get("reason", "candidate saved"))
+    verification = record.get("database_verification")
+    if verification and verification != "matched":
+        reason = verification
+    print(f"{story_id}: {record['status']} / {record['database_status']} ({reason}) – {path}")
+    return (
+        record["status"] == "failed" or record["database_status"] == "failed"
+        or verification in {"read_failed", "mismatch"}
+    )
 
 
 def write_result(path: Path, record: dict, *, replace: bool = False) -> None:
