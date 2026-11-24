@@ -38,6 +38,13 @@
 }
 
 /* Error / empty message */
+.loadingMore {
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
 .message {
   display: grid;
   justify-items: center;
@@ -45,6 +52,22 @@
   padding: 48px 16px;
   text-align: center;
   color: var(--muted);
+}
+
+.messageActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* "Titles with “flood” in Sports" above the grid while searching */
+.searchSummary {
+  margin: -8px 0 -8px; /* sits closer to the filters and grid than the page's 24px gap */
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .button {

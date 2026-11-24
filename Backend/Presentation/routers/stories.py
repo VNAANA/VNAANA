@@ -16,8 +16,8 @@ from Backend.Presentation.schemas.stories import (
     StoryArticleLink,
     StoryArticleRead,
     StoryArticlesPageRead,
+    StoryCardRead,
     StoryCreate,
-    StoryListItem,
     StoryRead,
     StoryTagsUpdate,
     StoryUpdate,
@@ -36,21 +36,29 @@ def get_story_articles(
     return service.list_articles(story_id, limit=limit, offset=offset)
 
 
-@router.get("", response_model=list[StoryListItem])
+@router.get("", response_model=list[StoryCardRead])
 def list_stories(
     service: StoryServiceDep,
     status_filter: StoryStatus | None = Query(
         StoryStatus.published,
         alias="status",
     ),
-    tag_id: uuid.UUID | None = None,
-    q: str | None = Query(None, max_length=100),
+    tag_id: list[uuid.UUID] | None = Query(
+        None,
+        max_length=50,
+        description="Repeat to filter by several tags: stories with any of them.",
+    ),
+    q: str | None = Query(
+        None,
+        max_length=100,
+        description="Words that must all appear in the title. With tag_id, only those tags' stories are searched.",
+    ),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
     return service.list_stories(
         status=status_filter,
-        tag_id=tag_id,
+        tag_ids=tag_id,
         q=q,
         limit=limit,
         offset=offset,
@@ -62,16 +70,19 @@ def list_stories(
 @router.get("/for-you", response_model=FeedRead)
 def get_for_you(
     service: AlgorithmServiceDep,
+    stories: StoryServiceDep,
     subject: AuthenticatedSubject,
     users: UserServiceDep,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
     user = users.get_authenticated_user(subject)
-    return service.get_feed(
-        user.id,
-        limit=limit,
-        offset=offset,
+    return stories.with_cards(
+        service.get_feed(
+            user.id,
+            limit=limit,
+            offset=offset,
+        )
     )
 
 

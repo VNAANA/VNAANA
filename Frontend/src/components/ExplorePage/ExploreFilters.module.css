@@ -1,3 +1,8 @@
+/* The bar holds the chip row and, below it, the tag panel. */
+.bar {
+  position: relative;
+}
+
 /* The padding keeps focus rings from being clipped by the sideways scroll. */
 .row {
   display: flex;
@@ -13,6 +18,9 @@
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: none;
   height: 40px;
   padding: 0 18px;
@@ -29,8 +37,156 @@
   border-color: var(--ink);
 }
 
-.chip[aria-pressed='true'] {
+.chip[aria-pressed='true'],
+.filterButton[aria-expanded='true'] {
   border-color: var(--ink);
   background: var(--ink);
   color: #fff;
+}
+
+.filterButton {
+  padding: 0 14px;
+}
+
+/* How many tags are picked, on the Filter button */
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* A picked tag: click to remove it */
+.selected {
+  padding: 0 12px 0 14px;
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+
+/* ---------- Tag panel ---------- */
+
+.panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(520px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-ui);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(14, 17, 22, 0.14);
+}
+
+.fieldset {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hint {
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
+.error {
+  color: var(--error);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* The checkbox stays in the page for keyboards and screen readers; the label is the visible chip */
+.option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--surface-2);
+}
+
+.option:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.option:has(input:checked) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.link {
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:disabled {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+.done {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
 }

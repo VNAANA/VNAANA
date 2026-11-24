@@ -2,13 +2,13 @@
  * Calls to the backend for the signed-in user's own profile (Backend/Presentation/routers/users.py).
  * Every call sends the current Supabase access token, so a refreshed token is always used.
  */
-import { TAG_NAMES } from '../data/tags'
-import type { TagName } from '../data/tags'
 import { apiUrl } from './api'
 import type { Language } from './language'
 import { supabase } from './supabase'
+import { loadTags } from './tags'
 
-export type TopicLists = { liked: TagName[]; disliked: TagName[] }
+/* Tag names (as in GET /tags) the user likes and dislikes. */
+export type TopicLists = { liked: string[]; disliked: string[] }
 
 /** The fields of UserRead the frontend uses. */
 export type Profile = {
@@ -21,12 +21,24 @@ export type Profile = {
   language: Language | null
 }
 
-/* Known tags only, no duplicates, in the default tag order; a topic is never in both lists. */
+/*
+ * Tag names only, no duplicates; a topic is never in both lists. Names the
+ * database no longer has (an old "World") are kept here but never shown, and
+ * are dropped the next time the topics are saved.
+ */
 export function cleanTopics(
   value: { liked?: unknown; disliked?: unknown } | null | undefined,
 ): TopicLists {
   const pick = (tags: unknown) =>
-    Array.isArray(tags) ? TAG_NAMES.filter((tag) => tags.includes(tag)) : []
+    Array.isArray(tags)
+      ? [
+          ...new Set(
+            tags.filter(
+              (tag): tag is string => typeof tag === 'string' && !!tag.trim(),
+            ),
+          ),
+        ]
+      : []
   const liked = pick(value?.liked)
   return {
     liked,
@@ -111,37 +123,23 @@ export async function completeOnboarding(userId: string): Promise<Profile> {
   )
 }
 
-// Tag IDs never change while the app is open; fetch them once (again after a failure).
-let tagIds: Promise<Map<string, string>> | null = null
-
-function loadTagIds() {
-  tagIds ??= fetch(apiUrl('/tags'))
-    .then((response) => {
-      if (!response.ok) throw new Error('Could not load tags')
-      return response.json() as Promise<{ id: string; name: string }[]>
-    })
-    .then((tags) => new Map(tags.map((tag) => [tag.name, tag.id])))
-    .catch((error) => {
-      tagIds = null
-      throw error
-    })
-  return tagIds
-}
-
 /*
  * Liked topics become the user's declared interests (PUT /tags, used by the
  * For You algorithm). Liked and disliked are both kept in preferences, so the
- * pop-up and Profile can show them again.
+ * pop-up and Profile can show them again. Names the database doesn't have
+ * any more are dropped from both.
  */
 export async function saveTopics(
   userId: string,
   topics: TopicLists,
 ): Promise<void> {
-  const ids = await loadTagIds()
-  const likedIds = topics.liked.map((name) => ids.get(name))
-  if (likedIds.some((id) => id === undefined)) throw new Error('Unknown tag')
+  const ids = new Map((await loadTags()).map((tag) => [tag.name, tag.id]))
+  const known = (names: string[]) => names.filter((name) => ids.has(name))
+  const saved = { liked: known(topics.liked), disliked: known(topics.disliked) }
   await Promise.all([
-    put(`/users/${userId}/tags`, { tag_ids: likedIds }),
-    put(`/users/${userId}/preferences`, { preferences: topics }),
+    put(`/users/${userId}/tags`, {
+      tag_ids: saved.liked.map((name) => ids.get(name)),
+    }),
+    put(`/users/${userId}/preferences`, { preferences: saved }),
   ])
 }

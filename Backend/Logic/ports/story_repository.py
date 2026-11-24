@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal, Protocol
 
-from Backend.Logic.domain.story import Story, StoryStatus
+from Backend.Logic.domain.story import Story, StoryCard, StoryStatus
 from Backend.Logic.domain.story_article_link import StoryArticleLink
 from Backend.Logic.domain.story_articles import StoryArticlesPage
 from Backend.Logic.domain.story_translation import StoryTranslation
@@ -22,12 +24,18 @@ class StoryRepository(Protocol):
         self,
         *,
         status: StoryStatus | None = None,
-        tag_id: uuid.UUID | None = None,
+        tag_ids: list[uuid.UUID] | None = None,
         search_terms: list[str] | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
-        """search_terms: every word must appear in the title or the summary."""
+        """tag_ids: stories with at least one of these tags.
+        search_terms: every word must appear in the title or the summary."""
+        ...
+
+    def to_cards(self, stories: list[Story]) -> list[StoryCard]:
+        """The same stories, in the same order, with tags, lead article and
+        article count. Loads them for all stories at once."""
         ...
 
     def add(self, **fields: Any) -> Story: ...

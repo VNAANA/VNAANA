@@ -8,44 +8,46 @@ import {
   Landmark,
   Leaf,
   Palette,
-  Plane,
+  Tag,
   TrendingUp,
   Trophy,
+  Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import type { Strings } from './strings'
 
 /*
- * The default news tags a user can like or dislike. Must match TAG_NAMES in
- * Backend/Dal/migrations/versions/c91e4a72b608_seed_default_tags.py.
+ * How each tag looks. The tags themselves come from the database (GET /tags,
+ * see utils/tags.ts). This only gives a known tag its icon; its translated
+ * name is in strings.ts under `tags`. A tag that isn't listed here still
+ * works: it gets the generic tag icon and its database name.
+ *
+ * Keyed by the tag's name in lower case, so "Social Issues" and
+ * "social issues" match. Used by the sidebar, the topic editor, the Explore
+ * filter and the pills on posts, so a tag looks the same everywhere.
  */
-export const TAG_NAMES = [
-  'Politics',
-  'Technology',
-  'Sports',
-  'Climate',
-  'Economy',
-  'Health',
-  'Entertainment',
-  'World',
-  'Culture',
-  'Science',
-  'Domestic',
-  'International',
-] as const
+const TAG_ICONS: Record<string, LucideIcon> = {
+  politics: Landmark,
+  technology: Cpu,
+  sports: Trophy,
+  climate: Leaf,
+  economy: TrendingUp,
+  health: HeartPulse,
+  entertainment: Clapperboard,
+  'social issues': Users,
+  culture: Palette,
+  science: FlaskConical,
+  domestic: House,
+  international: Globe,
+}
 
-export type TagName = (typeof TAG_NAMES)[number]
+const key = (name: string) => name.trim().toLowerCase()
 
-export const TAG_ICONS: Record<TagName, LucideIcon> = {
-  Politics: Landmark,
-  Technology: Cpu,
-  Sports: Trophy,
-  Climate: Leaf,
-  Economy: TrendingUp,
-  Health: HeartPulse,
-  Entertainment: Clapperboard,
-  World: Globe,
-  Culture: Palette,
-  Science: FlaskConical,
-  Domestic: House,
-  International: Plane,
+export function tagIcon(name: string): LucideIcon {
+  return TAG_ICONS[key(name)] ?? Tag
+}
+
+/* The tag's name in the display language, or its database name when there's no translation. */
+export function tagLabel(name: string, t: Strings): string {
+  return t.tags[key(name)] ?? name
 }

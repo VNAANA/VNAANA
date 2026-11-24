@@ -77,6 +77,22 @@ class StoryListItem(ORMModel):
     last_updated_at: datetime
 
 
+class StoryLeadArticleRead(ArticleSummary):
+    """The article a story card leads with. No content, to keep lists small."""
+
+    description: str | None
+    img_url: str | None = None
+    author: str | None = None
+
+
+class StoryCardRead(StoryListItem):
+    """A story in a list (GET /stories, the For you feed)."""
+
+    context: str | None
+    tags: list[StoryTagRead]
+    lead_article: StoryLeadArticleRead | None
+
+
 class StoryRead(StoryListItem):
     context: str | None
     tags: list[StoryTagRead]

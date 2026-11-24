@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from playwright.sync_api import Page, expect
 
-from tests.e2e.support import SEEDED_ARTICLE
+from tests.e2e.support import SEEDED_STORY
 
 PASSWORD = "new-user-password-123"
 
@@ -28,4 +28,4 @@ def test_new_account_lands_in_the_app(page: Page):
     topics.get_by_role("button", name="Skip for now").click()
 
     expect(topics).to_be_hidden()
-    expect(page.get_by_role("article", name=SEEDED_ARTICLE)).to_have_count(5)
+    expect(page.get_by_role("article", name=SEEDED_STORY)).to_have_count(5)

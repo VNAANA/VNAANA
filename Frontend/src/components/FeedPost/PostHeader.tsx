@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent } from 'react'
 import { BadgeCheck, Ellipsis, EyeOff, MapPin } from 'lucide-react'
+import { tagIcon, tagLabel } from '../../data/tags'
 import { TOPIC_ICONS } from '../../data/topics'
+import { useSignedIn } from '../../hooks/useSignedIn'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
+import { ScopeIcon } from '../ScopeIcon/ScopeIcon'
 import { usePost } from './PostContext'
 import styles from './PostHeader.module.css'
 
@@ -65,6 +68,26 @@ function TopicPill() {
       <Icon size={14} aria-hidden="true" />
       {t.topics[article.topic]}
     </span>
+  )
+}
+
+/* The story's tags, with the same icons and names as the sidebar. */
+function TagPills() {
+  const { article } = usePost()
+  const { t } = useStrings()
+  if (!article.tags?.length) return null
+  return (
+    <ul className={styles.tagList} aria-label={t.post.tags}>
+      {article.tags.map((name) => {
+        const Icon = tagIcon(name)
+        return (
+          <li key={name} className={styles.pill}>
+            <Icon size={14} aria-hidden="true" />
+            {tagLabel(name, t)}
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -167,8 +190,14 @@ function MoreMenu() {
   )
 }
 
-/* The top bar: byline, then the label pills (topic, location), then the ⋯ menu. */
+/*
+ * The top bar: byline, then the label pills (topic, tags, location), then the
+ * domestic / international icon and the ⋯ menu in the top-right corner.
+ */
 export function PostHeader() {
+  const { article } = usePost()
+  // "Not interested" is the menu's only option and needs an account, so signed out there is no ⋯ menu.
+  const signedIn = useSignedIn()
   return (
     <header className={styles.header}>
       <div className={styles.headerByline}>
@@ -176,10 +205,12 @@ export function PostHeader() {
       </div>
       <div className={styles.labels}>
         <TopicPill />
+        <TagPills />
         <LocationPill />
       </div>
       <div className={styles.headerMenu}>
-        <MoreMenu />
+        <ScopeIcon scope={article.scope} />
+        {signedIn && <MoreMenu />}
       </div>
     </header>
   )

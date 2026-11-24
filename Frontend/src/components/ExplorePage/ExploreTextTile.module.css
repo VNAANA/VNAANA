@@ -44,6 +44,15 @@
   font-weight: 700;
 }
 
+/* Pushed to the right end of the top row; after an explainer badge it just follows it. */
+.scope {
+  margin-left: auto;
+}
+
+.badge + .scope {
+  margin-left: 0;
+}
+
 /* The headline is the tile's main visual. Very long ones stop at 6 lines. */
 .title {
   display: -webkit-box;

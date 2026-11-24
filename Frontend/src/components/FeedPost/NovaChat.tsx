@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Info, SendHorizontal } from 'lucide-react'
 import { useStrings } from '../../hooks/useStrings'
+import { MAX_NOVA_QUESTION_CHARS } from '../../utils/nova'
 import { usePost } from './PostContext'
 import { SuggestionChips } from './SuggestionChips'
 import styles from './NovaChat.module.css'
@@ -23,22 +24,9 @@ export function NovaChatLog() {
       aria-live="polite"
       aria-label={t.nova.conversation}
     >
-      {chat.groundingMode === 'preview' && (
-        <p className={styles.intro}>
-          {chat.previewIncludesDescription
-            ? t.nova.previewWithDescription
-            : t.nova.previewHeadlineOnly}
-        </p>
-      )}
       {chat.messages.length === 0 && (
         <p className={styles.intro}>
-          {chat.tooLong
-            ? t.nova.tooLong
-            : chat.available
-              ? chat.groundingMode === 'full_article'
-                ? t.nova.fullArticleOnly
-                : t.nova.previewOnly
-              : t.nova.missingText}
+          {chat.available ? t.nova.storyOnly : t.nova.missingText}
         </p>
       )}
       {chat.messages.map((message) =>
@@ -59,10 +47,22 @@ export function NovaChatLog() {
             )}
             <p>{message.answer.text}</p>
             {message.answer.sources.length > 0 && (
-              <p className={styles.sources}>
-                <strong>{t.nova.submittedUrl}</strong>{' '}
-                {message.answer.sources.join(', ')}
-              </p>
+              <div className={styles.sources}>
+                <strong>{t.nova.sources}</strong>
+                <ul>
+                  {message.answer.sources.map((url) => (
+                    <li key={url}>
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        {chat.sourceLabels[url] ?? sourceDomain(url)}
+                        <span className="sr-only">
+                          {' '}
+                          {t.common.opensInNewTab}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
             <p className={styles.uncertain}>
               <Info size={14} aria-hidden="true" />
@@ -88,6 +88,15 @@ export function NovaChatLog() {
   )
 }
 
+/* "nos.nl" for https://www.nos.nl/artikel/…; the whole URL if it can't be parsed. */
+function sourceDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
 export function NovaComposer() {
   const { article, chat, composerFocusRequest } = usePost()
   const { t } = useStrings()
@@ -111,7 +120,7 @@ export function NovaComposer() {
   return (
     <div className={styles.composer}>
       <SuggestionChips
-        onPick={(suggestion) => void chat.sendSuggestion(suggestion)}
+        onPick={(question) => void chat.send(question)}
         tone="row"
         disabled={!chat.available || chat.pending}
       />
@@ -127,6 +136,7 @@ export function NovaComposer() {
           onChange={(event) => setDraft(event.target.value)}
           placeholder={t.nova.placeholder}
           autoComplete="off"
+          maxLength={MAX_NOVA_QUESTION_CHARS}
           disabled={!chat.available || chat.pending}
         />
         <button

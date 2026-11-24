@@ -3,9 +3,7 @@
  * language; components read the labels with useStrings().
  * Dutch is typed against English, so a missing translation fails the build.
  */
-import type { TagName } from './tags'
 import type { Topic } from '../types'
-import type { ExploreFilter } from '../utils/explore'
 import type { Language } from '../utils/language'
 
 function plural(count: number, one: string, many: string) {
@@ -32,7 +30,7 @@ const en = {
   nav: {
     home: 'Virtual News Anchor – home',
     searchLabel: 'Search news',
-    searchPlaceholder: 'Search',
+    searchPlaceholder: 'Search titles',
     main: 'Main',
     forYou: 'For You',
     explore: 'Explore',
@@ -117,21 +115,24 @@ const en = {
     understand: 'I understand',
     saveFailed: 'Could not save your consent. Please try again.',
   },
-  /** The topics a user can like or dislike (TAG_NAMES) */
+  /**
+   * Names for the database tags (GET /tags), keyed by the tag name in lower
+   * case. Read with tagLabel(); a tag missing here shows its database name.
+   */
   tags: {
-    Politics: 'Politics',
-    Technology: 'Technology',
-    Sports: 'Sports',
-    Climate: 'Climate',
-    Economy: 'Economy',
-    Health: 'Health',
-    Entertainment: 'Entertainment',
-    World: 'World',
-    Culture: 'Culture',
-    Science: 'Science',
-    Domestic: 'Domestic',
-    International: 'International',
-  } as Record<TagName, string>,
+    politics: 'Politics',
+    technology: 'Technology',
+    sports: 'Sports',
+    climate: 'Climate',
+    economy: 'Economy',
+    health: 'Health',
+    entertainment: 'Entertainment',
+    'social issues': 'Social issues',
+    culture: 'Culture',
+    science: 'Science',
+    domestic: 'Domestic',
+    international: 'International',
+  } as Record<string, string | undefined>,
   topicPrefs: {
     title: 'What news do you want?',
     intro:
@@ -149,6 +150,10 @@ const en = {
     cancel: 'Cancel',
     profileHint: 'Changes are saved straight away.',
     likedMark: '(liked)',
+    dislikedMark: '(disliked)',
+    tagsLoading: 'Loading topics…',
+    tagsFailed: 'We couldn’t load the topics.',
+    retry: 'Try again',
   },
   profile: {
     title: 'Profile',
@@ -212,22 +217,44 @@ const en = {
     loadFailed: 'We couldn’t load the news right now.',
     retry: 'Try again',
     caughtUp: 'You’re all caught up for this morning.',
+    empty: 'There are no stories yet. Check back soon.',
+    loadingMore: 'Loading more stories…',
+    loadMoreFailed: 'We couldn’t load more stories.',
   },
   explore: {
     title: 'Explore',
     subtitle: 'Discover news beyond your usual topics.',
     skipToContent: 'Skip to Explore',
     filtersLabel: 'Filter articles',
-    filters: {
-      all: 'All',
-    } as Record<ExploreFilter, string>,
+    all: 'All',
+    filter: 'Filter',
+    filterCount: (count: number) =>
+      `Filter, ${plural(count, 'tag', 'tags')} selected`,
+    filterByTags: 'Filter by tags',
+    filterHint: 'Shows stories with any of the selected tags.',
+    removeTag: (tag: string) => `Remove filter: ${tag}`,
+    clearFilters: 'Clear all',
+    done: 'Done',
+    tagsLoading: 'Loading tags…',
+    tagsFailed: 'We couldn’t load the tags.',
     loading: 'Loading articles…',
     loadFailed: 'We couldn’t load articles right now.',
+    loadingMore: 'Loading more articles…',
+    loadMoreFailed: 'We couldn’t load more articles.',
     retry: 'Try again',
     empty: (filter: string) =>
       `Nothing in ${filter} right now — try another topic.`,
     emptyAll: 'Nothing to explore right now. Check back soon.',
     showAll: 'Show all',
+    searchSummary: (query: string, tags: string | null) =>
+      `Titles with “${query}” in ${tags ?? 'all topics'}`,
+    searchEmpty: (query: string, tags: string | null) =>
+      `No titles with “${query}” in ${tags ?? 'any topic'}.`,
+    clearSearchShort: 'Clear search',
+    searchAllTopics: 'Search all topics',
+    readerLabel: 'Stories from Explore',
+    backToExplore: 'Back to Explore',
+    readerEnd: 'You’ve seen everything in Explore.',
     explainer: 'Explainer',
   },
   briefing: {
@@ -252,6 +279,8 @@ const en = {
     verifiedPublisher: 'Verified publisher',
     byAuthor: (author: string) => `By ${author} · `,
     location: 'Location: ',
+    tags: 'Tags',
+    scope: { domestic: 'Domestic news', international: 'International news' },
     moreOptions: 'More options',
     postOptions: 'Post options',
     notInterested: 'Not interested',
@@ -265,7 +294,7 @@ const en = {
     parts: {
       whatHappened: 'What happened',
       why: 'Why it matters',
-      fullArticle: 'Full article',
+      context: 'Context',
       readMore: 'Read more',
     },
     carousel: {
@@ -293,7 +322,7 @@ const en = {
     why: {
       notExplained: 'Nova hasn’t explained this one yet',
       readNextSlide:
-        'Until then, you can read the whole article on the next slide.',
+        'Until then, you can read the background on the next slide.',
       readOnPublisher: (publisher: string) =>
         `The full text isn’t available here yet. Read it on ${publisher}.`,
       background: 'Background:',
@@ -312,32 +341,26 @@ const en = {
   nova: {
     askNova: 'Ask Nova',
     conversation: 'Conversation with Nova',
-    previewWithDescription:
-      'Full article text is unavailable. Nova is using only the headline and available description.',
-    previewHeadlineOnly:
-      'Full article text is unavailable. Nova is using only the headline.',
-    tooLong:
-      'Ask Nova is unavailable: this article exceeds the 12,000-character AI limit.',
-    fullArticleOnly:
-      'Nova answers using only this original article, not other sources or previous messages.',
-    previewOnly:
-      'Questions are answered only when the available preview supports them.',
+    storyOnly:
+      'Nova answers using only the original articles linked to this story, not other sources. Follow-up questions can refer to your last two questions.',
     missingText:
-      'Ask Nova is unavailable because the original article text is missing.',
+      'Ask Nova is unavailable because this story has no linked articles.',
     youAsked: 'You asked: ',
     novaReplied: 'Nova replied: ',
-    notAnswered: 'Not answered from this article',
-    submittedUrl: 'Submitted article URL:',
+    notAnswered: 'Not answered from this story’s articles',
+    sources: 'Sources:',
     notCertain: 'Not certain:',
-    checking: 'Nova is checking the article…',
-    inputLabel: 'Ask Nova about this article',
+    checking: 'Nova is checking the story’s articles…',
+    inputLabel: 'Ask Nova about this story',
     placeholder: 'Ask Nova anything…',
     send: 'Send question to Nova',
     suggestions: 'Suggested questions',
     errors: {
       unreachable:
         'Cannot reach the AI service. Check that the backend is running.',
-      invalidRequest: 'The article or question is invalid or too long.',
+      invalidRequest:
+        'The question is invalid, or this story’s articles are too long for Nova.',
+      notFound: 'This story is no longer available.',
       modelUnavailable: 'The AI model is unavailable. Please try again later.',
       failed: 'Nova could not answer right now. Please try again.',
       invalidResponse: 'The AI service returned an invalid response.',
@@ -370,7 +393,7 @@ const nl: Strings = {
   nav: {
     home: 'Virtual News Anchor – startpagina',
     searchLabel: 'Zoeken in het nieuws',
-    searchPlaceholder: 'Zoeken',
+    searchPlaceholder: 'Zoek in titels',
     main: 'Hoofdmenu',
     forYou: 'Voor jou',
     explore: 'Ontdekken',
@@ -458,18 +481,18 @@ const nl: Strings = {
       'Je toestemming kon niet worden opgeslagen. Probeer het opnieuw.',
   },
   tags: {
-    Politics: 'Politiek',
-    Technology: 'Technologie',
-    Sports: 'Sport',
-    Climate: 'Klimaat',
-    Economy: 'Economie',
-    Health: 'Gezondheid',
-    Entertainment: 'Entertainment',
-    World: 'Wereld',
-    Culture: 'Cultuur',
-    Science: 'Wetenschap',
-    Domestic: 'Binnenland',
-    International: 'Buitenland',
+    politics: 'Politiek',
+    technology: 'Technologie',
+    sports: 'Sport',
+    climate: 'Klimaat',
+    economy: 'Economie',
+    health: 'Gezondheid',
+    entertainment: 'Entertainment',
+    'social issues': 'Maatschappij',
+    culture: 'Cultuur',
+    science: 'Wetenschap',
+    domestic: 'Binnenland',
+    international: 'Buitenland',
   },
   topicPrefs: {
     title: 'Welk nieuws wil je zien?',
@@ -489,6 +512,10 @@ const nl: Strings = {
     cancel: 'Annuleren',
     profileHint: 'Wijzigingen worden meteen opgeslagen.',
     likedMark: '(leuk)',
+    dislikedMark: '(minder leuk)',
+    tagsLoading: 'Onderwerpen worden geladen…',
+    tagsFailed: 'We konden de onderwerpen niet laden.',
+    retry: 'Opnieuw proberen',
   },
   profile: {
     title: 'Profiel',
@@ -555,21 +582,43 @@ const nl: Strings = {
     loadFailed: 'We konden het nieuws nu niet laden.',
     retry: 'Opnieuw proberen',
     caughtUp: 'Je bent helemaal bij voor vanochtend.',
+    empty: 'Er zijn nog geen verhalen. Kom straks terug.',
+    loadingMore: 'Meer verhalen laden…',
+    loadMoreFailed: 'We konden niet meer verhalen laden.',
   },
   explore: {
     title: 'Ontdekken',
     subtitle: 'Ontdek nieuws buiten je vaste onderwerpen.',
     skipToContent: 'Naar Ontdekken',
     filtersLabel: 'Artikelen filteren',
-    filters: {
-      all: 'Alles',
-    },
+    all: 'Alles',
+    filter: 'Filter',
+    filterCount: (count) =>
+      `Filter, ${plural(count, 'tag', 'tags')} geselecteerd`,
+    filterByTags: 'Filteren op tags',
+    filterHint: 'Toont verhalen met minstens één van de gekozen tags.',
+    removeTag: (tag) => `Filter verwijderen: ${tag}`,
+    clearFilters: 'Alles wissen',
+    done: 'Klaar',
+    tagsLoading: 'Tags worden geladen…',
+    tagsFailed: 'We konden de tags niet laden.',
     loading: 'Artikelen worden geladen…',
     loadFailed: 'We konden de artikelen nu niet laden.',
+    loadingMore: 'Meer artikelen laden…',
+    loadMoreFailed: 'We konden niet meer artikelen laden.',
     retry: 'Opnieuw proberen',
     empty: (filter) => `Nu niets in ${filter} — probeer een ander onderwerp.`,
     emptyAll: 'Er is nu niets te ontdekken. Kom straks terug.',
     showAll: 'Alles tonen',
+    searchSummary: (query, tags) =>
+      `Titels met ‘${query}’ in ${tags ?? 'alle onderwerpen'}`,
+    searchEmpty: (query, tags) =>
+      `Geen titels met ‘${query}’ in ${tags ?? 'welk onderwerp dan ook'}.`,
+    clearSearchShort: 'Zoekopdracht wissen',
+    searchAllTopics: 'Zoek in alle onderwerpen',
+    readerLabel: 'Verhalen uit Ontdekken',
+    backToExplore: 'Terug naar Ontdekken',
+    readerEnd: 'Je hebt alles in Ontdekken gezien.',
     explainer: 'Uitleg',
   },
   briefing: {
@@ -589,6 +638,11 @@ const nl: Strings = {
     verifiedPublisher: 'Geverifieerde uitgever',
     byAuthor: (author) => `Door ${author} · `,
     location: 'Locatie: ',
+    tags: 'Tags',
+    scope: {
+      domestic: 'Binnenlands nieuws',
+      international: 'Buitenlands nieuws',
+    },
     moreOptions: 'Meer opties',
     postOptions: 'Berichtopties',
     notInterested: 'Niet geïnteresseerd',
@@ -602,7 +656,7 @@ const nl: Strings = {
     parts: {
       whatHappened: 'Wat er gebeurde',
       why: 'Waarom het ertoe doet',
-      fullArticle: 'Volledig artikel',
+      context: 'Achtergrond',
       readMore: 'Lees meer',
     },
     carousel: {
@@ -628,7 +682,7 @@ const nl: Strings = {
     why: {
       notExplained: 'Nova heeft dit verhaal nog niet uitgelegd',
       readNextSlide:
-        'Tot die tijd kun je het hele artikel op de volgende dia lezen.',
+        'Tot die tijd kun je de achtergrond op de volgende dia lezen.',
       readOnPublisher: (publisher) =>
         `De volledige tekst is hier nog niet beschikbaar. Lees het op ${publisher}.`,
       background: 'Achtergrond:',
@@ -648,24 +702,16 @@ const nl: Strings = {
   nova: {
     askNova: 'Vraag het Nova',
     conversation: 'Gesprek met Nova',
-    previewWithDescription:
-      'De volledige artikeltekst is niet beschikbaar. Nova gebruikt alleen de kop en de beschikbare beschrijving.',
-    previewHeadlineOnly:
-      'De volledige artikeltekst is niet beschikbaar. Nova gebruikt alleen de kop.',
-    tooLong:
-      'Vraag het Nova is niet beschikbaar: dit artikel is langer dan de AI-limiet van 12.000 tekens.',
-    fullArticleOnly:
-      'Nova antwoordt alleen op basis van dit originele artikel, niet op basis van andere bronnen of eerdere berichten.',
-    previewOnly:
-      'Vragen worden alleen beantwoord als de beschikbare preview daar genoeg informatie voor geeft.',
+    storyOnly:
+      'Nova antwoordt alleen op basis van de originele artikelen bij dit verhaal, niet op basis van andere bronnen. Vervolgvragen kunnen verwijzen naar je laatste twee vragen.',
     missingText:
-      'Vraag het Nova is niet beschikbaar omdat de originele artikeltekst ontbreekt.',
+      'Vraag het Nova is niet beschikbaar omdat dit verhaal geen gekoppelde artikelen heeft.',
     youAsked: 'Jij vroeg: ',
     novaReplied: 'Nova antwoordde: ',
-    notAnswered: 'Niet beantwoord op basis van dit artikel',
-    submittedUrl: 'URL van het ingestuurde artikel:',
+    notAnswered: 'Niet beantwoord op basis van de artikelen bij dit verhaal',
+    sources: 'Bronnen:',
     notCertain: 'Niet zeker:',
-    checking: 'Nova controleert het artikel…',
+    checking: 'Nova controleert de artikelen bij dit verhaal…',
     inputLabel: 'Vraag Nova iets over dit verhaal',
     placeholder: 'Vraag Nova wat je wilt…',
     send: 'Vraag naar Nova sturen',
@@ -673,7 +719,9 @@ const nl: Strings = {
     errors: {
       unreachable:
         'De AI-service is niet bereikbaar. Controleer of de backend draait.',
-      invalidRequest: 'Het artikel of de vraag is ongeldig of te lang.',
+      invalidRequest:
+        'De vraag is ongeldig, of de artikelen bij dit verhaal zijn te lang voor Nova.',
+      notFound: 'Dit verhaal is niet meer beschikbaar.',
       modelUnavailable:
         'Het AI-model is niet beschikbaar. Probeer het later opnieuw.',
       failed: 'Nova kon nu geen antwoord geven. Probeer het opnieuw.',

@@ -1,30 +1,38 @@
-import { useCallback, useEffect, useState } from 'react'
-import { fetchExploreArticles } from '../utils/explore'
+import { useCallback } from 'react'
+import {
+  EXPLORE_SIZE,
+  exploreFilterFromKey,
+  exploreFilterKey,
+  fetchExploreStories,
+  toExploreItem,
+} from '../utils/explore'
 import type { ExploreFilter, ExploreItem } from '../utils/explore'
+import { useInfiniteList } from './useInfiniteList'
+import type { PageLoader } from './useInfiniteList'
 
-type ExploreStatus = 'loading' | 'ready' | 'error'
-
-/* Loads a random set of articles for Explore. `reload` fetches a new set. */
+/*
+ * Explore's stories, newest first, EXPLORE_SIZE at a time. Starts again from
+ * offset 0 when the selected tags or the search change.
+ */
 export function useExploreArticles(filter: ExploreFilter) {
-  const [items, setItems] = useState<ExploreItem[]>([])
-  const [status, setStatus] = useState<ExploreStatus>('loading')
-  const [attempt, setAttempt] = useState(0)
+  // The filter object is new on every render; the key only changes with the tags or search.
+  const key = exploreFilterKey(filter)
+  const loadPage = useCallback<PageLoader<ExploreItem, null>>(
+    async (offset, _source, signal) => {
+      const stories = await fetchExploreStories(
+        exploreFilterFromKey(key),
+        offset,
+        signal,
+      )
+      return {
+        items: stories.map(toExploreItem),
+        received: stories.length,
+        source: null,
+        done: stories.length < EXPLORE_SIZE,
+      }
+    },
+    [key],
+  )
 
-  useEffect(() => {
-    const controller = new AbortController()
-    setStatus('loading')
-    fetchExploreArticles(filter, controller.signal)
-      .then((next) => {
-        setItems(next)
-        setStatus('ready')
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setStatus('error')
-      })
-    return () => controller.abort()
-  }, [filter, attempt])
-
-  const reload = useCallback(() => setAttempt((n) => n + 1), [])
-
-  return { items, status, reload }
+  return useInfiniteList(loadPage, key)
 }

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useCarousel } from '../../hooks/useCarousel'
 import { useNovaChat } from '../../hooks/useNovaChat'
+import { useReaction } from '../../hooks/useReaction'
+import { logReadComplete } from '../../utils/engagement'
 import { useStrings } from '../../hooks/useStrings'
 import type { Article } from '../../types'
 import { PartDots } from './CarouselControls'
@@ -11,7 +13,7 @@ import type { PartKey } from './PostContext'
 import { PostHeader } from './PostHeader'
 import { ReactionBar } from './ReactionBar'
 import {
-  FullArticlePart,
+  ContextPart,
   ReadMorePart,
   WhatHappenedPart,
   WhyPart,
@@ -28,7 +30,7 @@ type Props = {
 const PART_ELEMENTS: Record<PartKey, ReactNode> = {
   whatHappened: <WhatHappenedPart />,
   why: <WhyPart />,
-  fullArticle: <FullArticlePart />,
+  context: <ContextPart />,
   readMore: <ReadMorePart />,
 }
 
@@ -45,12 +47,17 @@ export function FeedPost({ article, onOpened }: Props) {
   const parts = getParts(article)
   const partLabels = parts.map((part) => t.post.parts[part])
   const carousel = useCarousel(parts.length)
-  const chat = useNovaChat(article.novaArticle)
-  const [hidden, setHidden] = useState(false)
+  const chat = useNovaChat(article.novaStory)
+  // A story the user marked "Not interested" earlier (a stored dislike) starts collapsed;
+  // after that, their own Hide / Undo decides.
+  const disliked = useReaction(article.id) === 'dislike'
+  const [hiddenChoice, setHiddenChoice] = useState<boolean | null>(null)
+  const hidden = hiddenChoice ?? disliked
   const [composerFocusRequest, setComposerFocusRequest] = useState(0)
   const undoRef = useRef<HTMLButtonElement>(null)
   const postRef = useRef<HTMLElement>(null)
-  const wasHidden = useRef(false)
+  // Only move focus after the user's own Hide / Undo, not when a post loads collapsed.
+  const focusAfterToggle = useRef(false)
 
   // Every Ask Nova button in the post leads here: go to the chat part,
   // focus its input, and send the question if there is one.
@@ -62,7 +69,14 @@ export function FeedPost({ article, onOpened }: Props) {
   }
 
   const actions = usePostActions(article, {
-    onHide: () => setHidden(true),
+    onHide: () => {
+      focusAfterToggle.current = true
+      setHiddenChoice(true)
+    },
+    onUnhide: () => {
+      focusAfterToggle.current = true
+      setHiddenChoice(false)
+    },
     onOpened: () => onOpened(article.id),
     onAskNova: askNova,
   })
@@ -71,11 +85,19 @@ export function FeedPost({ article, onOpened }: Props) {
     if (carousel.index > 0) onOpened(article.id)
   }, [carousel.index, onOpened, article.id])
 
+  // Read: the reader moved past the first part (swipe, arrows, dots or Ask Nova).
+  // Sent once per story; the part reached is sent along.
+  useEffect(() => {
+    if (carousel.index > 0)
+      logReadComplete(article.id, carousel.index + 1, parts.length)
+  }, [carousel.index, parts.length, article.id])
+
   // Keep keyboard focus in a sensible place when hiding / undoing.
   useEffect(() => {
+    if (!focusAfterToggle.current) return
+    focusAfterToggle.current = false
     if (hidden) undoRef.current?.focus()
-    else if (wasHidden.current) postRef.current?.focus()
-    wasHidden.current = hidden
+    else postRef.current?.focus()
   }, [hidden])
 
   if (hidden) {
@@ -92,7 +114,7 @@ export function FeedPost({ article, onOpened }: Props) {
           ref={undoRef}
           type="button"
           className={styles.undo}
-          onClick={() => setHidden(false)}
+          onClick={actions.undoHide}
         >
           {t.post.undo}
         </button>

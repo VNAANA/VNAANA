@@ -1,33 +1,31 @@
 import uuid
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    model_validator,
+)
 
 from Backend.Logic.domain.story_reaction import Reaction
 from Backend.Presentation.schemas.common import ORMModel, TagRead
 
-TopicName = Literal[
-    "Politics",
-    "Technology",
-    "Sports",
-    "Climate",
-    "Economy",
-    "Health",
-    "Entertainment",
-    "World",
-    "Culture",
-    "Science",
-    "Domestic",
-    "International",
+# Tag names as in GET /tags. Tags live in the database and can be renamed
+# (e.g. "World" -> "Social Issues"), so they are not hardcoded here.
+TopicName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)
 ]
 
 
 class TopicPreferences(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    liked: list[TopicName] = Field(default_factory=list)
-    disliked: list[TopicName] = Field(default_factory=list)
+    liked: list[TopicName] = Field(default_factory=list, max_length=100)
+    disliked: list[TopicName] = Field(default_factory=list, max_length=100)
 
     @model_validator(mode="after")
     def normalize_topics(self):

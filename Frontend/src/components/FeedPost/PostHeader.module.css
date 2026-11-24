@@ -26,6 +26,9 @@
 
 .headerMenu {
   grid-area: menu;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 @container feed (max-width: 560px) {
@@ -148,7 +151,18 @@
   min-width: 0;
 }
 
-/* Non-interactive label pill (topic, location) */
+/* The story's tags: a list, so screen readers announce how many there are. */
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: inherit;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Non-interactive label pill (topic, tag, location) */
 .pill {
   display: inline-flex;
   align-items: center;

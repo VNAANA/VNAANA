@@ -58,19 +58,19 @@ def test_empty_search_terms_add_no_ilike(repository, db):
     assert "ILIKE" not in sql_sent(db)
 
 
-def test_each_word_must_match_in_title_or_summary(repository, db):
+def test_each_word_must_match_in_the_title(repository, db):
     repository.list(search_terms=["flood", "rotterdam"])
 
     sql = sql_sent(db)
 
     assert sql.count("stories.title ILIKE") == 2
-    assert sql.count("stories.summary ILIKE") == 2
-    assert values_sent(db).count("%flood%") == 2
-    assert values_sent(db).count("%rotterdam%") == 2
-    # Words are ANDed together, the two columns per word are ORed.
+    assert "stories.summary ILIKE" not in sql
+    assert values_sent(db).count("%flood%") == 1
+    assert values_sent(db).count("%rotterdam%") == 1
+    # Every word must be in the title.
     where = where_sent(db)
     assert where.count(" AND ") == 1
-    assert where.count(" OR ") == 2
+    assert " OR " not in where
 
 
 @pytest.mark.parametrize(
@@ -97,7 +97,7 @@ def test_the_query_tells_postgres_which_escape_character_is_used(repository, db)
 def test_search_is_combined_with_status_and_tag(repository, db):
     repository.list(
         status="published",
-        tag_id="00000000-0000-0000-0000-000000000001",
+        tag_ids=["00000000-0000-0000-0000-000000000001"],
         search_terms=["flood"],
     )
 
@@ -106,3 +106,29 @@ def test_search_is_combined_with_status_and_tag(repository, db):
     assert "stories.status" in where
     assert "story_tags.tag_id" in where
     assert "stories.title ILIKE" in where
+
+
+def test_search_within_several_tags_only_looks_at_those_stories(repository, db):
+    repository.list(
+        tag_ids=["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"],
+        search_terms=["flood"],
+    )
+
+    where = where_sent(db)
+
+    # The tag subquery and the title search are both required (AND), not either.
+    assert "stories.id IN (SELECT story_tags.story_id" in where
+    assert "story_tags.tag_id IN" in where
+    assert " AND stories.title ILIKE" in where
+
+
+def test_pages_have_a_stable_order_and_the_requested_size(repository, db):
+    repository.list(search_terms=["flood"], limit=20, offset=40)
+
+    sql = sql_sent(db)
+    params = compiled(db).params
+
+    # last_updated_at can tie; the id keeps the order fixed between pages.
+    assert "ORDER BY stories.last_updated_at DESC, stories.id" in sql
+    assert 20 in params.values()
+    assert 40 in params.values()

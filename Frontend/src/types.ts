@@ -9,33 +9,39 @@ export type Topic =
 
 export type FeedReason = 'forYou' | 'dontMiss'
 
-export type NovaArticle = {
-  groundingText: string
-  groundingMode: 'full_article' | 'preview'
-  previewIncludesDescription?: boolean
-  sourceUrl?: string
+/* Dutch or foreign news, from the story's "Domestic" / "International" tag. Shown as an icon, not a tag pill. */
+export type NewsScope = 'domestic' | 'international'
+
+/* What Ask Nova needs for a post. The backend reads the story's linked articles itself. */
+export type NovaStory = {
+  storyId: string
+  /** Publisher names by article URL, to label the sources Nova cites. */
+  sourceLabels: Record<string, string>
 }
 
 /*
- * Articles from the API don't have a topic or Nova's "why it matters" analysis
- * yet, and not every article has an image, so those are optional and the post
- * shows a fallback instead.
+ * One post in the feed, built from a story (see utils/stories.ts). Stories don't
+ * have Nova's "why it matters" analysis yet, and not every story has an image,
+ * so those are optional and the post shows a fallback instead.
  */
 export type Article = {
   id: string
-  novaArticle?: NovaArticle
+  /** Missing when the story has no linked articles for Nova to read. */
+  novaStory?: NovaStory
   publisher: { name: string; initials: string; verified: boolean }
   author?: string
   publishedAt: Date // shown as "2h ago" in the display language
   topic?: Topic
+  /** Tag names from the story, most relevant first. Shown as pills above the post. */
+  tags?: string[]
+  scope?: NewsScope
   location?: string // "Eindhoven"
   feedReason: FeedReason
-  whyPicked: string
   image?: { src: string; alt: string }
   title: string
   summary: string
-  /** The scraped article text, one string per paragraph. Adds a "Full article" part. */
-  content?: string[]
+  /** The story's context, one string per paragraph. Adds a "Context" part. */
+  context?: string[]
   why?: {
     heading: string
     points: { keyword: string; text: string }[]

@@ -1,7 +1,12 @@
 /* Parts shared by image cards and text tiles. The card must be position: relative. */
 
+/* A button that looks like the headline text */
 .link {
+  display: inline;
   color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
   text-decoration: none;
 }
 
@@ -27,8 +32,43 @@
   color: var(--ink);
 }
 
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Non-interactive pill. White, so it reads on both white cards and coloured text tiles. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.tag svg {
+  flex: none;
+}
+
 @container explore (max-width: 559.98px) {
   .meta {
     font-size: 12px;
+  }
+
+  .tag {
+    padding: 1px 7px;
+    font-size: 11px;
   }
 }
