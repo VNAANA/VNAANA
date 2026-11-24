@@ -108,6 +108,46 @@ jobs:
             - name: Run code quality checks
               run: make quality
 
+    frontend-performance:
+        name: Frontend Performance Tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+
+            - name: Set up pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9.10.0
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: pnpm
+                  cache-dependency-path: Frontend/pnpm-lock.yaml
+
+            - name: Install frontend dependencies
+              working-directory: Frontend
+              run: pnpm install --frozen-lockfile
+
+            - name: Build production frontend
+              working-directory: Frontend
+              run: pnpm build
+
+            - name: Run Lighthouse performance tests
+              working-directory: Frontend
+              run: pnpm run test:performance
+
+            - name: Upload Lighthouse reports
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: lighthouse-performance-reports
+                  path: Frontend/.lighthouseci/
+                  retention-days: 14
+
     publish:
         name: Build and Publish Docker Image
         runs-on: ubuntu-latest
