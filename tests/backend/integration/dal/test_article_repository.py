@@ -1,4 +1,4 @@
-"""ArticleRepository on an in-memory SQLite database (setup in ../conftest.py).
+"""ArticleRepository on the real migrated Postgres database (setup in ../conftest.py).
 
 Ingestion is already covered in test_dal.py; this file covers the rest.
 """
@@ -13,13 +13,11 @@ from sqlalchemy import select
 from Backend.Dal.models import (
     Article as ArticleModel,
     EngagementEvent,
-    EventWeight,
     Provider,
     Story,
     StoryArticle,
 )
 from Backend.Dal.repositories.article_repository import ArticleRepository
-from tests.backend.integration.helpers import naive
 
 NOW = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
 
@@ -213,8 +211,6 @@ def test_cleanup_keeps_an_article_seen_exactly_at_the_cutoff(db, repo, provider)
 def test_cleanup_keeps_engagement_events_but_unlinks_them(db, repo, provider):
     cutoff = NOW - timedelta(days=30)
     old = add_article(db, provider, last_seen_at=cutoff - timedelta(days=1))
-    db.add(EventWeight(event_type="read_complete", weight=1))
-    db.commit()
     event = EngagementEvent(
         session_id=uuid.uuid4(), article_id=old.id, event_type="read_complete",
         occurred_at=NOW, ingested_at=NOW,
@@ -229,4 +225,4 @@ def test_cleanup_keeps_engagement_events_but_unlinks_them(db, repo, provider):
     kept = db.get(EngagementEvent, event.id)
     assert kept is not None
     assert kept.article_id is None
-    assert naive(kept.occurred_at) == naive(NOW)
+    assert kept.occurred_at == NOW

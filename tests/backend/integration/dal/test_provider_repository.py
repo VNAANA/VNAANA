@@ -1,4 +1,4 @@
-"""ProviderRepository on an in-memory SQLite database (setup in ../conftest.py)."""
+"""ProviderRepository on the real migrated Postgres database (setup in ../conftest.py)."""
 
 import uuid
 

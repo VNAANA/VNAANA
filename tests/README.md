@@ -9,7 +9,8 @@ python -m pytest
 | Folder | What | Needs |
 |---|---|---|
 | `backend/unit` | Backend logic, fake repositories, no database | Python packages |
-| `backend/integration` | DAL against an in-memory SQLite database | Python packages |
+| `backend/integration` | DAL against the real migrated Postgres database | Local Supabase (below) |
+| `backend/security` | Login checks and rate limiting through the whole app, services faked | Python packages |
 | `backend/manual` | Scripts for a real database or Ollama, never collected by pytest | Run by hand with `python -m tests.backend.manual.<name>` |
 | `frontend` | Frontend unit tests (`node --test`), started from pytest | Node.js 22+, `npm ci` in `Frontend/` |
 | `e2e` | Browser tests through the whole app (Playwright) | Everything below |
@@ -25,11 +26,11 @@ py -3.12 -m venv .venv
 cd Frontend; npm ci; cd ..
 ```
 
-For the E2E tests also install [Docker Desktop](https://docs.docker.com/desktop/).
+For the integration and E2E tests also install [Docker Desktop](https://docs.docker.com/desktop/).
 
-## E2E tests
+## Local Supabase (integration and E2E tests)
 
-The E2E tests run against a **local** Supabase (database + Auth in Docker), never the team's cloud project. Start it once; it keeps running between test runs:
+The integration and E2E tests run against a **local** Supabase (database + Auth in Docker), never the team's cloud project. Start it once; it keeps running between test runs:
 
 ```powershell
 npx supabase@3 start --workdir tests/e2e
@@ -37,7 +38,13 @@ npx supabase@3 start --workdir tests/e2e
 
 The first start downloads the Docker images and takes a few minutes. Stop it with `npx supabase@3 stop --workdir tests/e2e`.
 
-Every run then does the rest by itself:
+## Integration tests
+
+The integration tests use their own database, `vnaana_integration`, on that local Postgres. Every run drops it, creates it again and builds it with the real Alembic migrations, so the tests see exactly the tables, constraints and seeded rows (default tags, event weights) production gets. Each test runs in a transaction that is rolled back afterwards, so nothing is left behind and the E2E data is never touched.
+
+## E2E tests
+
+Every run does the rest by itself:
 
 1. Drops the app's tables and rebuilds them with the real Alembic migrations (tags come from a migration).
 2. Adds 5 test articles and removes every local account.

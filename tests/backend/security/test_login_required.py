@@ -23,6 +23,7 @@ PUBLIC_ON_PURPOSE = {
     ("POST", "/auth/login"),    # signing in can't require being signed in
     ("POST", "/ai/ask"),        # Nova works for signed-out users too
     ("POST", "/ai/summarize"),
+    ("POST", "/ai/stories/{story_id}/ask"),  # story Nova; the frontend sends no token
 }
 
 NOT_LOCKED_YET = {
@@ -52,14 +53,16 @@ def with_ids(path: str) -> str:
     return path
 
 
-def cases():
+def cases() -> list:
+    params = []
     for method, path in write_endpoints():
         if (method, path) in PUBLIC_ON_PURPOSE:
             continue
         marks = []
         if (method, path) in NOT_LOCKED_YET:
             marks.append(pytest.mark.skip(reason="Open for now; will be locked down later"))
-        yield pytest.param(method, path, id=f"{method} {path}", marks=marks)
+        params.append(pytest.param(method, path, id=f"{method} {path}", marks=marks))
+    return params
 
 
 @pytest.mark.parametrize("method, path", cases())

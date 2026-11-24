@@ -1,29 +1,10 @@
-"""StoryRepository translation cache on an in-memory SQLite database."""
+"""StoryRepository translation cache on the real migrated Postgres database (setup in ../conftest.py)."""
 
 import pytest
-from sqlalchemy import create_engine, event, func, select
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
 
-from Backend.Dal.models import Base, Story, StoryTranslation
+from Backend.Dal.models import Story, StoryTranslation
 from Backend.Dal.repositories.story_repository import StoryRepository
-
-
-@compiles(JSONB, "sqlite")
-def compile_test_jsonb(type_, compiler, **kwargs):
-    return "JSON"
-
-
-@pytest.fixture
-def db():
-    engine = create_engine("sqlite://")
-    event.listen(engine, "connect", lambda connection, _: connection.execute("PRAGMA foreign_keys=ON"))
-    Base.metadata.create_all(engine)
-    session = Session(engine, expire_on_commit=False)
-    yield session
-    session.close()
-    engine.dispose()
 
 
 @pytest.fixture

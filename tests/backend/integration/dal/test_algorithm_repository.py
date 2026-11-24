@@ -1,11 +1,11 @@
-"""AlgorithmRepository on an in-memory SQLite database.
+"""AlgorithmRepository on the real migrated Postgres database.
 
 The algorithm unit tests use a fake repository, so they can't notice a wrong
 query. These tests run the real repository against a real database engine and
 check every promise the port (Backend/Logic/ports/algorithm_repository.py)
 makes.
 
-The database comes from tests/backend/integration/conftest.py.
+The database is the real migrated Postgres from tests/backend/integration/conftest.py.
 """
 
 import uuid
@@ -16,7 +16,6 @@ from sqlalchemy import select
 
 from Backend.Dal.models import (
     EngagementEvent,
-    EventWeight,
     Story,
     StoryReaction,
     StoryStatus,
@@ -27,20 +26,13 @@ from Backend.Dal.models import (
 )
 from Backend.Dal.repositories.algorithm_repository import AlgorithmRepository
 from Backend.Logic.domain.story_reaction import Reaction
-from tests.backend.integration.helpers import naive
 
 NOW = datetime(2026, 11, 20, 12, 0, tzinfo=timezone.utc)
 SINCE = NOW - timedelta(days=30)
 
 
 # ---- setup ---------------------------------------------------------------------
-
-
-@pytest.fixture(autouse=True)
-def event_types(db):
-    # engagement_events.event_type points at event_weights, so the types must exist.
-    db.add_all([EventWeight(event_type="share", weight=5), EventWeight(event_type="read_complete", weight=1)])
-    db.commit()
+# The event types (share, read_complete) and default tags come from the migrations.
 
 
 @pytest.fixture
@@ -156,7 +148,7 @@ def test_events_come_back_with_their_fields(db, repo):
     assert event.user_id == user.id
     assert event.story_id == story.id
     assert event.event_type == "read_complete"
-    assert naive(event.occurred_at) == naive(stored.occurred_at)
+    assert event.occurred_at == stored.occurred_at
 
 
 def test_reactions_are_filtered_on_user_and_since(db, repo):
@@ -186,7 +178,7 @@ def test_only_declared_tags_are_listed_with_when_they_were_declared(db, repo):
     [declared] = repo.list_declared_tags(user.id)
 
     assert declared.tag_id == sport.id
-    assert naive(declared.declared_at) == naive(declared_at)
+    assert declared.declared_at == declared_at
 
 
 # ---- hourly job: saving the result --------------------------------------------------
@@ -201,7 +193,7 @@ def test_new_scores_are_stored_as_scored_tags(db, repo):
     rows = stored_user_tags(db, user)
     assert {tag_id: row.score for tag_id, row in rows.items()} == {sport.id: 7.5, music.id: -2.0}
     assert all(row.is_declared is False for row in rows.values())
-    assert all(naive(row.computed_at) == naive(NOW) for row in rows.values())
+    assert all(row.computed_at == NOW for row in rows.values())
 
 
 def test_storing_scores_marks_when_the_user_was_scored(db, repo):
@@ -210,7 +202,7 @@ def test_storing_scores_marks_when_the_user_was_scored(db, repo):
 
     repo.replace_tag_scores(user.id, {sport.id: 1.0}, NOW)
 
-    assert naive(affinity_updated_at(db, user)) == naive(NOW)
+    assert affinity_updated_at(db, user) == NOW
 
 
 def test_replacing_updates_kept_scores_and_drops_scores_that_are_gone(db, repo):
@@ -224,7 +216,7 @@ def test_replacing_updates_kept_scores_and_drops_scores_that_are_gone(db, repo):
 
     rows = stored_user_tags(db, user)
     assert {tag_id: row.score for tag_id, row in rows.items()} == {kept.id: 4.0, new.id: 2.0}
-    assert naive(rows[kept.id].computed_at) == naive(NOW)
+    assert rows[kept.id].computed_at == NOW
 
 
 def test_a_declared_tag_without_a_new_score_stays_with_score_zero(db, repo):
@@ -237,7 +229,7 @@ def test_a_declared_tag_without_a_new_score_stays_with_score_zero(db, repo):
     row = stored_user_tags(db, user)[sport.id]
     assert row.is_declared is True
     assert row.score == 0.0
-    assert naive(row.computed_at) == naive(NOW)
+    assert row.computed_at == NOW
 
 
 def test_scoring_a_declared_tag_keeps_it_declared_and_keeps_its_declare_date(db, repo):
@@ -252,7 +244,7 @@ def test_scoring_a_declared_tag_keeps_it_declared_and_keeps_its_declare_date(db,
     row = stored_user_tags(db, user)[sport.id]
     assert row.is_declared is True
     assert row.score == 5.0
-    assert naive(row.updated_at) == naive(declared_at)
+    assert row.updated_at == declared_at
 
 
 def test_replacing_scores_leaves_other_users_alone(db, repo):
@@ -288,7 +280,7 @@ def test_clearing_scores_without_consent_leaves_users_with_consent_alone(db, rep
     repo.delete_tag_scores_without_consent()
 
     assert stored_user_tags(db, keeps)[music.id].score == 3.0
-    assert naive(affinity_updated_at(db, keeps)) == naive(NOW)
+    assert affinity_updated_at(db, keeps) == NOW
 
 
 # ---- reactions ----------------------------------------------------------------------
@@ -315,7 +307,7 @@ def test_a_new_reaction_on_the_same_story_replaces_the_old_one(db, repo):
 
     [row] = stored_reactions(db, user)
     assert row.reaction == "dislike"
-    assert naive(row.updated_at) == naive(later)
+    assert row.updated_at == later
 
 
 def test_a_reaction_can_be_removed(db, repo):
@@ -368,7 +360,7 @@ def test_withdrawing_consent_leaves_other_users_alone(db, repo):
 
     assert len(stored_reactions(db, other)) == 1
     assert stored_user_tags(db, other)[music.id].score == 3.0
-    assert naive(affinity_updated_at(db, other)) == naive(NOW)
+    assert affinity_updated_at(db, other) == NOW
 
 
 # ---- feed request ----------------------------------------------------------------------
