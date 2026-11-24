@@ -32,35 +32,49 @@ export type ExploreItem = {
 export const EXPLORE_SIZE = 20
 
 /*
- * Each filter's extra query for GET /stories. Only "All" exists for now.
- * GET /stories can already filter by tag_id, so topic filters can be added
- * here (and their label in strings.ts).
+ * The tags Explore is filtered by, as database tag IDs. Empty means "All".
+ * Stories with any of the tags are shown (GET /stories?tag_id=…&tag_id=…).
+ * The IDs are sorted, so the same selection always gives the same URL.
  */
-const FILTER_QUERY = {
-  all: '',
-} satisfies Record<string, string>
+export type ExploreFilter = { tagIds: string[] }
 
-export type ExploreFilter = keyof typeof FILTER_QUERY
-export const EXPLORE_FILTERS = Object.keys(FILTER_QUERY) as ExploreFilter[]
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/* "#explore" or "#explore?filter=science" */
+export function exploreFilter(tagIds: readonly string[]): ExploreFilter {
+  return { tagIds: [...new Set(tagIds.map((id) => id.toLowerCase()).filter((id) => UUID.test(id)))].sort() }
+}
+
+/* "#explore" or "#explore?tags=<id>,<id>" */
 export function isExploreHash(hash: string) {
   return hash.split('?')[0] === '#explore'
 }
 
-/* The filter in the hash; unknown or missing filters fall back to "all". */
+/* The filter in the hash. Anything that isn't a tag ID is ignored. */
 export function exploreFilterFromHash(hash: string): ExploreFilter {
-  const filter = new URLSearchParams(hash.split('?')[1] ?? '').get('filter')
-  return EXPLORE_FILTERS.find((known) => known === filter) ?? 'all'
+  const tags = new URLSearchParams(hash.split('?')[1] ?? '').get('tags')
+  return exploreFilter(tags ? tags.split(',') : [])
 }
 
 export function exploreHash(filter: ExploreFilter) {
-  return filter === 'all' ? '#explore' : `#explore?filter=${filter}`
+  const { tagIds } = exploreFilter(filter.tagIds)
+  return tagIds.length ? `#explore?tags=${tagIds.join(',')}` : '#explore'
+}
+
+/* The link the sidebar uses: Explore filtered by one tag. */
+export function exploreTagHash(tagId: string) {
+  return exploreHash({ tagIds: [tagId] })
+}
+
+/* A string that changes exactly when the selection does, for resetting the list. */
+export function exploreFilterKey(filter: ExploreFilter) {
+  return filter.tagIds.join(',')
 }
 
 /* One page of published stories, most recently updated first. */
 export async function fetchExploreStories(filter: ExploreFilter, offset: number, signal?: AbortSignal) {
-  const query = `/stories?limit=${EXPLORE_SIZE}&offset=${offset}${FILTER_QUERY[filter]}`
+  const params = new URLSearchParams({ limit: String(EXPLORE_SIZE), offset: String(offset) })
+  filter.tagIds.forEach((id) => params.append('tag_id', id))
+  const query = `/stories?${params}`
   const response = await fetch(apiUrl(query), { signal })
   if (!response.ok) throw new Error('Explore request failed')
   const stories: ApiStory[] = await response.json()

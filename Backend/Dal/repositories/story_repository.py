@@ -98,7 +98,7 @@ class StoryRepository(StoryRepositoryPort):
         self,
         *,
         status: StoryStatus | None = None,
-        tag_id: uuid.UUID | None = None,
+        tag_ids: list[uuid.UUID] | None = None,
         search_terms: list[str] | None = None,
         limit: int = 20,
         offset: int = 0,
@@ -111,12 +111,11 @@ class StoryRepository(StoryRepositoryPort):
         if status is not None:
             stmt = stmt.where(StoryModel.status == status)
 
-        if tag_id is not None:
-            stmt = (
-                stmt
-                .join(StoryTagModel)
-                .where(StoryTagModel.tag_id == tag_id)
-            )
+        if tag_ids:
+            # Stories with any of the tags. A subquery instead of a join, so a
+            # story with several of them is still listed once.
+            tagged = select(StoryTagModel.story_id).where(StoryTagModel.tag_id.in_(tag_ids))
+            stmt = stmt.where(StoryModel.id.in_(tagged))
 
         for term in search_terms or []:
             pattern = f"%{self._escape_like(term)}%"

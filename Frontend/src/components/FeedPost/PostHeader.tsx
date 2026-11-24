@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent } from 'react'
-import { BadgeCheck, Ellipsis, EyeOff, MapPin, Tag } from 'lucide-react'
-import { TOPIC_ICONS, topicForTag } from '../../data/topics'
+import { BadgeCheck, Ellipsis, EyeOff, MapPin } from 'lucide-react'
+import { tagIcon, tagLabel } from '../../data/tags'
+import { TOPIC_ICONS } from '../../data/topics'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
 import { ScopeIcon } from '../ScopeIcon/ScopeIcon'
@@ -65,7 +66,7 @@ function TopicPill() {
   )
 }
 
-/* The story's tags. A tag named like one of our topics gets that topic's icon. */
+/* The story's tags, with the same icons and names as the sidebar. */
 function TagPills() {
   const { article } = usePost()
   const { t } = useStrings()
@@ -73,12 +74,11 @@ function TagPills() {
   return (
     <ul className={styles.tagList} aria-label={t.post.tags}>
       {article.tags.map((name) => {
-        const topic = topicForTag(name)
-        const Icon = topic ? TOPIC_ICONS[topic] : Tag
+        const Icon = tagIcon(name)
         return (
           <li key={name} className={styles.pill}>
             <Icon size={14} aria-hidden="true" />
-            {topic ? t.topics[topic] : name}
+            {tagLabel(name, t)}
           </li>
         )
       })}

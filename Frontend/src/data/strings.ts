@@ -3,9 +3,7 @@
  * language; components read the labels with useStrings().
  * Dutch is typed against English, so a missing translation fails the build.
  */
-import type { TagName } from './tags'
 import type { Topic } from '../types'
-import type { ExploreFilter } from '../utils/explore'
 import type { Language } from '../utils/language'
 
 function plural(count: number, one: string, many: string) {
@@ -111,21 +109,24 @@ const en = {
     understand: 'I understand',
     saveFailed: 'Could not save your consent. Please try again.',
   },
-  /** The topics a user can like or dislike (TAG_NAMES) */
+  /**
+   * Names for the database tags (GET /tags), keyed by the tag name in lower
+   * case. Read with tagLabel(); a tag missing here shows its database name.
+   */
   tags: {
-    Politics: 'Politics',
-    Technology: 'Technology',
-    Sports: 'Sports',
-    Climate: 'Climate',
-    Economy: 'Economy',
-    Health: 'Health',
-    Entertainment: 'Entertainment',
-    World: 'World',
-    Culture: 'Culture',
-    Science: 'Science',
-    Domestic: 'Domestic',
-    International: 'International',
-  } as Record<TagName, string>,
+    politics: 'Politics',
+    technology: 'Technology',
+    sports: 'Sports',
+    climate: 'Climate',
+    economy: 'Economy',
+    health: 'Health',
+    entertainment: 'Entertainment',
+    'social issues': 'Social issues',
+    culture: 'Culture',
+    science: 'Science',
+    domestic: 'Domestic',
+    international: 'International',
+  } as Record<string, string | undefined>,
   topicPrefs: {
     title: 'What news do you want?',
     intro: 'Pick topics you like and topics you’d rather see less of. A topic can be in only one list.',
@@ -142,6 +143,10 @@ const en = {
     cancel: 'Cancel',
     profileHint: 'Changes are saved straight away.',
     likedMark: '(liked)',
+    dislikedMark: '(disliked)',
+    tagsLoading: 'Loading topics…',
+    tagsFailed: 'We couldn’t load the topics.',
+    retry: 'Try again',
   },
   profile: {
     title: 'Profile',
@@ -203,9 +208,16 @@ const en = {
     subtitle: 'Discover news beyond your usual topics.',
     skipToContent: 'Skip to Explore',
     filtersLabel: 'Filter articles',
-    filters: {
-      all: 'All',
-    } as Record<ExploreFilter, string>,
+    all: 'All',
+    filter: 'Filter',
+    filterCount: (count: number) => `Filter, ${plural(count, 'tag', 'tags')} selected`,
+    filterByTags: 'Filter by tags',
+    filterHint: 'Shows stories with any of the selected tags.',
+    removeTag: (tag: string) => `Remove filter: ${tag}`,
+    clearFilters: 'Clear all',
+    done: 'Done',
+    tagsLoading: 'Loading tags…',
+    tagsFailed: 'We couldn’t load the tags.',
     loading: 'Loading articles…',
     loadFailed: 'We couldn’t load articles right now.',
     loadingMore: 'Loading more articles…',
@@ -416,18 +428,18 @@ const nl: Strings = {
     saveFailed: 'Je toestemming kon niet worden opgeslagen. Probeer het opnieuw.',
   },
   tags: {
-    Politics: 'Politiek',
-    Technology: 'Technologie',
-    Sports: 'Sport',
-    Climate: 'Klimaat',
-    Economy: 'Economie',
-    Health: 'Gezondheid',
-    Entertainment: 'Entertainment',
-    World: 'Wereld',
-    Culture: 'Cultuur',
-    Science: 'Wetenschap',
-    Domestic: 'Binnenland',
-    International: 'Buitenland',
+    politics: 'Politiek',
+    technology: 'Technologie',
+    sports: 'Sport',
+    climate: 'Klimaat',
+    economy: 'Economie',
+    health: 'Gezondheid',
+    entertainment: 'Entertainment',
+    'social issues': 'Maatschappij',
+    culture: 'Cultuur',
+    science: 'Wetenschap',
+    domestic: 'Binnenland',
+    international: 'Buitenland',
   },
   topicPrefs: {
     title: 'Welk nieuws wil je zien?',
@@ -445,6 +457,10 @@ const nl: Strings = {
     cancel: 'Annuleren',
     profileHint: 'Wijzigingen worden meteen opgeslagen.',
     likedMark: '(leuk)',
+    dislikedMark: '(minder leuk)',
+    tagsLoading: 'Onderwerpen worden geladen…',
+    tagsFailed: 'We konden de onderwerpen niet laden.',
+    retry: 'Opnieuw proberen',
   },
   profile: {
     title: 'Profiel',
@@ -506,9 +522,16 @@ const nl: Strings = {
     subtitle: 'Ontdek nieuws buiten je vaste onderwerpen.',
     skipToContent: 'Naar Ontdekken',
     filtersLabel: 'Artikelen filteren',
-    filters: {
-      all: 'Alles',
-    },
+    all: 'Alles',
+    filter: 'Filter',
+    filterCount: (count) => `Filter, ${plural(count, 'tag', 'tags')} geselecteerd`,
+    filterByTags: 'Filteren op tags',
+    filterHint: 'Toont verhalen met minstens één van de gekozen tags.',
+    removeTag: (tag) => `Filter verwijderen: ${tag}`,
+    clearFilters: 'Alles wissen',
+    done: 'Klaar',
+    tagsLoading: 'Tags worden geladen…',
+    tagsFailed: 'We konden de tags niet laden.',
     loading: 'Artikelen worden geladen…',
     loadFailed: 'We konden de artikelen nu niet laden.',
     loadingMore: 'Meer artikelen laden…',

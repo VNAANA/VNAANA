@@ -1,4 +1,4 @@
-import { Globe, House } from 'lucide-react'
+import { tagIcon } from '../../data/tags'
 import { useStrings } from '../../hooks/useStrings'
 import type { NewsScope } from '../../types'
 import styles from './ScopeIcon.module.css'
@@ -11,7 +11,8 @@ import styles from './ScopeIcon.module.css'
 export function ScopeIcon({ scope, className }: { scope?: NewsScope; className?: string }) {
   const { t } = useStrings()
   if (!scope) return null
-  const Icon = scope === 'domestic' ? House : Globe
+  // The same icon the Domestic / International tag has in the sidebar (house / globe).
+  const Icon = tagIcon(scope)
   const label = t.post.scope[scope]
   return (
     <span className={className ? `${styles.icon} ${className}` : styles.icon} role="img" aria-label={label} title={label}>

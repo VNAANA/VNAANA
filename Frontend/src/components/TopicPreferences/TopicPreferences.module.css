@@ -114,6 +114,14 @@
   color: var(--muted);
 }
 
+.retry {
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;

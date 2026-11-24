@@ -24,12 +24,13 @@ class StoryRepository(Protocol):
         self,
         *,
         status: StoryStatus | None = None,
-        tag_id: uuid.UUID | None = None,
+        tag_ids: list[uuid.UUID] | None = None,
         search_terms: list[str] | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[Story]:
-        """search_terms: every word must appear in the title or the summary."""
+        """tag_ids: stories with at least one of these tags.
+        search_terms: every word must appear in the title or the summary."""
         ...
 
     def to_cards(self, stories: list[Story]) -> list[StoryCard]:

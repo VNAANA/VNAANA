@@ -1,20 +1,22 @@
 import { useCallback } from 'react'
-import { EXPLORE_SIZE, fetchExploreStories, toExploreItem } from '../utils/explore'
+import { EXPLORE_SIZE, exploreFilter, exploreFilterKey, fetchExploreStories, toExploreItem } from '../utils/explore'
 import type { ExploreFilter, ExploreItem } from '../utils/explore'
 import { useInfiniteList } from './useInfiniteList'
 import type { PageLoader } from './useInfiniteList'
 
-/* Explore's stories, newest first, EXPLORE_SIZE at a time. Starts again when the filter changes. */
+/* Explore's stories, newest first, EXPLORE_SIZE at a time. Starts again when the selected tags change. */
 export function useExploreArticles(filter: ExploreFilter) {
+  // The filter object is new on every render; the key only changes with the selection.
+  const key = exploreFilterKey(filter)
   const loadPage = useCallback<PageLoader<ExploreItem, null>>(async (offset, _source, signal) => {
-    const stories = await fetchExploreStories(filter, offset, signal)
+    const stories = await fetchExploreStories(exploreFilter(key ? key.split(',') : []), offset, signal)
     return {
       items: stories.map(toExploreItem),
       received: stories.length,
       source: null,
       done: stories.length < EXPLORE_SIZE,
     }
-  }, [filter])
+  }, [key])
 
-  return useInfiniteList(loadPage, filter)
+  return useInfiniteList(loadPage, key)
 }

@@ -211,6 +211,25 @@
   color: var(--foryou-ink);
 }
 
+.dislikedMark {
+  flex: none;
+  color: var(--muted);
+}
+
+/* Disliked topics sit at the bottom and look quieter. */
+.topicRow[data-disliked] .topicName {
+  color: var(--muted);
+}
+
+.topicsError {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding: 6px;
+  font-size: var(--text-meta);
+  color: var(--muted);
+}
+
 /* Bottom of the sidebar: "Log in", or the signed-in user's profile */
 .account {
   margin-top: auto;

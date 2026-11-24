@@ -39,14 +39,18 @@ def list_stories(
         StoryStatus.published,
         alias="status",
     ),
-    tag_id: uuid.UUID | None = None,
+    tag_id: list[uuid.UUID] | None = Query(
+        None,
+        max_length=50,
+        description="Repeat to filter by several tags: stories with any of them.",
+    ),
     q: str | None = Query(None, max_length=100),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
     return service.list_stories(
         status=status_filter,
-        tag_id=tag_id,
+        tag_ids=tag_id,
         q=q,
         limit=limit,
         offset=offset,

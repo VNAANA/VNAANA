@@ -97,7 +97,7 @@ def test_the_query_tells_postgres_which_escape_character_is_used(repository, db)
 def test_search_is_combined_with_status_and_tag(repository, db):
     repository.list(
         status="published",
-        tag_id="00000000-0000-0000-0000-000000000001",
+        tag_ids=["00000000-0000-0000-0000-000000000001"],
         search_terms=["flood"],
     )
 

@@ -83,11 +83,11 @@ def test_wildcard_characters_are_passed_on_as_typed(service, stories):
 
 
 def test_search_is_combined_with_the_other_filters(service, stories):
-    tag_id = uuid4()
+    tag_ids = [uuid4(), uuid4()]
 
     service.list_stories(
         status=StoryStatus.published,
-        tag_id=tag_id,
+        tag_ids=tag_ids,
         q="flood",
         limit=5,
         offset=10,
@@ -95,7 +95,7 @@ def test_search_is_combined_with_the_other_filters(service, stories):
 
     stories.list.assert_called_once_with(
         status=StoryStatus.published,
-        tag_id=tag_id,
+        tag_ids=tag_ids,
         search_terms=["flood"],
         limit=5,
         offset=10,

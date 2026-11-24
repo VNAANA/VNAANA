@@ -48,14 +48,14 @@ class StoryService:
         self,
         *,
         status: StoryStatus | None = None,
-        tag_id: uuid.UUID | None = None,
+        tag_ids: list[uuid.UUID] | None = None,
         q: str | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[StoryCard]:
         return self.stories.to_cards(self.stories.list(
             status=status,
-            tag_id=tag_id,
+            tag_ids=tag_ids,
             search_terms=self._search_terms(q),
             limit=limit,
             offset=offset,

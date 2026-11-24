@@ -1,5 +1,4 @@
-import { Tag } from 'lucide-react'
-import { TOPIC_ICONS, topicForTag } from '../../data/topics'
+import { tagIcon, tagLabel } from '../../data/tags'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
 import type { ExploreItem } from '../../utils/explore'
@@ -20,9 +19,8 @@ export function CardLink({ item }: { item: ExploreItem }) {
 }
 
 /*
- * The story's tags as small pills, like on feed posts: a tag named like one of
- * our topics gets that topic's icon and translated name. A list, so screen
- * readers announce how many there are.
+ * The story's tags as small pills, with the same icons and names as the
+ * sidebar and feed posts. A list, so screen readers announce how many there are.
  */
 export function CardTags({ item }: { item: ExploreItem }) {
   const { t } = useStrings()
@@ -30,12 +28,11 @@ export function CardTags({ item }: { item: ExploreItem }) {
   return (
     <ul className={styles.tags} aria-label={t.post.tags}>
       {item.tags.map((name) => {
-        const topic = topicForTag(name)
-        const Icon = topic ? TOPIC_ICONS[topic] : Tag
+        const Icon = tagIcon(name)
         return (
           <li key={name} className={styles.tag}>
             <Icon size={12} aria-hidden="true" />
-            {topic ? t.topics[topic] : name}
+            {tagLabel(name, t)}
           </li>
         )
       })}
