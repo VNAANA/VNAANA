@@ -283,9 +283,7 @@ class StoryRepository(StoryRepositoryPort):
         )
         missing_body = links.join(
             ArticleModel, StoryArticleModel.article_id == ArticleModel.id
-        ).where(
-            ~func.coalesce(ArticleModel.content, "").regexp_match(r"[^[:space:]]")
-        )
+        ).where(~func.coalesce(ArticleModel.content, "").regexp_match(r"[^[:space:]]"))
         stmt = (
             select(StoryModel.id)
             .where(

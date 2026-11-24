@@ -110,10 +110,15 @@ def _reconcile_saves(repository, uncertain, excluded):
             excluded.add(story_id)
         else:
             outcome = "not_stored"
-        write_result(reconciliation, {
-            "story_id": str(story_id), "result_file": path.name, "outcome": outcome,
-            "checked_at_utc": datetime.now(timezone.utc).isoformat(),
-        })
+        write_result(
+            reconciliation,
+            {
+                "story_id": str(story_id),
+                "result_file": path.name,
+                "outcome": outcome,
+                "checked_at_utc": datetime.now(timezone.utc).isoformat(),
+            },
+        )
         print(f"{story_id}: previous save reconciled ({outcome})")
 
 
@@ -121,7 +126,8 @@ def _exclude_unchanged_input_limits(repository, latest, service, excluded):
     for story_id, record in latest.items():
         if (
             story_id not in excluded
-            and record.get("reason") in {"model_context_limit", "estimated_groq_token_limit"}
+            and record.get("reason")
+            in {"model_context_limit", "estimated_groq_token_limit"}
             and record.get("provider") == service.provider
             and record.get("model") == service.model
             and isinstance(record.get("settings"), dict)
@@ -134,11 +140,15 @@ def _exclude_unchanged_input_limits(repository, latest, service, excluded):
             if isinstance(story, StoryDetails):
                 _, sources = story_summary_sources(story)
                 prompt = build_story_summary_prompt(story.title, sources)
-                if hashlib.sha256(prompt.encode("utf-8")).hexdigest() == record.get("input_sha256"):
+                if hashlib.sha256(prompt.encode("utf-8")).hexdigest() == record.get(
+                    "input_sha256"
+                ):
                     excluded.add(story_id)
 
 
-def select_backfill_ids(limit: int, session_factory, service: StorySummarizationService) -> list[UUID]:
+def select_backfill_ids(
+    limit: int, session_factory, service: StorySummarizationService
+) -> list[UUID]:
     latest = {}
     uncertain = []
     excluded = set()
@@ -209,8 +219,12 @@ def build_service(settings: Settings, provider: str) -> StorySummarizationServic
 
 
 def summarize_stories(
-    story_ids: list[UUID], service: StorySummarizationService, session_factory,
-    *, save: bool = False, backfill: bool = False,
+    story_ids: list[UUID],
+    service: StorySummarizationService,
+    session_factory,
+    *,
+    save: bool = False,
+    backfill: bool = False,
 ) -> int:
     RESULTS.mkdir(parents=True, exist_ok=True)
     failures = 0
@@ -301,16 +315,21 @@ def _record_story_result(story_id, record, service, session_factory, *, save, ba
         try:
             write_result(path, record, replace=True)
         except OSError:
-            print(f"{story_id}: failed (local_status_write_failed, database outcome: {outcome})")
+            print(
+                f"{story_id}: failed (local_status_write_failed, database outcome: {outcome})"
+            )
             return True
 
     reason = record.get("database_reason", record.get("reason", "candidate saved"))
     verification = record.get("database_verification")
     if verification and verification != "matched":
         reason = verification
-    print(f"{story_id}: {record['status']} / {record['database_status']} ({reason}) – {path}")
+    print(
+        f"{story_id}: {record['status']} / {record['database_status']} ({reason}) – {path}"
+    )
     return (
-        record["status"] == "failed" or record["database_status"] == "failed"
+        record["status"] == "failed"
+        or record["database_status"] == "failed"
         or verification in {"read_failed", "mismatch"}
     )
 
@@ -357,11 +376,15 @@ def main() -> int:
     parser.add_argument("story_ids", type=UUID, nargs="*")
     parser.add_argument("--backfill", type=int, metavar="LIMIT")
     parser.add_argument("--provider", choices=("groq", "ollama"))
-    parser.add_argument("--save", action="store_true", help="Save valid summaries to the database.")
+    parser.add_argument(
+        "--save", action="store_true", help="Save valid summaries to the database."
+    )
     args = parser.parse_args()
     if bool(args.story_ids) == (args.backfill is not None):
         parser.error("Pass explicit Story IDs or --backfill LIMIT")
-    if args.backfill is not None and (not 1 <= args.backfill <= MAX_STORIES or not args.save):
+    if args.backfill is not None and (
+        not 1 <= args.backfill <= MAX_STORIES or not args.save
+    ):
         parser.error(f"--backfill requires --save and a limit from 1 to {MAX_STORIES}")
     if len(args.story_ids) > MAX_STORIES:
         parser.error(f"Pass at most {MAX_STORIES} Story IDs")
@@ -378,14 +401,29 @@ def main() -> int:
     if args.backfill is not None:
         try:
             story_ids = select_backfill_ids(args.backfill, SessionLocal, service)
-        except (OSError, ValueError, KeyError, AttributeError, SQLAlchemyError, RuntimeError) as exc:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            AttributeError,
+            SQLAlchemyError,
+            RuntimeError,
+        ) as exc:
             parser.exit(1, f"Backfill selection failed ({type(exc).__name__}).\n")
         if not story_ids:
             print("No unattempted eligible Stories found.")
             return 0
-    return int(bool(summarize_stories(
-        story_ids, service, SessionLocal, save=args.save, backfill=args.backfill is not None
-    )))
+    return int(
+        bool(
+            summarize_stories(
+                story_ids,
+                service,
+                SessionLocal,
+                save=args.save,
+                backfill=args.backfill is not None,
+            )
+        )
+    )
 
 
 if __name__ == "__main__":
