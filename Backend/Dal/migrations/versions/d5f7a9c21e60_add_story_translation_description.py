@@ -10,7 +10,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("story_translations", sa.Column("description", sa.Text(), nullable=True))
+    op.add_column(
+        "story_translations", sa.Column("description", sa.Text(), nullable=True)
+    )
 
 
 def downgrade() -> None:

@@ -178,7 +178,10 @@ class StoryService:
 
         return Feed(
             feed.status,
-            [RankedStory(card, ranked.score) for card, ranked in zip(cards, feed.stories)],
+            [
+                RankedStory(card, ranked.score)
+                for card, ranked in zip(cards, feed.stories)
+            ],
         )
 
     def translate_story(

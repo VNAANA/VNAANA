@@ -73,7 +73,9 @@ class RateLimitMiddleware:
         reset_at = _limiter.get_window_stats(self.limit, ip).reset_time
         response = JSONResponse(
             status_code=429,
-            content={"detail": "Too many requests. Please wait a moment and try again."},
+            content={
+                "detail": "Too many requests. Please wait a moment and try again."
+            },
             headers={
                 "Retry-After": str(max(1, math.ceil(reset_at - time.time()))),
                 "X-RateLimit-Limit": str(self.limit.amount),

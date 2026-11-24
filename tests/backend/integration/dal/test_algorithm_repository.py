@@ -349,6 +349,25 @@ def test_withdrawing_consent_removes_reactions_and_scores(db, repo):
     assert affinity_updated_at(db, user) is None
 
 
+def test_withdrawing_consent_removes_reaction_events_but_keeps_other_events(db, repo):
+    # Likes and dislikes are stored as engagement events (Logic/Algorithm/reactions.py).
+    user, other = add_user(db), add_user(db)
+    story = add_story(db)
+    for event_type in ("like", "dislike", "reaction_removed", "share"):
+        add_event(db, user, story, event_type)
+    add_event(db, other, story, "like")
+
+    repo.delete_algorithm_data(user.id)
+
+    db.commit()
+    db.expire_all()
+    left = {
+        (row.user_id, row.event_type)
+        for row in db.scalars(select(EngagementEvent).where(EngagementEvent.user_id.in_([user.id, other.id])))
+    }
+    assert left == {(user.id, "share"), (other.id, "like")}
+
+
 def test_withdrawing_consent_leaves_other_users_alone(db, repo):
     user, other = add_user(db), add_user(db, scored_at=NOW)
     story = add_story(db)

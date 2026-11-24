@@ -123,12 +123,15 @@ def test_the_for_you_feed_through_the_whole_backend(client, stories, new_session
     assert feed(client)["status"] == "available"
 
     # Reacting to stories: like Sports (+2), dislike Politics (-5), read Climate to the end (+1).
-    client.put(f"/users/{user_id}/reactions/{stories['Sports']}", json={"reaction": "like"}).raise_for_status()
-    client.put(f"/users/{user_id}/reactions/{stories['Politics']}", json={"reaction": "dislike"}).raise_for_status()
-    client.post(
-        f"/users/{user_id}/events",
-        json={"session_id": str(uuid.uuid4()), "story_id": str(stories["Climate"]), "event_type": "read_complete"},
-    ).raise_for_status()
+    # Like the app, every tap is an engagement event (Frontend/src/utils/engagement.ts).
+    session_id = str(uuid.uuid4())
+    for topic, event_type in (("Sports", "like"), ("Politics", "dislike"), ("Climate", "read_complete")):
+        client.post(
+            f"/users/{user_id}/events",
+            json={"session_id": session_id, "story_id": str(stories[topic]), "event_type": event_type},
+        ).raise_for_status()
+    reactions = {r["story_id"]: r["reaction"] for r in client.get(f"/users/{user_id}/reactions").json()}
+    assert reactions == {str(stories["Sports"]): "like", str(stories["Politics"]): "dislike"}
 
     expected_order = ["Technology story", "Sports story", "Climate story", "Politics story"]
 

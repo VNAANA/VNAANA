@@ -7,7 +7,6 @@ from typing import Literal
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
 
@@ -42,6 +41,7 @@ class Settings(BaseSettings):
     # Read from RATE_LIMIT. Requests per client IP for the whole API, in
     # slowapi/limits notation ("60/minute", "1000/hour").
     rate_limit: str = "60/minute"
+
 
 @lru_cache
 def get_settings() -> Settings:

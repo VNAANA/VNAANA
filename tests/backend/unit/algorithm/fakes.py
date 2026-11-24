@@ -9,6 +9,7 @@ import dataclasses
 import uuid
 from datetime import datetime
 
+from Backend.Logic.Algorithm.reactions import REACTION_EVENTS
 from Backend.Logic.Algorithm.shared_types import StoryTags, TagScores
 from Backend.Logic.domain.declared_tag import DeclaredTag
 from Backend.Logic.domain.engagement_event import EngagementEvent
@@ -76,6 +77,10 @@ class FakeAlgorithmRepository:
         self.scores.pop(user_id, None)
         for key in [k for k in self.reactions if k[0] == user_id]:
             del self.reactions[key]
+        self.events = [
+            e for e in self.events
+            if not (e.user_id == user_id and e.event_type in REACTION_EVENTS)
+        ]
 
     def get_tag_scores(self, user_id: uuid.UUID) -> TagScores:
         return dict(self.scores.get(user_id, {}))

@@ -4,7 +4,8 @@ Storage layout (live Supabase schema, migration 83fdcb1cc3fc):
 - tag scores live in user_tags.score / computed_at. A row is either a declared
   interest (is_declared = true) or a tag the algorithm scored (is_declared = false).
 - users.affinity_updated_at records when the user was last scored.
-- reactions live in story_reactions.
+- likes and dislikes are engagement events (like / dislike / reaction_removed);
+  story_reactions is no longer read.
 
 This class only stores and fetches. Weights, decay and ranking are decided in
 Backend/Logic/Algorithm.
@@ -42,6 +43,7 @@ from Backend.Dal.repositories.engagement_event_repository import (
     EngagementEventRepository,
 )
 from Backend.Dal.repositories.story_repository import StoryRepository
+from Backend.Logic.Algorithm.reactions import REACTION_EVENTS
 from Backend.Logic.Algorithm.shared_types import StoryTags, TagScores
 from Backend.Logic.domain.declared_tag import DeclaredTag
 from Backend.Logic.domain.engagement_event import EngagementEvent
@@ -217,6 +219,14 @@ class AlgorithmRepository(AlgorithmRepositoryPort):
     def delete_algorithm_data(self, user_id: uuid.UUID) -> None:
         self.db.execute(
             delete(StoryReactionModel).where(StoryReactionModel.user_id == user_id)
+        )
+        # Likes and dislikes are stored as engagement events
+        # (Logic/Algorithm/reactions.py), so those go too.
+        self.db.execute(
+            delete(EngagementEventModel).where(
+                EngagementEventModel.user_id == user_id,
+                EngagementEventModel.event_type.in_(REACTION_EVENTS),
+            )
         )
         self._clear_scores(UserTagModel.user_id == user_id)
 
