@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 
 from Backend.Logic.ai_service import AIModelError
 
+STORY_SUMMARY_OPTIONS = {"temperature": 0, "num_ctx": 32_768}
+
 
 class OllamaClient:
     def __init__(self, base_url: str, model: str, timeout_seconds: int = 90):
@@ -73,3 +75,27 @@ class OllamaClient:
         if not isinstance(text, str):
             raise AIModelError("Ollama returned no generated text")
         return text
+
+    def generate_story_summary(self, prompt: str) -> dict:
+        result = self._json_request(
+            "/api/generate",
+            {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "truncate": False,
+                "shift": False,
+                "options": STORY_SUMMARY_OPTIONS,
+            },
+        )
+        return {
+            "text": result.get("response"),
+            "finish_reason": (
+                result.get("done_reason") if result.get("done") is True else None
+            ),
+            "reported_model": result.get("model"),
+            "usage": {
+                "input_tokens": result.get("prompt_eval_count"),
+                "output_tokens": result.get("eval_count"),
+            },
+        }

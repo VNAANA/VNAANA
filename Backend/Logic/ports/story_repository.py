@@ -42,6 +42,8 @@ class StoryRepository(Protocol):
 
     def update(self, story: Story, **fields: Any) -> Story: ...
 
+    def get_for_summary_publication(self, story_id: uuid.UUID) -> Story | None: ...
+
     def replace_tags(
         self,
         story: Story,

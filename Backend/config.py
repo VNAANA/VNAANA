@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import PositiveInt, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     fontys_model: str = "fontys-gpt-5.6-sol"
     fontys_endpoint: str = "https://api.portkey.ai/v1/chat/completions"
     fontys_timeout_seconds: float = 90
+
+    story_summary_provider: Literal["groq", "ollama"] = "groq"
+    story_summary_groq_token_budget: PositiveInt = 8000
+    groq_api_key: SecretStr | None = None
 
     genre_classification_model_path: Path | None = None
     genre_classification_device: str = "cpu"

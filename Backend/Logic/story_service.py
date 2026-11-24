@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -5,7 +6,7 @@ from decimal import Decimal
 from typing import Any
 
 from Backend.Logic.domain.feed import Feed, RankedStory
-from Backend.Logic.domain.story import Story, StoryCard, StoryStatus
+from Backend.Logic.domain.story import Story, StoryCard, StoryDetails, StoryStatus
 from Backend.Logic.domain.story_translation import StoryTranslation
 from Backend.Logic.exceptions import (
     ConflictError,
@@ -17,6 +18,11 @@ from Backend.Logic.ports.article_repository import ArticleRepository
 from Backend.Logic.ports.story_repository import GenreTagWrite, StoryRepository
 from Backend.Logic.ports.tag_repository import TagRepository
 from Backend.Logic.ports.translator import Translator
+from Backend.Logic.story_summarization_service import (
+    MAX_SUMMARY_CHARS,
+    build_story_summary_prompt,
+    story_summary_sources,
+)
 
 MIN_SEARCH_LENGTH = 2
 
@@ -365,6 +371,31 @@ class StoryService:
         )
 
         return self.get_story(story_id)
+
+    def save_generated_summary(
+        self, story_id: uuid.UUID, summary: str, input_sha256: str
+    ) -> str:
+        if not summary.strip() or len(summary) > MAX_SUMMARY_CHARS:
+            return "invalid_summary"
+
+        story = self.stories.get_for_summary_publication(story_id)
+        if not isinstance(story, StoryDetails):
+            return "missing"
+        if story.status != StoryStatus.published:
+            return "unpublished"
+        if story.summary and story.summary.strip():
+            return "already_summarized"
+        _, sources = story_summary_sources(story)
+        if not sources or any(not source["body"].strip() for source in sources):
+            return "stale"
+        prompt = build_story_summary_prompt(story.title, sources)
+        if hashlib.sha256(prompt.encode("utf-8")).hexdigest() != input_sha256:
+            return "stale"
+
+        self.stories.update(
+            story, summary=summary, last_updated_at=datetime.now(timezone.utc)
+        )
+        return "saved"
 
     def set_tags(
         self,
