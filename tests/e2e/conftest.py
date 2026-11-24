@@ -209,6 +209,9 @@ def servers(supabase, database, tmp_path_factory):
             "DATABASE_URL": supabase["db_url"],
             "SUPABASE_URL": supabase["api_url"],
             "SUPABASE_PUBLISHABLE_KEY": supabase["publishable_key"],
+            # Every E2E request comes from 127.0.0.1, and one page load already
+            # makes several API calls; the real limit would make runs flaky.
+            "RATE_LIMIT": "1000/minute",
         },
         logs / "api.log",
     )
