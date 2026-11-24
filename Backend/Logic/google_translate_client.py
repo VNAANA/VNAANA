@@ -13,6 +13,12 @@ from Backend.Logic.exceptions import TranslationUnavailableError
 
 TRANSLATE_URL = "https://translation.googleapis.com/language/translate/v2"
 
+# Google rejects a v2 request with more than 128 texts or over 100K bytes.
+# A feed page can go past both, so bigger batches are split into several
+# requests. The byte budget leaves room for the JSON around the texts.
+MAX_TEXTS_PER_REQUEST = 128
+MAX_TEXT_BYTES_PER_REQUEST = 50_000
+
 
 class GoogleTranslateClient:
     def __init__(
@@ -33,10 +39,20 @@ class GoogleTranslateClient:
         if not self.api_key:
             raise TranslationUnavailableError("Translation is not configured")
 
+        translated: list[str] = []
+        for chunk in _chunks(texts):
+            translated.extend(
+                self._translate_chunk(chunk, source=source, target=target)
+            )
+        return translated
+
+    def _translate_chunk(
+        self, texts: list[str], *, source: str, target: str
+    ) -> list[str]:
         try:
             response = self._post(
                 {
-                    # v2 accepts a list, so all fields of a story go in one request.
+                    # v2 accepts a list, so many texts go in one request.
                     "q": texts,
                     "source": source,
                     "target": target,
@@ -91,3 +107,31 @@ class GoogleTranslateClient:
 
         with httpx.Client(timeout=self.timeout_seconds) as client:
             return client.post(TRANSLATE_URL, json=payload, headers=headers)
+
+
+def _chunks(texts: list[str]) -> list[list[str]]:
+    """Split texts into groups that each fit in one request, keeping their order.
+
+    A single text bigger than the byte budget gets a request of its own; if
+    Google rejects it, that fails like any other refused request.
+    """
+    chunks: list[list[str]] = []
+    current: list[str] = []
+    current_bytes = 0
+
+    for text in texts:
+        size = len(text.encode("utf-8"))
+        full = len(current) == MAX_TEXTS_PER_REQUEST
+        too_big = current and current_bytes + size > MAX_TEXT_BYTES_PER_REQUEST
+
+        if full or too_big:
+            chunks.append(current)
+            current, current_bytes = [], 0
+
+        current.append(text)
+        current_bytes += size
+
+    if current:
+        chunks.append(current)
+
+    return chunks

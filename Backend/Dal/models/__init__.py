@@ -1,6 +1,7 @@
 """All ORM models. Importing this package registers every table on Base.metadata."""
 
 from Backend.Dal.models.article import Article
+from Backend.Dal.models.article_translation import ArticleTranslation
 from Backend.Dal.models.base import Base
 from Backend.Dal.models.engagement_event import EngagementEvent
 from Backend.Dal.models.event_weight import EventWeight
@@ -28,6 +29,7 @@ __all__ = [
     "Provider",
     "ProviderSource",
     "Article",
+    "ArticleTranslation",
     "StoryArticle",
     "EngagementEvent",
     "EventWeight",

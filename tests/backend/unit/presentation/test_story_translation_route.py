@@ -117,3 +117,96 @@ def test_preferred_language_comes_from_the_profile():
     assert service.get_preferred_language(subject) == "en"
     assert service.get_preferred_language(uuid4()) is None
     assert service.get_preferred_language(None) is None
+
+
+# ---- GET /stories/for-you ----
+
+
+@pytest.fixture
+def feed_context(context):
+    from Backend.Logic.domain.feed import Feed, FeedStatus, RankedStory
+    from Backend.Logic.domain.story import StoryCard
+    from Backend.Presentation.auth import get_authenticated_subject
+    from Backend.Presentation.dependencies import get_algorithm_service
+
+    context.subject = uuid4()
+    context.algorithm = Mock()
+    context.profile = SimpleNamespace(id=uuid4(), language="en")
+    context.users.get_authenticated_user.return_value = context.profile
+
+    raw = Feed(FeedStatus.available, [])
+    cards = Feed(FeedStatus.available, [])
+    translated = Feed(
+        FeedStatus.available,
+        [
+            RankedStory(
+                StoryCard(
+                    id=uuid4(), title="Title", summary=None, context="Context",
+                    status=StoryStatus.published, first_published_at=None,
+                    last_updated_at=datetime(2026, 11, 24, tzinfo=timezone.utc),
+                ),
+                2.5,
+            )
+        ],
+    )
+    context.algorithm.get_feed.return_value = raw
+    context.stories.with_cards.return_value = cards
+    context.stories.translate_feed.return_value = translated
+    context.feeds = SimpleNamespace(raw=raw, cards=cards, translated=translated)
+
+    app.dependency_overrides[get_algorithm_service] = lambda: context.algorithm
+    app.dependency_overrides[get_authenticated_subject] = lambda: context.subject
+    return context
+
+
+def test_for_you_is_translated_into_the_profile_language(feed_context):
+    c = feed_context
+
+    response = c.client.get("/stories/for-you?limit=10&offset=20")
+
+    assert response.status_code == 200
+    assert response.json()["stories"][0]["story"]["title"] == "Title"
+    c.users.get_authenticated_user.assert_called_once_with(c.subject)
+    c.algorithm.get_feed.assert_called_once_with(c.profile.id, limit=10, offset=20)
+    c.stories.with_cards.assert_called_once_with(c.feeds.raw)
+    # The language comes from the profile that was already loaded, so no
+    # second lookup through get_preferred_language.
+    c.stories.translate_feed.assert_called_once_with(c.feeds.cards, "en")
+    c.users.get_preferred_language.assert_not_called()
+
+
+def test_for_you_without_a_profile_language_passes_none(feed_context):
+    c = feed_context
+    c.profile.language = None
+
+    assert c.client.get("/stories/for-you").status_code == 200
+    c.stories.translate_feed.assert_called_once_with(c.feeds.cards, None)
+
+
+def test_for_you_with_a_failing_translator_still_answers_200(feed_context):
+    """Through the real StoryService, so the fallback is checked end to end."""
+    from Backend.Logic.domain.feed import Feed, FeedStatus, RankedStory
+    from Backend.Logic.domain.story import StoryCard
+    from Backend.Logic.story_service import StoryService
+
+    c = feed_context
+    card = StoryCard(
+        id=uuid4(), title="Titel", summary=None, context="Context",
+        status=StoryStatus.published, first_published_at=None,
+        last_updated_at=datetime(2026, 11, 24, tzinfo=timezone.utc),
+    )
+    repo = Mock()
+    repo.get_translations.return_value = {}
+    translator = Mock()
+    translator.translate.side_effect = TranslationUnavailableError("offline")
+    service = StoryService(stories=repo, articles=Mock(), tags=None, translator=translator)
+    c.algorithm.get_feed.return_value = Feed(FeedStatus.available, [RankedStory(card, 1.0)])
+    service.with_cards = lambda feed: feed
+    app.dependency_overrides[get_story_service] = lambda: service
+
+    response = c.client.get("/stories/for-you")
+
+    assert response.status_code == 200
+    assert response.json()["stories"][0]["story"]["title"] == "Titel"
+    translator.translate.assert_called_once()
+    repo.save_translation.assert_not_called()

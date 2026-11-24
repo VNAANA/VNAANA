@@ -99,3 +99,74 @@ def test_invalid_or_incomplete_responses(body):
 
     with pytest.raises(TranslationUnavailableError, match="invalid"):
         client.translate(["Titel", "Context"], source="nl", target="en")
+
+
+def echo_client(requests):
+    """Answers every request with its own texts prefixed by EN:, like Google would."""
+
+    def handler(request):
+        texts = json.loads(request.content)["q"]
+        requests.append(texts)
+        return httpx.Response(200, json=translations(*[f"EN:{text}" for text in texts]))
+
+    return GoogleTranslateClient(
+        api_key="test-key", http_client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+
+
+def test_more_than_128_texts_are_split_over_requests_in_order():
+    requests = []
+    texts = [f"Tekst {i}" for i in range(300)]
+
+    result = echo_client(requests).translate(texts, source="nl", target="en")
+
+    assert [len(chunk) for chunk in requests] == [128, 128, 44]
+    assert result == [f"EN:Tekst {i}" for i in range(300)]
+
+
+def test_large_texts_are_split_by_size():
+    requests = []
+    # Each text is 20 KB, so only two fit within the 50 KB budget per request.
+    texts = [f"{i}" + "a" * 20_000 for i in range(5)]
+
+    result = echo_client(requests).translate(texts, source="nl", target="en")
+
+    assert [len(chunk) for chunk in requests] == [2, 2, 1]
+    assert result == [f"EN:{text}" for text in texts]
+
+
+def test_size_counts_bytes_not_characters():
+    requests = []
+    # "é" is 2 bytes in UTF-8: 3 × 10 000 é = 60 KB, so they can't share one request.
+    texts = ["é" * 10_000] * 3
+
+    echo_client(requests).translate(texts, source="nl", target="en")
+
+    assert [len(chunk) for chunk in requests] == [2, 1]
+
+
+def test_one_text_over_the_budget_still_gets_its_own_request():
+    requests = []
+
+    result = echo_client(requests).translate(["a" * 60_000, "b"], source="nl", target="en")
+
+    assert [len(chunk) for chunk in requests] == [1, 1]
+    assert result == ["EN:" + "a" * 60_000, "EN:b"]
+
+
+def test_a_failing_chunk_fails_the_whole_translation():
+    calls = []
+
+    def handler(request):
+        calls.append(1)
+        if len(calls) == 2:
+            return httpx.Response(429, json={"error": {}})
+        texts = json.loads(request.content)["q"]
+        return httpx.Response(200, json=translations(*texts))
+
+    client = GoogleTranslateClient(
+        api_key="test-key", http_client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
+
+    with pytest.raises(TranslationUnavailableError, match="quota"):
+        client.translate(["x"] * 200, source="nl", target="en")

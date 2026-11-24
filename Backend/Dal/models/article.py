@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from Backend.Dal.models.base import Base
 
 if TYPE_CHECKING:
+    from Backend.Dal.models.article_translation import ArticleTranslation
     from Backend.Dal.models.provider import Provider
     from Backend.Dal.models.story_article import StoryArticle
 
@@ -46,5 +47,8 @@ class Article(Base):
 
     provider: Mapped["Provider"] = relationship(lazy="joined")
     stories: Mapped[list["StoryArticle"]] = relationship(
+        back_populates="article", cascade="all, delete-orphan", passive_deletes=True
+    )
+    translations: Mapped[list["ArticleTranslation"]] = relationship(
         back_populates="article", cascade="all, delete-orphan", passive_deletes=True
     )

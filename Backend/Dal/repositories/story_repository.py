@@ -486,6 +486,23 @@ class StoryRepository(StoryRepositoryPort):
 
         return self._translation_to_domain(row)
 
+    def get_translations(
+        self,
+        story_ids: list[uuid.UUID],
+        language: str,
+    ) -> dict[uuid.UUID, StoryTranslation]:
+        if not story_ids:
+            return {}
+
+        rows = self.db.scalars(
+            select(StoryTranslationModel).where(
+                StoryTranslationModel.story_id.in_(story_ids),
+                StoryTranslationModel.language == language,
+            )
+        )
+
+        return {row.story_id: self._translation_to_domain(row) for row in rows}
+
     def save_translation(
         self,
         story_id: uuid.UUID,

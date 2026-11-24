@@ -170,3 +170,73 @@ def test_a_new_user_without_consent_is_never_scored_by_the_job(client, stories, 
 
     assert AlgorithmRepository(new_session()).get_tag_scores(uuid.UUID(user_id)) == {}
     assert feed(client)["status"] == "no_consent"
+
+
+class FakeTranslator:
+    """Stands in for Google: prefixes every text with EN: and remembers the calls."""
+
+    def __init__(self):
+        self.calls = []
+        self.fail = False
+
+    def translate(self, texts, *, source, target):
+        from Backend.Logic.exceptions import TranslationUnavailableError
+
+        self.calls.append(list(texts))
+        if self.fail:
+            raise TranslationUnavailableError("Translation quota exceeded")
+        return [f"EN:{text}" for text in texts]
+
+
+def test_an_english_user_gets_the_feed_translated_and_cached(client, stories, db):
+    from Backend.Dal.models import Article, Provider, StoryArticle
+    from Backend.main import app
+    from Backend.Presentation.dependencies import get_translator
+
+    # The Technology story leads with an article, whose description the card shows.
+    provider = Provider(name="NOS", domain="nos.test", reliability_status="verified")
+    db.add(provider)
+    db.flush()
+    article = Article(
+        provider_id=provider.id,
+        canonical_url="https://nos.test/tech",
+        title="Artikel",
+        description="Beschrijving",
+    )
+    db.add(article)
+    db.flush()
+    db.add(StoryArticle(story_id=stories["Technology"], article_id=article.id, is_primary=True))
+    db.commit()
+
+    translator = FakeTranslator()
+    app.dependency_overrides[get_translator] = lambda: translator
+
+    user_id = client.post("/users/me/bootstrap").json()["id"]
+    client.patch(f"/users/{user_id}", json={"language": "en"}).raise_for_status()
+    client.put(f"/users/{user_id}/consent", json={"analytics_consent": True}).raise_for_status()
+    tags = {tag["name"]: tag["id"] for tag in client.get("/tags").json()}
+    client.put(f"/users/{user_id}/tags", json={"tag_ids": [tags["Technology"]]}).raise_for_status()
+
+    body = feed(client)
+    assert titles(body)[0] == "EN:Technology story"
+    lead = body["stories"][0]["story"]["lead_article"]
+    assert lead["description"] == "EN:Beschrijving"
+    # Every story of the page went to Google in a single call.
+    assert len(translator.calls) == 1
+
+    # Loading the feed again comes from the cache, even with Google down.
+    translator.fail = True
+    body = feed(client)
+    assert titles(body)[0] == "EN:Technology story"
+    assert body["stories"][0]["story"]["lead_article"]["description"] == "EN:Beschrijving"
+    assert len(translator.calls) == 1
+
+    # A story that changed can't be translated now: it falls back to the
+    # original instead of failing the whole feed.
+    db.get(Story, stories["Technology"]).title = "Nieuw verhaal"
+    db.get(Story, stories["Technology"]).last_updated_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+    db.commit()
+    body = feed(client)
+    assert body["status"] == "available"
+    assert "Nieuw verhaal" in titles(body)
+    assert len(translator.calls) == 2

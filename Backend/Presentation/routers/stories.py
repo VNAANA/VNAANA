@@ -76,13 +76,18 @@ def get_for_you(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
+    """The personal feed in the user's profile language. Translation problems
+    never fail the feed: untranslated stories are returned as they are."""
     user = users.get_authenticated_user(subject)
-    return stories.with_cards(
-        service.get_feed(
-            user.id,
-            limit=limit,
-            offset=offset,
-        )
+    return stories.translate_feed(
+        stories.with_cards(
+            service.get_feed(
+                user.id,
+                limit=limit,
+                offset=offset,
+            )
+        ),
+        user.language,
     )
 
 

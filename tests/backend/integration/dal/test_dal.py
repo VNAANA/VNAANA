@@ -57,10 +57,10 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(Story.__table__.c.status.default.arg, StoryStatus.draft)
         self.assertEqual(Story.__table__.c.status.server_default.arg, "draft")
         self.assertEqual(Story.__table__.c.status.type.enums, ["draft", "published", "archived"])
-        self.assertEqual(len(Base.metadata.tables), 13)
+        self.assertEqual(len(Base.metadata.tables), 14)
         self.assertNotIn("age_band", User.__table__.c)
         self.assertNotIn("region", User.__table__.c)
-        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 83)
+        self.assertEqual(sum(len(t.columns) for t in Base.metadata.tables.values()), 88)
         self.assertNotIn("language", Story.__table__.c)
         for name in ("eng_title", "eng_summary", "eng_context"):
             self.assertNotIn(name, Story.__table__.c)
@@ -69,6 +69,14 @@ class SchemaTests(unittest.TestCase):
             self.assertTrue(StoryTranslation.__table__.c[name].nullable)
         self.assertEqual(str(StoryTranslation.__table__.c.language.type), "VARCHAR")
         self.assertTrue(StoryTranslation.__table__.c.updated_at.type.timezone)
+        article_translations = Base.metadata.tables["article_translations"]
+        for name in ("source_description", "description"):
+            self.assertEqual(str(article_translations.c[name].type), "TEXT")
+            self.assertFalse(article_translations.c[name].nullable)
+        self.assertEqual(
+            [c.name for c in article_translations.primary_key], ["article_id", "language"]
+        )
+        self.assertTrue(article_translations.c.updated_at.type.timezone)
         expected_server_defaults = {
             ("users", "onboarding_completed"),
             ("users", "analytics_consent"),
@@ -84,6 +92,7 @@ class SchemaTests(unittest.TestCase):
             ("articles", "is_scraped"),
             ("story_reactions", "updated_at"),
             ("story_translations", "updated_at"),
+            ("article_translations", "updated_at"),
         }
         actual_server_defaults = {
             (table.name, column.name)

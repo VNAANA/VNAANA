@@ -87,6 +87,15 @@ class StoryRepository(Protocol):
         language: str,
     ) -> StoryTranslation | None: ...
 
+    def get_translations(
+        self,
+        story_ids: list[uuid.UUID],
+        language: str,
+    ) -> dict[uuid.UUID, StoryTranslation]:
+        """The cached translations of these stories, by story id.
+        Stories without a translation are left out."""
+        ...
+
     def save_translation(
         self,
         story_id: uuid.UUID,
