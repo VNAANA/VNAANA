@@ -15,6 +15,8 @@ from Backend.Logic.ports.tag_repository import TagRepository
 from Backend.Logic.ports.user_repository import UserRepository
 from Backend.Logic.ports.algorithm_repository import AlgorithmRepository
 
+# "Since the beginning": list_reactions_since with this returns every reaction.
+_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
 
 class UserService:
@@ -224,6 +226,16 @@ class UserService:
     # ------------------------------------------------------------------
     # Reactions (design doc D2)
     # ------------------------------------------------------------------
+
+    def list_reactions(self, user_id: uuid.UUID) -> list[StoryReaction]:
+        """Every story the user currently likes or dislikes, so the app can show it again.
+
+        All of them, not only the last 30 days the algorithm counts: a story
+        liked long ago is still liked.
+        """
+        self.get_user(user_id)
+
+        return self.algorithm.list_reactions_since(user_id, _EPOCH)
 
     def set_reaction(
         self,

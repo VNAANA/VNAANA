@@ -3,6 +3,7 @@ import type { FocusEvent } from 'react'
 import { BadgeCheck, Ellipsis, EyeOff, MapPin } from 'lucide-react'
 import { tagIcon, tagLabel } from '../../data/tags'
 import { TOPIC_ICONS } from '../../data/topics'
+import { useSignedIn } from '../../hooks/useSignedIn'
 import { useStrings } from '../../hooks/useStrings'
 import { timeAgo } from '../../utils/articles'
 import { ScopeIcon } from '../ScopeIcon/ScopeIcon'
@@ -182,6 +183,8 @@ function MoreMenu() {
  */
 export function PostHeader() {
   const { article } = usePost()
+  // "Not interested" is the menu's only option and needs an account, so signed out there is no ⋯ menu.
+  const signedIn = useSignedIn()
   return (
     <header className={styles.header}>
       <div className={styles.headerByline}>
@@ -194,7 +197,7 @@ export function PostHeader() {
       </div>
       <div className={styles.headerMenu}>
         <ScopeIcon scope={article.scope} />
-        <MoreMenu />
+        {signedIn && <MoreMenu />}
       </div>
     </header>
   )

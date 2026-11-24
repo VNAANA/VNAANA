@@ -1,16 +1,22 @@
 import { Bookmark, Check, EyeOff, Heart, Share2, Sparkles, ThumbsDown } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useSignedIn } from '../../hooks/useSignedIn'
 import { useStrings } from '../../hooks/useStrings'
 import { usePost } from './PostContext'
 import styles from './ReactionBar.module.css'
 
-export type ActionKind = 'like' | 'dislike' | 'notInterested' | 'share' | 'save'
+import { ACCOUNT_ACTIONS } from './accountActions'
+import type { ActionKind } from './accountActions'
+
+export type { ActionKind }
 
 /* One reaction button. Reads its state from the post, so it can be placed anywhere. */
 export function ActionButton({ kind }: { kind: ActionKind }) {
   const { actions } = usePost()
   const { t } = useStrings()
+  const signedIn = useSignedIn()
   const labels = t.post.reactions
+  if (!signedIn && ACCOUNT_ACTIONS.includes(kind)) return null
 
   const config: Record<ActionKind, { label: string; Icon: LucideIcon; onClick: () => void; pressed?: boolean }> = {
     like: { label: labels.like, Icon: Heart, onClick: actions.toggleLike, pressed: actions.liked },

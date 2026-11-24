@@ -81,3 +81,43 @@ def test_other_consent_changes_delete_nothing(repo, users, user_service, start, 
     user_service.set_consent(user.id, new)
 
     assert repo.data_deleted_for == []
+
+
+# ---- listing reactions (so the app can show them again) -----------------------------
+
+def test_list_reactions_returns_the_users_current_reactions(repo, users, user_service):
+    user = add_user(repo, users)
+    liked = repo.add_story(make_story(), [])
+    disliked = repo.add_story(make_story(), [])
+    user_service.set_reaction(user.id, liked.id, Reaction.like)
+    user_service.set_reaction(user.id, disliked.id, Reaction.dislike)
+
+    reactions = {r.story_id: r.reaction for r in user_service.list_reactions(user.id)}
+
+    assert reactions == {liked.id: Reaction.like, disliked.id: Reaction.dislike}
+
+
+def test_list_reactions_includes_old_ones(repo, users, user_service):
+    # The algorithm only counts the last 30 days, but a like from long ago is still a like.
+    from datetime import datetime, timezone
+    from Backend.Logic.domain.story_reaction import StoryReaction
+
+    user = add_user(repo, users)
+    story = repo.add_story(make_story(), [])
+    old = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    repo.reactions[(user.id, story.id)] = StoryReaction(user.id, story.id, Reaction.like, old)
+
+    assert [r.story_id for r in user_service.list_reactions(user.id)] == [story.id]
+
+
+def test_list_reactions_shows_only_this_users(repo, users, user_service):
+    user, other = add_user(repo, users), add_user(repo, users)
+    story = repo.add_story(make_story(), [])
+    user_service.set_reaction(other.id, story.id, Reaction.like)
+
+    assert user_service.list_reactions(user.id) == []
+
+
+def test_list_reactions_for_an_unknown_user_is_not_found(user_service):
+    with pytest.raises(NotFoundError):
+        user_service.list_reactions(new_id())

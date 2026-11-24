@@ -178,6 +178,19 @@ def list_events(
     )
 
 
+@router.get(
+    "/{user_id}/reactions",
+    response_model=list[StoryReactionRead],
+    dependencies=[Depends(require_user_owner)],
+)
+def list_reactions(
+    user_id: uuid.UUID,
+    service: UserServiceDep,
+):
+    """The stories the user likes or dislikes, so the app can show the heart filled again."""
+    return service.list_reactions(user_id)
+
+
 @router.put(
     "/{user_id}/reactions/{story_id}",
     response_model=StoryReactionRead,

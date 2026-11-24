@@ -36,6 +36,7 @@ def context():
     service.get_tags.return_value = []
     service.set_tags.return_value = []
     service.list_events.return_value = []
+    service.list_reactions.return_value = []
     now = datetime.now(timezone.utc)
     service.set_reaction.return_value = dict(story_id=story_id, reaction="like", updated_at=now)
     session_id = uuid4()
@@ -60,6 +61,7 @@ def context():
         ("PUT", f"/users/{user_id}/tags", {"tag_ids": []}, 200),
         ("POST", f"/users/{user_id}/events", {"session_id": str(session_id), "event_type": "view"}, 201),
         ("GET", f"/users/{user_id}/events", None, 200),
+        ("GET", f"/users/{user_id}/reactions", None, 200),
         ("PUT", f"/users/{user_id}/reactions/{story_id}", {"reaction": "like"}, 200),
         ("DELETE", f"/users/{user_id}/reactions/{story_id}", None, 204),
     ]
@@ -72,7 +74,7 @@ def context():
         app.dependency_overrides.update(previous)
 
 
-@pytest.mark.parametrize("case_index", range(12))
+@pytest.mark.parametrize("case_index", range(13))
 @pytest.mark.parametrize("identity", ["missing", "owner", "other", "wrong_provider"])
 def test_all_user_routes_enforce_ownership(context, case_index, identity):
     c = context
