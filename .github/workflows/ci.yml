@@ -157,8 +157,9 @@ jobs:
               with:
                   name: lighthouse-performance-reports
                   path: .lighthouseci/
-                  if-no-files-found: ignore
+                  if-no-files-found: warn
                   retention-days: 14
+                  include-hidden-files: true
 
     publish:
         name: Build and Publish Docker Image
