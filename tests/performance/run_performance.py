@@ -71,6 +71,11 @@ def run_frontend_performance(status: dict) -> None:
         cwd=FRONTEND,
         env=lighthouse_env,
     )
+    print(f"\nRepository root: {ROOT}")
+    print(f"Lighthouse report directory: {ROOT / '.lighthouseci'}")
+    print(f"Directory exists: {(ROOT / '.lighthouseci').exists()}")
+    if (ROOT / ".lighthouseci").exists():
+        print(f"Report files: {list((ROOT / '.lighthouseci').glob('*.report.json'))}")
     print_lighthouse_results()
 
 
@@ -128,7 +133,13 @@ def start_backend(database_url: str, status: dict):
 
 def print_lighthouse_results():
     report_dir = ROOT / ".lighthouseci"
-    reports = sorted(report_dir.glob("lhr-*.json"))
+    print(f"\nLooking for Lighthouse reports in: {report_dir}")
+    print(f"Directory exists: {report_dir.exists()}")
+
+    if report_dir.exists():
+        print(f"Files found: {[p.name for p in report_dir.iterdir()]}")
+
+    reports = sorted(report_dir.glob("*.report.json"))
 
     print("\n" + "=" * 65)
     print("FRONTEND PERFORMANCE RESULTS")
@@ -141,6 +152,11 @@ def print_lighthouse_results():
     for report in reports:
         try:
             data = json.loads(report.read_text(encoding="utf-8"))
+
+            # Skip manifest and other JSON files that aren't Lighthouse reports.
+            if not isinstance(data, dict) or "audits" not in data:
+                continue
+
             audits = data.get("audits", {})
             categories = data.get("categories", {})
 

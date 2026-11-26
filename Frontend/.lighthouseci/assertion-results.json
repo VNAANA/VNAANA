@@ -2,9 +2,9 @@
   {
     "name": "maxNumericValue",
     "expected": 2500,
-    "actual": 3024.7757999999994,
+    "actual": 2995.0184500000005,
     "values": [
-      3024.7757999999994
+      2995.0184500000005
     ],
     "operator": "<=",
     "passed": false,
@@ -13,125 +13,5 @@
     "url": "http://localhost:5173/#login",
     "auditTitle": "Largest Contentful Paint",
     "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 200,
-    "actual": 219.50254999999993,
-    "values": [
-      219.50254999999993
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "total-blocking-time",
-    "level": "warn",
-    "url": "http://localhost:5173/#login",
-    "auditTitle": "Total Blocking Time",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 200,
-    "actual": 235.5,
-    "values": [
-      235.5
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "total-blocking-time",
-    "level": "warn",
-    "url": "http://localhost:5173/#sign-up",
-    "auditTitle": "Total Blocking Time",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 2500,
-    "actual": 3332.9413,
-    "values": [
-      3332.9413
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "largest-contentful-paint",
-    "level": "warn",
-    "url": "http://localhost:5173/",
-    "auditTitle": "Largest Contentful Paint",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 200,
-    "actual": 248.83709999999996,
-    "values": [
-      248.83709999999996
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "total-blocking-time",
-    "level": "warn",
-    "url": "http://localhost:5173/",
-    "auditTitle": "Total Blocking Time",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 2500,
-    "actual": 3475.2315,
-    "values": [
-      3475.2315
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "largest-contentful-paint",
-    "level": "warn",
-    "url": "http://localhost:5173/#profile",
-    "auditTitle": "Largest Contentful Paint",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 200,
-    "actual": 234,
-    "values": [
-      234
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "total-blocking-time",
-    "level": "warn",
-    "url": "http://localhost:5173/#profile",
-    "auditTitle": "Total Blocking Time",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 2500,
-    "actual": 3218.79225,
-    "values": [
-      3218.79225
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "largest-contentful-paint",
-    "level": "warn",
-    "url": "http://localhost:5173/#profile?tab=topics",
-    "auditTitle": "Largest Contentful Paint",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-largest-contentful-paint/"
-  },
-  {
-    "name": "maxNumericValue",
-    "expected": 200,
-    "actual": 338.99289999999996,
-    "values": [
-      338.99289999999996
-    ],
-    "operator": "<=",
-    "passed": false,
-    "auditId": "total-blocking-time",
-    "level": "warn",
-    "url": "http://localhost:5173/#profile?tab=topics",
-    "auditTitle": "Total Blocking Time",
-    "auditDocumentationLink": "https://developer.chrome.com/docs/lighthouse/performance/lighthouse-total-blocking-time/"
   }
 ]
